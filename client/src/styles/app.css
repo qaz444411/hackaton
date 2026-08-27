@@ -1,0 +1,177 @@
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: var(--font-body);
+  color: var(--c-text);
+  background: #EFE9E4;
+  display: flex; justify-content: center; align-items: center; min-height: 100vh;
+}
+
+/* 모바일 프레임 */
+.phone-frame {
+  width: var(--w-screen); height: var(--h-screen);
+  background: var(--c-bg);
+  border-radius: var(--r-phone);
+  box-shadow: var(--shadow-phone);
+  overflow: hidden; position: relative;
+}
+@media (max-width: 430px) {
+  body { display: block; }
+  .phone-frame { width: 100vw; height: 100dvh; border-radius: 0; box-shadow: none; }
+}
+
+.screen { display: flex; flex-direction: column; height: 100%; background: var(--c-bg-grad); }
+.screen.center { align-items: center; justify-content: center; }
+.screen__body { flex: 1; overflow-y: auto; padding: 0 20px 16px; }
+.screen__body::-webkit-scrollbar { width: 0; }
+
+/* 헤더 */
+.appbar {
+  display: flex; align-items: center; gap: 8px;
+  height: 56px; padding: 0 16px; flex: none;
+}
+.appbar__title { font-family: var(--font-display); font-size: 18px; font-weight: 700; flex: 1; }
+.icon-btn {
+  width: 36px; height: 36px; display: grid; place-items: center;
+  border: none; background: transparent; font-size: 20px; cursor: pointer; color: var(--c-text);
+}
+
+/* 하단 네비 */
+.bottom-nav {
+  display: flex; height: 64px; flex: none;
+  background: var(--c-white); border-top: 1px solid var(--c-line);
+}
+.bottom-nav a {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; font-size: 11px; color: var(--c-text-mute); text-decoration: none; position: relative;
+}
+.bottom-nav a.active { color: var(--c-primary); font-weight: 700; }
+.bottom-nav .badge {
+  position: absolute; top: 8px; right: 26px;
+  min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px;
+  background: var(--c-primary); color: #fff; font-size: 10px; line-height: 16px; text-align: center;
+}
+
+/* 공통 요소 */
+.card {
+  background: var(--c-white); border-radius: var(--r-xl);
+  padding: 16px; box-shadow: var(--shadow-card); border: 1px solid var(--c-line);
+}
+.btn {
+  width: 100%; height: 52px; border: none; border-radius: var(--r-lg);
+  background: var(--c-primary); color: #fff; font-family: var(--font-body);
+  font-size: 16px; font-weight: 700; cursor: pointer; transition: .15s;
+}
+.btn:disabled { background: var(--c-line-strong); color: #fff; cursor: not-allowed; }
+.btn--ghost { background: var(--c-primary-tint); color: var(--c-primary); }
+.btn--line { background: transparent; border: 1.5px solid var(--c-line-strong); color: var(--c-text-sub); }
+
+.field { margin-bottom: 16px; }
+.field__label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+.input {
+  width: 100%; height: 48px; padding: 0 14px;
+  border: 1.5px solid var(--c-line); border-radius: var(--r-md);
+  background: var(--c-white); font-family: var(--font-body); font-size: 15px;
+}
+.input:focus { outline: none; border-color: var(--c-primary); }
+.field__msg { font-size: 12px; margin-top: 4px; color: var(--c-text-mute); }
+.field__msg.ok { color: #1DA678; }
+.field__msg.err { color: var(--c-primary); }
+.row { display: flex; gap: 8px; align-items: center; }
+
+/* 선택 칩 (음식/대화스타일/시간대/MBTI/관심사) */
+.chip-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 10px 16px; border-radius: 999px; border: 1.5px solid var(--c-line);
+  background: var(--c-white); font-size: 14px; font-weight: 600;
+  color: var(--c-text-sub); cursor: pointer;
+}
+.chip[aria-pressed='true'] {
+  background: var(--c-primary); border-color: var(--c-primary); color: #fff;
+}
+.chip:disabled { opacity: .4; cursor: not-allowed; }
+
+/* 프로필 */
+.avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: var(--c-surface); flex: none; }
+.avatar--lg { width: 88px; height: 88px; }
+
+/* 일치율 게이지 */
+.match-rate { display: flex; align-items: center; gap: 8px; }
+.match-rate__bar { flex: 1; height: 6px; border-radius: 3px; background: var(--c-line); overflow: hidden; }
+.match-rate__fill { height: 100%; background: linear-gradient(90deg, var(--c-primary-soft), var(--c-primary)); }
+.match-rate__num { font-family: var(--font-display); font-weight: 700; color: var(--c-primary); font-size: 14px; }
+
+.section-title { font-size: 15px; font-weight: 800; margin: 20px 0 10px; }
+.muted { color: var(--c-text-sub); font-size: 13px; }
+.tag { padding: 4px 10px; border-radius: 999px; background: var(--c-primary-tint); color: var(--c-primary); font-size: 12px; font-weight: 700; }
+
+/* 지도 */
+.map-canvas { position: absolute; inset: 0; }
+.map-wrap { position: relative; flex: 1; }
+.map-search {
+  position: absolute; top: 12px; left: 16px; right: 16px; z-index: 5;
+  height: 46px; border-radius: var(--r-md); border: none; padding: 0 14px;
+  box-shadow: var(--shadow-card); font-family: var(--font-body); font-size: 14px;
+}
+.map-fab {
+  position: absolute; right: 16px; bottom: 96px; z-index: 5;
+  width: 52px; height: 52px; border-radius: 50%; border: none;
+  background: var(--c-primary); color: #fff; font-size: 24px; box-shadow: var(--shadow-card); cursor: pointer;
+}
+.map-fab--list { bottom: 160px; background: var(--c-white); color: var(--c-primary); font-size: 18px; }
+.map-pin {
+  transform: translate(-50%, -100%); background: var(--c-white); border: 2px solid var(--c-primary);
+  border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 800; color: var(--c-primary);
+  white-space: nowrap; box-shadow: var(--shadow-card); cursor: pointer;
+}
+
+/* 음식점 배너 (지도 하단 시트) */
+.sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 10;
+  background: var(--c-white); border-radius: var(--r-phone) var(--r-phone) 0 0;
+  padding: 12px 20px 24px; box-shadow: 0 -8px 32px rgba(0,0,0,.12);
+  animation: sheet-up .22s ease-out;
+}
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+.sheet__handle { width: 40px; height: 4px; border-radius: 2px; background: var(--c-line-strong); margin: 0 auto 12px; }
+
+/* 채팅 */
+.chat-list { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+.bubble { max-width: 72%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.45; }
+.bubble--me { align-self: flex-end; background: var(--c-primary); color: #fff; border-bottom-right-radius: 4px; }
+.bubble--you { align-self: flex-start; background: var(--c-white); border: 1px solid var(--c-line); border-bottom-left-radius: 4px; }
+.bubble--sys { align-self: center; background: var(--c-surface); color: var(--c-text-sub); font-size: 12px; border-radius: 999px; }
+.chat-input { display: flex; gap: 8px; padding: 12px 16px; background: var(--c-white); border-top: 1px solid var(--c-line); }
+.chat-input .input { height: 44px; }
+.chat-input .send { width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--c-primary); color: #fff; font-size: 18px; }
+
+/* 제미나이 추천 질문 */
+.suggest {
+  background: var(--c-primary-tint); border-radius: var(--r-lg);
+  padding: 12px 14px; margin: 8px 16px 0;
+}
+.suggest__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.suggest__head b { font-size: 13px; color: var(--c-primary); }
+.suggest__item {
+  display: block; width: 100%; text-align: left; background: var(--c-white);
+  border: 1px solid var(--c-line); border-radius: var(--r-md);
+  padding: 10px 12px; font-size: 13px; margin-bottom: 6px; cursor: pointer; font-family: var(--font-body);
+}
+
+/* 매칭 진행 로딩 */
+.progress { width: 100%; height: 8px; border-radius: 4px; background: var(--c-line); overflow: hidden; }
+.progress__fill { height: 100%; background: var(--c-primary); transition: width .4s; }
+.spinner {
+  width: 72px; height: 72px; border-radius: 50%;
+  border: 6px solid var(--c-primary-tint); border-top-color: var(--c-primary);
+  animation: spin 1s linear infinite; margin: 0 auto 20px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 가격 슬라이더 */
+.range-row { display: flex; align-items: center; gap: 10px; }
+input[type='range'] { flex: 1; accent-color: var(--c-primary); }
+
+.list { display: flex; flex-direction: column; gap: 10px; }
+.list-item { display: flex; gap: 12px; align-items: center; }
+.list-item__body { flex: 1; min-width: 0; }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

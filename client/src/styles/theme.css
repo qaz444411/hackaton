@@ -1,0 +1,41 @@
+/* =====================================================================
+   랜덤 밥친구 — 디자인 토큰
+   Figma 내보내기 CSS(css파일_최종.zip)에서 추출한 실제 값
+   ===================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Outfit:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Brand */
+  --c-primary:        #FF6B4A;
+  --c-primary-soft:   #FF8D72;
+  --c-primary-tint:   #FFF0EB;
+  --c-bg:             #FFF8F5;
+  --c-bg-grad:        linear-gradient(135deg, #FFF8F5 0%, #FFEEE8 100%);
+  --c-accent:         #FFD166;
+
+  /* Text */
+  --c-text:           #1A1A1A;
+  --c-text-sub:       #7A7A7A;
+  --c-text-mute:      #AAAAAA;
+
+  /* Line / Surface */
+  --c-white:          #FFFFFF;
+  --c-line:           #F0ECE8;
+  --c-line-strong:    #DBD7D3;
+  --c-surface:        #F4F0EC;
+
+  /* Radius */
+  --r-sm: 10px; --r-md: 14px; --r-lg: 16px; --r-xl: 20px; --r-phone: 40px;
+
+  /* Shadow */
+  --shadow-phone: 0 32px 80px rgba(255,107,74,.18), 0 8px 32px rgba(0,0,0,.10);
+  --shadow-card:  0 4px 16px rgba(255,107,74,.10);
+
+  /* Type */
+  --font-body: 'Nunito', 'Apple SD Gothic Neo', sans-serif;
+  --font-display: 'Outfit', 'Nunito', sans-serif;
+
+  /* Layout (Figma 기준 390~403 x 844~874) */
+  --w-screen: 390px;
+  --h-screen: 844px;
+}
