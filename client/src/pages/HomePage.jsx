@@ -51,12 +51,22 @@ export default function HomePage() {
   const { data } = useQuery({ queryKey: ['home'], queryFn: getHome });
 
   // 오늘의 추천 맛집 — 카카오 API는 평점을 안 주므로(항상 null) 별점 대신
-  // 현재 위치에서 가까운 순으로 보여준다
+  // 현재 위치에서 가까운 순으로 보여준다.
+  // 폴백 좌표 결과를 항상 따로 받아두는 이유: 실제 위치 권한이 늦게 붙거나(권한 프롬프트
+  // 대기) 실제 위치 주변에 등록된 음식점이 드문 곳이면, myPos 기준 조회가 빈 배열을
+  // 돌려줘서 조금 전까지 잘 뜨던 추천 목록이 통째로 사라져 보였다 — 실제 위치 결과가
+  // 비어 있을 때는 폴백 결과로 대체해서 "아예 안 뜨는" 상황 자체를 없앤다.
   const { pos: myPos } = useMyLocation({ watch: false });
-  const { data: nearby = [] } = useQuery({
-    queryKey: ['home', 'nearby', myPos?.lat, myPos?.lng],
-    queryFn: () => getRestaurants({ ...(myPos ?? FALLBACK_CENTER), radius: 2000 }),
+  const { data: nearbyFallback = [] } = useQuery({
+    queryKey: ['home', 'nearby', 'fallback'],
+    queryFn: () => getRestaurants({ ...FALLBACK_CENTER, radius: 2000 }),
   });
+  const { data: nearbyMine = [] } = useQuery({
+    queryKey: ['home', 'nearby', myPos?.lat, myPos?.lng],
+    queryFn: () => getRestaurants({ ...myPos, radius: 2000 }),
+    enabled: !!myPos,
+  });
+  const nearby = nearbyMine.length > 0 ? nearbyMine : nearbyFallback;
   const recommended = [...nearby]
     .sort((a, b) => a.distance_m - b.distance_m)
     .slice(0, 6);

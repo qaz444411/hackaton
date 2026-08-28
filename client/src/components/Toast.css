@@ -1,0 +1,55 @@
+/* Toast — 상단에서 내려왔다 자동으로 사라지는 인앱 알림 */
+.toast {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--c-text);
+  border-radius: var(--r-lg);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  animation: toast-in 0.25s ease-out, toast-out 0.25s ease-in 3.6s forwards;
+}
+@keyframes toast-in {
+  from { transform: translateY(-140%); opacity: 0; }
+  to   { transform: translateY(0);      opacity: 1; }
+}
+@keyframes toast-out {
+  from { transform: translateY(0);      opacity: 1; }
+  to   { transform: translateY(-140%); opacity: 0; }
+}
+
+.toast__icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--c-white);
+}
+.toast__body { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.toast__title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: -0.32px;
+  color: var(--c-white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.toast__text {
+  font-size: 12px;
+  letter-spacing: -0.32px;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

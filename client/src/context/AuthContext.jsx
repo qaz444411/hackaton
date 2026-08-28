@@ -10,7 +10,19 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [toast, setToastState] = useState(null);
   const qc = useQueryClient();
+
+  // 인앱 토스트 — 브라우저 알림(권한 필요, 탭이 안 보일 때만)과는 별개로, 앱을 보고 있는
+  // 동안에도 채팅/보관함에 뭐가 왔는지 상단에 잠깐 띄운다. 4초 뒤 자동으로 사라진다.
+  const pushToast = (t) => {
+    setToastState({ ...t, key: Date.now() });
+  };
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToastState(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   useEffect(() => {
     if (!localStorage.getItem('token')) return setLoading(false);
@@ -35,6 +47,7 @@ export function AuthProvider({ children }) {
     socket.on('inbox:new', ({ fromNickname }) => {
       qc.invalidateQueries({ queryKey: ['home'] });
       qc.invalidateQueries({ queryKey: ['inbox'] });
+      pushToast({ title: '새 매칭 요청', body: `${fromNickname}님이 같이 밥 먹재요`, to: '/inbox' });
       if (notify?.match_push) {
         showNotification('새 매칭 요청', `${fromNickname}님이 같이 밥 먹재요`, { tag: 'inbox' });
       }
@@ -48,6 +61,10 @@ export function AuthProvider({ children }) {
     });
 
     socket.on('chat:new', ({ matchId, senderNickname, preview }) => {
+      // 채팅 목록/하단 바 배지도 실시간으로 갱신 — 안 그러면 30초 폴링을 기다려야 반영됐다.
+      qc.invalidateQueries({ queryKey: ['home'] });
+      qc.invalidateQueries({ queryKey: ['chatRooms'] });
+      pushToast({ title: senderNickname, body: preview, to: `/chats/${matchId}` });
       if (notify?.chat_push) {
         showNotification(senderNickname, preview, {
           tag: `chat-${matchId}`,
@@ -79,7 +96,9 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, signIn, signOut, loading }}>
+    <AuthContext.Provider value={{
+      user, setUser, signIn, signOut, loading, toast, dismissToast: () => setToastState(null),
+    }}>
       {children}
     </AuthContext.Provider>
   );

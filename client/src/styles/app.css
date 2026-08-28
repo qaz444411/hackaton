@@ -27,29 +27,38 @@ body {
 }
 
 /* 노트북 등 넓은 화면 — 폰 프레임 좌우/상하 여백에 뿌려두는 장식용 마스코트.
-   프레임(390px, 화면 중앙 고정)과 절대 겹치지 않도록 화면 폭이 충분할 때만 보인다. */
+   프레임(390px, 화면 중앙 고정, 반너비 195px)과 절대 겹치지 않게 계산해서 배치한다.
+   전부 left(음수 오프셋 포함)로만 잡는다 — right 를 섞으면 프레임 반너비와 헷갈려서
+   실수하기 쉽다. 예전엔 1040px부터 보이게 해뒀는데, 노트북 창이 그보다 좁은 경우가
+   흔해서(분할 화면 등) 실제로는 거의 안 보인다는 문제가 있었다 — 800px까지 낮췄다. */
 .bg-mascots { display: none; }
-@media (min-width: 1040px) {
+@media (min-width: 800px) {
   .bg-mascots { display: block; }
   .bg-mascot {
     position: fixed;
-    width: 128px;
     height: auto;
     pointer-events: none;
     user-select: none;
-    filter: drop-shadow(0 10px 24px rgba(34, 30, 20, 0.18));
+    filter: drop-shadow(0 8px 18px rgba(34, 30, 20, 0.16));
   }
-  .bg-mascot--1 { top: 8%;  left: calc(50% - 470px); width: 132px; transform: rotate(-8deg); }
-  .bg-mascot--2 { bottom: 10%; left: calc(50% - 450px); width: 108px; transform: rotate(7deg); }
-  .bg-mascot--3 { top: 12%; right: calc(50% - 470px); width: 126px; transform: rotate(8deg); }
-  .bg-mascot--4 { bottom: 8%; right: calc(50% - 440px); width: 112px; transform: rotate(-6deg); }
-  .bg-mascot--5 { top: 50%; left: calc(50% - 500px); width: 96px; transform: translateY(-50%) rotate(-4deg); }
+  .bg-mascot--1 { top: 8%;    left: calc(50% - 296px); width: 86px; transform: rotate(-8deg); }
+  .bg-mascot--2 { bottom: 10%; left: calc(50% - 284px); width: 74px; transform: rotate(7deg); }
+  .bg-mascot--3 { top: 12%;   left: calc(50% + 210px);  width: 84px; transform: rotate(8deg); }
+  .bg-mascot--4 { bottom: 8%; left: calc(50% + 202px);  width: 76px; transform: rotate(-6deg); }
+  .bg-mascot--5 { display: none; }
+}
+@media (min-width: 1040px) {
+  .bg-mascot--1 { left: calc(50% - 470px); width: 132px; }
+  .bg-mascot--2 { left: calc(50% - 450px); width: 108px; }
+  .bg-mascot--3 { left: calc(50% + 344px); width: 126px; }
+  .bg-mascot--4 { left: calc(50% + 328px); width: 112px; }
+  .bg-mascot--5 { display: block; top: 50%; left: calc(50% - 500px); width: 96px; transform: translateY(-50%) rotate(-4deg); }
 }
 @media (min-width: 1300px) {
   .bg-mascot--1 { left: calc(50% - 560px); }
   .bg-mascot--2 { left: calc(50% - 540px); }
-  .bg-mascot--3 { right: calc(50% - 560px); }
-  .bg-mascot--4 { right: calc(50% - 520px); }
+  .bg-mascot--3 { left: calc(50% + 434px); }
+  .bg-mascot--4 { left: calc(50% + 408px); }
   .bg-mascot--5 { left: calc(50% - 610px); }
 }
 

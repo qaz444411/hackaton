@@ -13,7 +13,9 @@ const ITEMS = [
 /** 하단 네비게이션 — 홈 / 채팅 / 보관함 (지도는 홈에서 진입) */
 export default function BottomNav() {
   const { data } = useQuery({ queryKey: ['home'], queryFn: getHome, refetchInterval: 30000 });
-  const newCount = data?.inboxNewCount || 0;
+  const inboxCount = data?.inboxNewCount || 0;
+  const chatCount = data?.chatUnreadCount || 0;
+  const badgeFor = { '/inbox': inboxCount, '/chats': chatCount };
 
   return (
     <div className="bnav-wrap">
@@ -26,8 +28,8 @@ export default function BottomNav() {
           >
             <span className="bnav__icon-wrap">
               <Icon className="bnav__icon" size={22} strokeWidth={2} />
-              {to === '/inbox' && newCount > 0 && (
-                <span className="bnav__badge">{newCount > 9 ? '9+' : newCount}</span>
+              {badgeFor[to] > 0 && (
+                <span className="bnav__badge">{badgeFor[to] > 9 ? '9+' : badgeFor[to]}</span>
               )}
             </span>
             <span className="bnav__label">{label}</span>

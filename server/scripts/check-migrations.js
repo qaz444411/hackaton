@@ -85,6 +85,14 @@ const MIGRATIONS = [
     file: '12_schema_patch_v12.sql', label: 'v12 진짜 랜덤 매칭(BLIND) 타입 추가',
     checks: [['check_contains', 'ck_mr_type', 'BLIND']],
   },
+  {
+    file: '13_schema_patch_v13.sql', label: 'v13 채팅 목록 미리보기에 last_message_type 추가',
+    checks: [['column', 'v_chat_list', 'last_message_type']],
+  },
+  {
+    file: '14_schema_patch_v14.sql', label: 'v14 잡은 약속 취소(SCHEDULED→CONFIRMED) 허용',
+    checks: [['trigger_contains', 'trg_match_transition', "'CONFIRMED','COMPLETED','CANCELLED'"]],
+  },
 ];
 
 const one = async (sql, params = []) => {
@@ -127,6 +135,13 @@ async function probe(check) {
         `SELECT CHECK_CLAUSE c FROM information_schema.CHECK_CONSTRAINTS
           WHERE CONSTRAINT_SCHEMA = DATABASE() AND CONSTRAINT_NAME = ?`, [a]);
       return { ok: !!r && String(r.c).includes(b), what: `제약 ${a} 에 ${b}` };
+    }
+    case 'trigger_contains': {
+      // 트리거 본문(ACTION_STATEMENT)에 특정 문구가 들어 있는지 — 트리거를 재정의한 패치용
+      const r = await one(
+        `SELECT ACTION_STATEMENT c FROM information_schema.TRIGGERS
+          WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = ?`, [a]);
+      return { ok: !!r && String(r.c).includes(b), what: `트리거 ${a} 에 ${b}` };
     }
     case 'row': {
       // 코드 테이블에 특정 행이 들어갔는지 (예: food_type_code 에 ETC)

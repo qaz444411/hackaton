@@ -22,6 +22,7 @@ import MatchManagePage from './pages/MatchManagePage.jsx';
 import MyPage from './pages/MyPage.jsx';
 import AssistantPage from './pages/AssistantPage.jsx';
 import DevPreviewPage from './pages/DevPreviewPage.jsx';
+import Toast from './components/Toast.jsx';
 
 function Private({ children }) {
   const { user, loading } = useAuth();
@@ -43,6 +44,7 @@ export default function App() {
         <img className="bg-mascot bg-mascot--5" src="/mascots/mascot-5.png" alt="" />
       </div>
       <div className="phone-frame">
+      <Toast />
       <Routes>
         <Route path="/__preview" element={<DevPreviewPage />} />
         <Route path="/" element={<IntroPage />} />

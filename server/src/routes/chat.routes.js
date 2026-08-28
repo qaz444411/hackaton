@@ -169,6 +169,35 @@ r.post('/rooms/:matchId/meeting', wrap(async (req, res) => {
   res.status(201).json(msg);
 }));
 
+/**
+ * 잡은 약속(식당/날짜/시간) 취소 — 채팅(매칭) 자체는 유지하고 약속 정보만 지운다.
+ * SCHEDULED였다면 CONFIRMED로 되돌린다(v14 패치로 트리거에서 허용). 이미 CONFIRMED
+ * 상태(식당 없이 날짜만 잡았던 경우)면 상태는 그대로 두고 필드만 지운다.
+ */
+r.post('/rooms/:matchId/meeting/cancel', wrap(async (req, res) => {
+  const matchId = Number(req.params.matchId);
+  await assertOpenRoom(req, matchId);
+
+  const before = await one('SELECT meal_date FROM meal_match WHERE id = :m', { m: matchId });
+  if (!before?.meal_date) return res.status(409).json({ message: '취소할 약속이 없어요.' });
+
+  await q(
+    `UPDATE meal_match
+        SET meal_date = NULL, restaurant_id = NULL,
+            status = IF(status = 'SCHEDULED', 'CONFIRMED', status)
+      WHERE id = :m`,
+    { m: matchId });
+
+  const [ins] = await pool.execute(
+    `INSERT INTO chat_message (match_id, sender_id, message_type, content)
+     VALUES (:m, NULL, 'SYSTEM', :c)`,
+    { m: matchId, c: `${req.user.nickname}님이 약속을 취소했어요.` });
+  const msg = await one('SELECT * FROM chat_message WHERE id = :id', { id: ins.insertId });
+  req.app.get('io')?.to(`room:${matchId}`).emit('message:new', msg);
+
+  res.json({ ok: true });
+}));
+
 /** 밥친구 평가 — 기존에 남긴 평가가 있으면 같이 돌려준다(수정 진입용). */
 r.get('/rooms/:matchId/rating', wrap(async (req, res) => {
   const matchId = Number(req.params.matchId);

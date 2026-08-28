@@ -13,7 +13,7 @@ import { formatDistance } from '../lib/format.js';
 import {
   getChatRoom, getMessages, getSuggestions, useSuggestion, closeChat,
   getAiContext, updateAiContext, deleteChatRoom, getCodes, getRestaurants,
-  sendRestaurantMessage, sendMeetingMessage,
+  sendRestaurantMessage, sendMeetingMessage, cancelMeeting,
 } from '../api/endpoints.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import './ChatRoomPage.css';
@@ -50,6 +50,8 @@ export default function ChatRoomPage() {
   const [menu, setMenu] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmCancelMeeting, setConfirmCancelMeeting] = useState(false);
+  const [cancellingMeeting, setCancellingMeeting] = useState(false);
   const bottomRef = useRef(null);
 
   // "+" 버튼 플로우 — 'menu' | 'pick-send' | 'pick-meeting' | 'datetime' | null
@@ -111,6 +113,20 @@ export default function ChatRoomPage() {
     } catch (e) {
       alert(e.response?.data?.message || '삭제하지 못했어요.');
       setConfirmDelete(false);
+    }
+  };
+
+  const cancelMeetingNow = async () => {
+    setCancellingMeeting(true);
+    try {
+      await cancelMeeting(matchId);
+      qc.invalidateQueries({ queryKey: ['chatRoom', matchId] });
+      qc.invalidateQueries({ queryKey: ['home'] });
+      setConfirmCancelMeeting(false);
+    } catch (e) {
+      alert(e.response?.data?.message || '약속을 취소하지 못했어요.');
+    } finally {
+      setCancellingMeeting(false);
     }
   };
 
@@ -182,6 +198,10 @@ export default function ChatRoomPage() {
         <div className="card chat-menu-card">
           <button className="btn btn--line" style={{ height: 42 }}
                   onClick={() => { setMenu(false); nav(`/chats/${matchId}/rating`); }}>밥친구 평가하기</button>
+          {!readOnly && room?.meal_date && (
+            <button className="btn btn--line" style={{ height: 42 }}
+                    onClick={() => { setMenu(false); setConfirmCancelMeeting(true); }}>약속 취소하기</button>
+          )}
           {!readOnly && (
             <button className="btn btn--line" style={{ height: 42 }}
                     onClick={() => { setMenu(false); setConfirmCancel(true); }}>매칭 취소하기</button>
@@ -201,6 +221,17 @@ export default function ChatRoomPage() {
           cancelLabel="닫기"
           onConfirm={cancelMatch}
           onCancel={() => setConfirmCancel(false)}
+        />
+      )}
+
+      {confirmCancelMeeting && (
+        <ConfirmDialog
+          title="약속을 취소할까요?"
+          desc="채팅은 그대로 이어져요. 식당/날짜/시간만 다시 정하면 돼요."
+          confirmLabel={cancellingMeeting ? '취소하는 중…' : '약속 취소'}
+          cancelLabel="약속 유지"
+          onConfirm={cancelMeetingNow}
+          onCancel={() => !cancellingMeeting && setConfirmCancelMeeting(false)}
         />
       )}
 

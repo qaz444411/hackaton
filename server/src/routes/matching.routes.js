@@ -242,6 +242,11 @@ r.get('/home', wrap(async (req, res) => {
     { u: req.user.id });
   const inboxNew = await one(
     "SELECT COUNT(*) AS c FROM v_inbox WHERE user_id=:u AND status='PENDING' AND is_new", { u: req.user.id });
+  // 하단 바 채팅 탭 배지 — 방마다 안 읽은 메시지 수(v_chat_list.unread_count)를 다 더한다.
+  const chatUnread = await one(
+    `SELECT COALESCE(SUM(unread_count), 0) AS c FROM v_chat_list
+      WHERE user_id = :u AND match_id NOT IN (SELECT match_id FROM chat_room_hidden WHERE user_id = :u)`,
+    { u: req.user.id });
   const searching = await one(
     "SELECT COUNT(*) AS c FROM matching_request WHERE status='SEARCHING' AND user_id <> :u", { u: req.user.id });
 
@@ -261,7 +266,8 @@ r.get('/home', wrap(async (req, res) => {
       LIMIT 1`);
 
   res.json({
-    confirmedMatch: confirmed, inboxNewCount: inboxNew.c, searchingCount: searching.c,
+    confirmedMatch: confirmed, inboxNewCount: inboxNew.c, chatUnreadCount: chatUnread.c,
+    searchingCount: searching.c,
     popularFood: popularFood ? { label: popularFood.label, pct: popularFood.pct } : null,
   });
 }));

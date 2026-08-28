@@ -87,5 +87,6 @@ export const sendRestaurantMessage = (matchId, restaurantId) =>
   api.post(`/chat/rooms/${matchId}/restaurant`, { restaurantId }).then((r) => r.data);
 export const sendMeetingMessage = (matchId, body) =>
   api.post(`/chat/rooms/${matchId}/meeting`, body).then((r) => r.data);
+export const cancelMeeting = (matchId) => api.post(`/chat/rooms/${matchId}/meeting/cancel`).then((r) => r.data);
 export const getRating = (matchId) => api.get(`/chat/rooms/${matchId}/rating`).then((r) => r.data);
 export const submitRating = (matchId, body) => api.post(`/chat/rooms/${matchId}/rating`, body).then((r) => r.data);
