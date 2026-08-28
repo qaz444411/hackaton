@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Trash2, Sparkles, ArrowUp } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
 import { askAssistant, getAssistantStatus, getAssistantStarters } from '../api/endpoints.js';
+import { useMyLocation, GEO } from '../hooks/useKakaoMap.js';
 
 const STORAGE_KEY = 'assistant.history';
 const MAX_KEPT = 30;   // 서버가 받는 상한과 맞춘다
@@ -22,6 +23,9 @@ export default function AssistantPage() {
   const { data: status } = useQuery({ queryKey: ['assistant', 'status'], queryFn: getAssistantStatus });
   const { data: startersData } = useQuery({ queryKey: ['assistant', 'starters'], queryFn: getAssistantStarters });
   const starters = startersData?.starters || [];
+
+  // 맛집 추천에 쓸 현재 위치. 없으면 일반 대화만 하고 추천은 생략된다.
+  const { pos, state: geoState, request: requestLocation } = useMyLocation({ watch: false });
 
   const [messages, setMessages] = useState(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
@@ -50,8 +54,8 @@ export default function AssistantPage() {
     setInput('');
     setBusy(true);
     try {
-      const { reply, source } = await askAssistant(content, history);
-      setMessages((prev) => [...prev, { role: 'model', text: reply, source }]);
+      const { reply, source, restaurants } = await askAssistant(content, history, pos);
+      setMessages((prev) => [...prev, { role: 'model', text: reply, source, restaurants }]);
     } catch (e) {
       setMessages((prev) => [...prev, {
         role: 'model', source: 'ERROR',
@@ -103,14 +107,70 @@ export default function AssistantPage() {
               {starters.map((s) => (
                 <button key={s} className="ai-starter" onClick={() => send(s)}>{s}</button>
               ))}
+              <button className="ai-starter" onClick={() => send('이 근처에서 뭐 먹을지 추천해줘')}>
+                📍 이 근처 맛집 추천해줘
+              </button>
             </div>
           </>
         )}
 
+        {/* 위치를 못 받으면 추천이 일반 답변으로만 나가므로 이유를 알려준다 */}
+        {!pos && geoState !== GEO.LOCATING && (
+          <div className="ai-geo">
+            <span>
+              {geoState === GEO.INSECURE
+                ? 'http 접속이라 위치를 쓸 수 없어요. https 주소로 열면 근처 맛집을 추천해 드려요.'
+                : '위치를 허용하면 지금 계신 곳 근처 맛집을 추천해 드려요.'}
+            </span>
+            {geoState !== GEO.INSECURE && (
+              <button className="geo-notice__btn" onClick={requestLocation}>위치 허용</button>
+            )}
+          </div>
+        )}
+
         {messages.map((m, i) => (
-          <div key={i} className={`bubble ${m.role === 'user' ? 'bubble--me' : 'bubble--you'}`}
-               style={{ whiteSpace: 'pre-wrap' }}>
-            {m.text}
+          <div key={i} className="msg-group">
+            <div className={`bubble ${m.role === 'user' ? 'bubble--me' : 'bubble--you'}`}
+                 style={{ whiteSpace: 'pre-wrap' }}>
+              {m.text}
+            </div>
+
+            {/* 위치 기반 추천 결과 — 바로 밥친구 모집으로 이어진다 */}
+            {m.restaurants?.length > 0 && (
+              <div className="rec-list">
+                {m.restaurants.map((r) => (
+                  <div key={r.restaurant_id} className="rec-card">
+                    <div className="rec-card__head">
+                      <strong>{r.name}</strong>
+                      <span className="rec-card__dist">{r.distance_m}m</span>
+                    </div>
+                    <p className="muted">
+                      {r.food_type_label}
+                      {r.road_address ? ` · ${r.road_address}` : ''}
+                    </p>
+                    {r.recruiting_count > 0 && (
+                      <p className="rec-card__recruit">
+                        지금 {r.recruiting_count}명이 밥친구를 찾고 있어요
+                      </p>
+                    )}
+                    <div className="row" style={{ marginTop: 10 }}>
+                      {r.place_url && (
+                        <a className="btn btn--line rec-card__link"
+                           href={r.place_url} target="_blank" rel="noreferrer">
+                          정보 보기
+                        </a>
+                      )}
+                      <button className="btn"
+                              onClick={() => nav(r.recruiting_count > 0
+                                ? `/restaurants/${r.restaurant_id}/buddies`
+                                : `/preference?restaurantId=${r.restaurant_id}`)}>
+                        {r.recruiting_count > 0 ? '밥친구 보기' : '여기서 모집하기'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
 

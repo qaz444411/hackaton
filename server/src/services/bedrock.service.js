@@ -113,7 +113,7 @@ export async function chatWithAssistant({ history = [], message, context = {} })
     const reply = await invoke({
       system: buildAssistantSystemPrompt(ASSISTANT_RULES, context),
       messages: toClaudeMessages(history, message),
-      maxTokens: 512,
+      maxTokens: 800,
     });
     if (!reply) return { reply: '잠시 생각이 멈췄어요. 다시 한 번 물어봐 주시겠어요?', source: 'FALLBACK' };
     return { reply, source: 'BEDROCK' };

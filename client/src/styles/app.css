@@ -322,3 +322,29 @@ input[type='range'] { flex: 1; accent-color: var(--c-primary); }
   background: var(--c-primary-tint); color: var(--c-primary);
   font-size: 12px; line-height: 1.5; font-weight: 600;
 }
+
+/* AI 도우미 — 위치 기반 맛집 추천 */
+.msg-group { display: flex; flex-direction: column; }
+.rec-list { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 4px; align-self: stretch; }
+.rec-card {
+  background: var(--c-white); border: 1px solid var(--c-line);
+  border-radius: var(--r-lg); padding: 12px 14px; box-shadow: var(--shadow-card);
+}
+.rec-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.rec-card__head strong { font-size: 15px; }
+.rec-card__dist { flex: none; font-size: 12px; color: var(--c-text-mute); }
+.rec-card p { margin-top: 4px; }
+.rec-card__recruit { margin-top: 8px; font-size: 13px; font-weight: 700; color: var(--c-primary); }
+.rec-card .btn { height: 40px; font-size: 14px; }
+.rec-card__link {
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none; line-height: 40px;
+}
+
+/* 위치 미허용 안내 */
+.ai-geo {
+  display: flex; align-items: center; gap: 8px;
+  margin: 8px 0; padding: 10px 12px; border-radius: var(--r-md);
+  background: var(--c-surface); color: var(--c-text-sub);
+  font-size: 12px; line-height: 1.5;
+}

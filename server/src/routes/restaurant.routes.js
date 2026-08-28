@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { q, one, pool } from '../db/pool.js';
 import { auth } from '../middlewares/auth.js';
 import { wrap } from '../middlewares/error.js';
-import { searchKakaoPlaces } from '../services/kakao.service.js';
+import { findNearbyRestaurants, upsertRestaurant } from '../services/restaurant.service.js';
 
 const r = Router();
 r.use(auth);
@@ -14,36 +14,10 @@ r.use(auth);
  */
 r.get('/', wrap(async (req, res) => {
   const { lat, lng, radius = 1500, keyword = '' } = req.query;
-
-  let rows = await q(
-    `SELECT v.*,
-            ROUND(6371000 * ACOS(LEAST(1,
-              COS(RADIANS(:lat)) * COS(RADIANS(v.latitude)) *
-              COS(RADIANS(v.longitude) - RADIANS(:lng)) +
-              SIN(RADIANS(:lat)) * SIN(RADIANS(v.latitude))))) AS distance_m
-       FROM v_restaurant_recruiting v
-      WHERE (:kw = '' OR v.name LIKE CONCAT('%', :kw, '%'))
-     HAVING distance_m <= :radius
-      ORDER BY v.recruiting_count DESC, distance_m ASC
-      LIMIT 50`,
-    { lat: Number(lat), lng: Number(lng), kw: keyword, radius: Number(radius) });
-
-  if (rows.length < 5) {
-    const places = await searchKakaoPlaces({ lat, lng, radius, keyword });
-    for (const p of places) await upsertRestaurant(p);
-    rows = await q(
-      `SELECT v.*,
-              ROUND(6371000 * ACOS(LEAST(1,
-                COS(RADIANS(:lat)) * COS(RADIANS(v.latitude)) *
-                COS(RADIANS(v.longitude) - RADIANS(:lng)) +
-                SIN(RADIANS(:lat)) * SIN(RADIANS(v.latitude))))) AS distance_m
-         FROM v_restaurant_recruiting v
-        WHERE (:kw = '' OR v.name LIKE CONCAT('%', :kw, '%'))
-       HAVING distance_m <= :radius
-        ORDER BY v.recruiting_count DESC, distance_m ASC LIMIT 50`,
-      { lat: Number(lat), lng: Number(lng), kw: keyword, radius: Number(radius) });
+  if (lat === undefined || lng === undefined) {
+    return res.status(400).json({ message: 'lat, lng 는 필수입니다.' });
   }
-  res.json(rows);
+  res.json(await findNearbyRestaurants({ lat, lng, radius, keyword }));
 }));
 
 /** 지도 "+버튼" — 카카오 검색 결과를 우리 DB 에 음식점으로 추가 */
@@ -76,22 +50,5 @@ r.get('/:id/buddies', wrap(async (req, res) => {
   res.json(rows.map((x) => ({ ...x, interests: x.interests ? x.interests.split(',') : [] })));
 }));
 
-async function upsertRestaurant(p) {
-  const [r1] = await pool.execute(
-    `INSERT INTO restaurant
-       (external_place_id, name, road_address, latitude, longitude, food_type_code,
-        rating, category_name, phone, place_url, synced_at)
-     VALUES (:ext, :name, :addr, :lat, :lng, :food, :rating, :cat, :phone, :url, NOW())
-     ON DUPLICATE KEY UPDATE
-       name=VALUES(name), road_address=VALUES(road_address),
-       latitude=VALUES(latitude), longitude=VALUES(longitude),
-       category_name=VALUES(category_name), phone=VALUES(phone),
-       place_url=VALUES(place_url), synced_at=NOW(), id=LAST_INSERT_ID(id)`,
-    { ext: p.externalPlaceId ?? null, name: p.name, addr: p.roadAddress ?? null,
-      lat: p.latitude, lng: p.longitude, food: p.foodTypeCode || 'KOREAN',
-      rating: p.rating ?? null, cat: p.categoryName ?? null, phone: p.phone ?? null,
-      url: p.placeUrl ?? null });
-  return r1.insertId;
-}
 
 export default r;

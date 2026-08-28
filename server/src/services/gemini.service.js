@@ -67,7 +67,7 @@ export async function chatWithAssistant({ history = [], message, context = {} })
       genAI,
       (ai, name) => ai.getGenerativeModel({
         model: name,
-        generationConfig: { temperature: 0.9, maxOutputTokens: 512 },
+        generationConfig: { temperature: 0.9, maxOutputTokens: 800 },
         systemInstruction,
       }),
       (model) => model.startChat({ history: turns }).sendMessage(message),

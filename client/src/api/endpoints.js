@@ -53,8 +53,11 @@ export const cancelProposal = (id) => api.post(`/proposals/${id}/cancel`).then((
 /* ── AI 도우미 (홈 챗봇) ─────────────────────── */
 export const getAssistantStatus = () => api.get('/assistant/status').then((r) => r.data);
 export const getAssistantStarters = () => api.get('/assistant/starters').then((r) => r.data);
-export const askAssistant = (message, history) =>
-  api.post('/assistant/chat', { message, history }).then((r) => r.data);
+export const askAssistant = (message, history, location) =>
+  api.post('/assistant/chat', {
+    message, history,
+    lat: location?.lat ?? null, lng: location?.lng ?? null,
+  }).then((r) => r.data);
 
 /* ── 채팅 ────────────────────────────────────── */
 export const getChatRooms = () => api.get('/chat/rooms').then((r) => r.data);

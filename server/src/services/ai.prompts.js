@@ -34,7 +34,10 @@ export const ASSISTANT_RULES = `너는 "랜덤 밥친구" 앱의 AI 도우미다
 - 사생활·외모·연봉·정치·종교 질문은 하지 않는다
 - 특정 식당을 실제로 예약해 주거나 상대를 대신 골라줄 수는 없다. 그건 사용자가 화면에서 직접 한다`;
 
-/** 규칙 + 현재 사용자 상황을 합친 시스템 프롬프트 */
+/**
+ * 규칙 + 현재 사용자 상황을 합친 시스템 프롬프트.
+ * context.nearby 가 있으면 실제 주변 음식점 목록을 덧붙여 그 안에서만 추천하게 한다.
+ */
 export function buildAssistantSystemPrompt(rules, context = {}) {
   return `${rules}
 
@@ -42,7 +45,7 @@ export function buildAssistantSystemPrompt(rules, context = {}) {
 - 닉네임: ${context.nickname || '알 수 없음'}
 - 확정된 약속: ${context.confirmedMatch || '없음'}
 - 진행 중인 매칭: ${context.activeMatching || '없음'}
-- 안 읽은 매칭 요청: ${context.inboxNewCount ?? 0}건`;
+- 안 읽은 매칭 요청: ${context.inboxNewCount ?? 0}건${buildNearbyBlock(context.nearby)}`;
 }
 
 /** 채팅방 추천 질문 생성기의 성격 */
@@ -60,4 +63,71 @@ export function buildSuggestPrompt(ctx = {}) {
 식당: ${ctx.restaurant_name || '미정'}
 위 정보를 반영한 대화 시작 질문 3개를 JSON 으로만 답해라.
 형식: {"questions": ["...", "...", "..."]}`;
+}
+
+/* ------------------------------------------------------------------ */
+/* 위치 기반 맛집 추천                                                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * 사용자가 "먹을 것"을 묻고 있는지 대략 판별한다.
+ * 여기서 걸러야 매 메시지마다 카카오 API 를 때리지 않는다.
+ * 애매하면 통과시킨다 — 못 잡아서 추천을 못 하는 쪽이 더 나쁘다.
+ */
+const FOOD_INTENT = /먹|맛집|식당|메뉴|배고|추천|점심|저녁|아침|야식|한식|중식|일식|양식|분식|카페|고기|국밥|파스타|피자|치킨|초밥|칼국수|떡볶이|햄버거|근처|주변/;
+export const looksLikeFoodIntent = (message = '') => FOOD_INTENT.test(String(message));
+
+/**
+ * 메시지에서 카카오 검색에 쓸 키워드를 뽑는다.
+ * 특정 음식이 언급되면 그걸 쓰고, 아니면 빈 문자열(= 주변 음식점 전체).
+ */
+const FOOD_WORDS = [
+  '한식', '중식', '일식', '양식', '분식', '카페', '고기', '삼겹살', '치킨', '피자',
+  '파스타', '초밥', '스시', '라멘', '국밥', '칼국수', '떡볶이', '햄버거', '샐러드',
+  '족발', '보쌈', '곱창', '냉면', '돈까스', '쌀국수', '마라탕', '탕수육', '회', '해장국',
+];
+export function extractFoodKeyword(message = '') {
+  const hit = FOOD_WORDS.find((w) => message.includes(w));
+  return hit || '';
+}
+
+/**
+ * 프롬프트에 넣을 후보 목록.
+ * AI 는 반드시 이 목록 안에서만 고른다 — 없는 식당을 지어내는 걸 막는 장치다.
+ */
+export function buildNearbyBlock(nearby = []) {
+  if (!nearby.length) return '';
+  const lines = nearby.slice(0, 12).map((r, i) =>
+    `${i + 1}. ${r.name} (${r.food_type_label || '음식점'}, ${r.distance_m}m`
+    + (r.recruiting_count > 0 ? `, ${r.recruiting_count}명 모집중` : '') + ')');
+
+  return `
+
+[참고 자료 — 사용자 주변의 실제 음식점]
+${lines.join('\n')}
+
+이 자료를 쓰는 방법
+- 위 목록을 그대로 나열하거나 옮겨 적지 마라. 사람이 말하듯 2~3문장으로 답한다.
+- 그 중 사용자에게 맞는 곳을 최대 3곳만 골라 가게 이름과 이유를 자연스럽게 녹여 말한다.
+- 목록에 없는 가게 이름은 절대 지어내지 마라.
+- 가게 정보(주소·거리 등)는 화면에 카드로 따로 표시되니 답변에서 길게 늘어놓지 않는다.
+- 답변의 마지막 줄에 고른 번호만 이 형식으로 적는다 → 추천:1,4
+  이 줄은 사용자에게 보이지 않는다. 설명이나 다른 글자를 붙이지 마라.
+- 마땅한 곳이 없으면 없다고 말하고 마지막 줄을 생략한다.`;
+}
+
+/**
+ * AI 답변 끝의 "추천:1,4,7" 줄을 떼어내고 실제 음식점 객체로 바꾼다.
+ * 형식이 어긋나면 추천 없이 원문만 돌려준다(파싱 실패로 대화가 깨지지 않게).
+ */
+export function extractPicks(reply = '', nearby = []) {
+  const m = /^\s*추천\s*[:：]\s*([0-9,\s]+)\s*$/m.exec(reply);
+  if (!m || !nearby.length) return { text: reply.trim(), picks: [] };
+
+  const picks = [...new Set(m[1].split(',').map((s) => parseInt(s.trim(), 10)))]
+    .filter((n) => Number.isInteger(n) && n >= 1 && n <= nearby.length)
+    .slice(0, 3)
+    .map((n) => nearby[n - 1]);
+
+  return { text: reply.replace(m[0], '').trim(), picks };
 }
