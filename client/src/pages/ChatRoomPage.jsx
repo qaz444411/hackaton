@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  MoreVertical, Sparkles, Send, MapPin, Plus, Utensils, CalendarClock, Search,
+  MoreVertical, Sparkles, Send, MapPin, Plus, Utensils, CalendarClock, Search, Ticket,
 } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
+import ScratchCard from '../components/ScratchCard.jsx';
 import { useChatSocket } from '../hooks/useChatSocket.js';
 import { useMyLocation, FALLBACK_CENTER } from '../hooks/useKakaoMap.js';
 import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
@@ -13,7 +14,7 @@ import { formatDistance } from '../lib/format.js';
 import {
   getChatRoom, getMessages, getSuggestions, useSuggestion, closeChat,
   getAiContext, updateAiContext, deleteChatRoom, getCodes, getRestaurants,
-  sendRestaurantMessage, sendMeetingMessage, cancelMeeting,
+  sendRestaurantMessage, sendMeetingMessage, cancelMeeting, sendLotteryMessage,
 } from '../api/endpoints.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import './ChatRoomPage.css';
@@ -163,6 +164,17 @@ export default function ChatRoomPage() {
     }
   };
 
+  // 랜덤 메뉴 복권 — 서버가 메뉴를 이미 정해서 카드형 메시지로 보내므로,
+  // 소켓으로 받는 상대도 나와 정확히 같은 메뉴를 보게 된다.
+  const sendLottery = async () => {
+    closePlus();
+    try {
+      await sendLotteryMessage(matchId);
+    } catch (e) {
+      alert(e.response?.data?.message || '복권을 보내지 못했어요.');
+    }
+  };
+
   const confirmMeeting = async () => {
     if (!mealTimeCode) return;
     setSending(true);
@@ -260,7 +272,7 @@ export default function ChatRoomPage() {
           }
           const mine = m.sender_id === user.id;
 
-          if (m.message_type === 'RESTAURANT' || m.message_type === 'MEETING') {
+          if (m.message_type === 'RESTAURANT' || m.message_type === 'MEETING' || m.message_type === 'LOTTERY') {
             let card = null;
             try { card = JSON.parse(m.content); } catch { /* 파싱 실패 시 카드 생략 */ }
             return (
@@ -291,6 +303,7 @@ export default function ChatRoomPage() {
                     <div className="meeting-card__cta">약속을 잡았어요!</div>
                   </div>
                 )}
+                {card && m.message_type === 'LOTTERY' && <ScratchCard prize={card.menu} />}
               </div>
             );
           }
@@ -358,6 +371,10 @@ export default function ChatRoomPage() {
             <button type="button" className="plus-menu__item" onClick={() => openPick('pick-meeting')}>
               <span className="plus-menu__icon"><CalendarClock size={18} strokeWidth={2} /></span>
               약속 잡기
+            </button>
+            <button type="button" className="plus-menu__item" onClick={sendLottery}>
+              <span className="plus-menu__icon"><Ticket size={18} strokeWidth={2} /></span>
+              랜덤 메뉴 복권
             </button>
           </div>
         </>

@@ -8,6 +8,17 @@ import { suggestQuestions } from '../services/ai.service.js';
 const r = Router();
 r.use(auth);
 
+// "+" → 랜덤 메뉴 복권 — 한식/중식/양식/일식/기타를 아우르는 약 50개 중 하나.
+// 홈 화면의 "랜덤 메뉴" 버튼과 같은 목록을 쓴다(둘 다 "뭐 먹지" 고민을 덜어주는 기능).
+const LOTTERY_MENU_POOL = [
+  '제육볶음', '김치찌개', '된장찌개', '순두부찌개', '비빔밥', '불고기', '삼겹살', '갈비탕',
+  '냉면', '떡볶이', '김밥', '칼국수', '순대국', '육개장', '잡채밥',
+  '짜장면', '짬뽕', '탕수육', '마파두부', '볶음밥', '유린기', '깐풍기', '양장피', '라조기', '고추잡채',
+  '파스타', '스테이크', '피자', '리조또', '햄버거', '샌드위치', '오믈렛', '그라탱', '감바스', '스튜',
+  '초밥', '라멘', '돈카츠', '우동', '규동', '오코노미야키', '텐동', '가라아게',
+  '쌀국수', '팟타이', '마라탕', '마라샹궈', '카레', '나시고랭', '케밥',
+];
+
 /** 채팅 목록 페이지 (내가 삭제한 방은 제외) */
 r.get('/rooms', wrap(async (req, res) => {
   const rows = await q(
@@ -112,6 +123,25 @@ r.post('/rooms/:matchId/restaurant', wrap(async (req, res) => {
     `INSERT INTO chat_message (match_id, sender_id, message_type, content)
      VALUES (:m, :u, 'RESTAURANT', :c)`,
     { m: matchId, u: req.user.id, c: JSON.stringify(card) });
+  const msg = await one('SELECT * FROM chat_message WHERE id = :id', { id: ins.insertId });
+  req.app.get('io')?.to(`room:${matchId}`).emit('message:new', msg);
+  res.status(201).json(msg);
+}));
+
+/**
+ * "+" → 랜덤 메뉴 복권 — 누르는 즉시 서버가 메뉴를 하나 확정해서 카드형 메시지로
+ * 남긴다. 같은 메시지를 두 사람이 함께 보므로(소켓 브로드캐스트) 누가 먼저 긁든
+ * 항상 같은 메뉴가 나온다 — 프론트는 그 값을 긁기 전까지만 가려서 보여줄 뿐이다.
+ */
+r.post('/rooms/:matchId/lottery', wrap(async (req, res) => {
+  const matchId = Number(req.params.matchId);
+  await assertOpenRoom(req, matchId);
+
+  const menu = LOTTERY_MENU_POOL[Math.floor(Math.random() * LOTTERY_MENU_POOL.length)];
+  const [ins] = await pool.execute(
+    `INSERT INTO chat_message (match_id, sender_id, message_type, content)
+     VALUES (:m, :u, 'LOTTERY', :c)`,
+    { m: matchId, u: req.user.id, c: JSON.stringify({ menu }) });
   const msg = await one('SELECT * FROM chat_message WHERE id = :id', { id: ins.insertId });
   req.app.get('io')?.to(`room:${matchId}`).emit('message:new', msg);
   res.status(201).json(msg);

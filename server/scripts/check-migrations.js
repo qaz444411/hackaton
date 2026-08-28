@@ -105,6 +105,10 @@ const MIGRATIONS = [
     file: '17_schema_patch_v17.sql', label: 'v17 홈 확정 매칭 카드에 상대 프로필 사진 노출',
     checks: [['column', 'v_home_confirmed_match', 'partner_image']],
   },
+  {
+    file: '18_schema_patch_v18.sql', label: 'v18 채팅 랜덤 메뉴 복권(LOTTERY) 타입 추가',
+    checks: [['check_contains', 'ck_chat_message_type', 'LOTTERY']],
+  },
 ];
 
 const one = async (sql, params = []) => {

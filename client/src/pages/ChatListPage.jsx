@@ -24,6 +24,7 @@ function previewText(r) {
       return c.restaurantName ? `${c.restaurantName}에서 약속을 잡았어요` : '약속을 잡았어요';
     } catch { return '약속을 잡았어요'; }
   }
+  if (r.last_message_type === 'LOTTERY') return '🎟️ 랜덤 메뉴 복권을 보냈어요';
   return r.last_message;
 }
 

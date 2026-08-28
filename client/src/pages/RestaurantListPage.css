@@ -145,14 +145,18 @@
   flex: none;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 6px;
 }
 
 .rl__card-cta {
   flex: none;
-  padding: 7px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 14px;
   background: var(--c-white);
-  box-shadow: var(--shadow-card-soft);
+  border: 1px solid var(--c-line);
   border-radius: 10px;
   font-family: var(--font-display);
   font-weight: 600;
@@ -162,7 +166,7 @@
   white-space: nowrap;
 }
 
-.rl__card-cta--accent { background: #B98154; color: var(--c-white); box-shadow: none; }
+.rl__card-cta--accent { background: #B98154; border-color: #B98154; color: var(--c-white); }
 
 /* ── RecruitPage 전용 (식당 선택 — 썸네일 없음) ───────────────────── */
 .rc__section-title {
