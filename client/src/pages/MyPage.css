@@ -10,8 +10,9 @@
 
 .mypage__profile-head { display: flex; align-items: center; gap: 14px; }
 
+.mypage__avatar-wrap { position: relative; flex: none; width: 60px; height: 60px; }
+
 .mypage__avatar {
-  flex: none;
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -19,6 +20,22 @@
   background: var(--c-surface);
   box-shadow: 0 2px 10px rgba(106, 114, 78, 0.25);
 }
+
+.mypage__avatar-edit {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--c-select);
+  border: 2px solid var(--c-bg);
+  color: var(--c-white);
+}
+.mypage__avatar-edit:disabled { opacity: 0.6; }
 
 .mypage__name { font-family: var(--font-body); font-size: 18px; letter-spacing: -0.32px; color: var(--c-text); }
 .mypage__sub { margin-top: 2px; font-size: 12px; letter-spacing: -0.32px; color: var(--c-text-sub); }

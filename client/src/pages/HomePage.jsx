@@ -5,7 +5,7 @@ import { Dices, MapPin, Sparkles, ChevronRight } from 'lucide-react';
 import BottomNav from '../components/BottomNav.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import {
-  getHome, getAssistantStarters, getCurrentMatching, cancelMatching, getMatchingDiagnosis, getSentProposals,
+  getHome, getAssistantStarters, getCurrentMatching, cancelMatching, getSentProposals,
 } from '../api/endpoints.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import './HomePage.css';
@@ -30,14 +30,6 @@ export default function HomePage() {
     queryKey: ['matching', 'current'],
     queryFn: getCurrentMatching,
     refetchOnWindowFocus: true,
-  });
-
-  // 매칭이 왜 안 잡히는지 — 진행 중일 때만 조회한다
-  const { data: diag } = useQuery({
-    queryKey: ['matching', current?.id, 'diagnosis'],
-    queryFn: () => getMatchingDiagnosis(current.id),
-    enabled: !!current && current.status === 'SEARCHING',
-    refetchInterval: 10000,
   });
 
   // 내가 보낸 대기 중인 요청 — 화면(대기 페이지)을 나갔다 와도 여기서 다시 열 수 있어야 한다.
@@ -80,7 +72,7 @@ export default function HomePage() {
           </button>
         </header>
 
-        {m ? (
+        {m && (
           <Link to={`/chats/${m.match_id}`} className="home__match-card">
             <img className="home__match-avatar" src={m.partner_image || '/avatar-default.png'} alt="" />
             <div className="home__match-body">
@@ -92,36 +84,37 @@ export default function HomePage() {
             </div>
             <ChevronRight size={20} strokeWidth={2} className="home__match-arrow" />
           </Link>
-        ) : (
-          <section className="home__cards">
-            <button type="button" className="home__card home__card--primary" disabled={searching || !!pendingSent}
-                    onClick={() => nav('/preference')}>
-              <span className="home__card-badge">
-                <Dices size={13} strokeWidth={2.4} />
-              </span>
-              <span className="home__card-text">
-                <span className="home__card-eyebrow">취향으로</span>
-                <span className="home__card-title">랜덤 매칭</span>
-              </span>
-              <span className="home__card-illust home__card-illust--table" aria-hidden="true">
-                <span className="home__card-illust-cup" />
-              </span>
-            </button>
-
-            <button type="button" className="home__card home__card--outline" onClick={() => nav('/map')}>
-              <span className="home__card-badge home__card-badge--accent">
-                <MapPin size={13} strokeWidth={2.4} />
-              </span>
-              <span className="home__card-text">
-                <span className="home__card-eyebrow home__card-eyebrow--dark">음식점에서</span>
-                <span className="home__card-title home__card-title--dark">밥친구 찾기</span>
-              </span>
-              <span className="home__card-illust home__card-illust--map" aria-hidden="true">
-                <span className="home__card-illust-pin" />
-              </span>
-            </button>
-          </section>
         )}
+
+        {/* 확정된 매칭이 있어도 다른 밥친구를 계속 찾을 수 있어야 하므로 항상 보여준다 */}
+        <section className="home__cards">
+          <button type="button" className="home__card home__card--primary" disabled={searching || !!pendingSent}
+                  onClick={() => nav('/preference')}>
+            <span className="home__card-badge">
+              <Dices size={13} strokeWidth={2.4} />
+            </span>
+            <span className="home__card-text">
+              <span className="home__card-eyebrow">취향으로</span>
+              <span className="home__card-title">랜덤 매칭</span>
+            </span>
+            <span className="home__card-illust home__card-illust--table" aria-hidden="true">
+              <span className="home__card-illust-cup" />
+            </span>
+          </button>
+
+          <button type="button" className="home__card home__card--outline" onClick={() => nav('/map')}>
+            <span className="home__card-badge home__card-badge--accent">
+              <MapPin size={13} strokeWidth={2.4} />
+            </span>
+            <span className="home__card-text">
+              <span className="home__card-eyebrow home__card-eyebrow--dark">음식점에서</span>
+              <span className="home__card-title home__card-title--dark">밥친구 찾기</span>
+            </span>
+            <span className="home__card-illust home__card-illust--map" aria-hidden="true">
+              <span className="home__card-illust-pin" />
+            </span>
+          </button>
+        </section>
 
         {/* 내가 보낸 요청 — 화면을 나가도 여기서 다시 확인/취소할 수 있다 */}
         {pendingSent && (
@@ -130,10 +123,12 @@ export default function HomePage() {
               <span className="tag">요청 보냄</span>
               <span className="dot-pulse" aria-hidden="true" />
             </div>
-            <p className="home__status-desc">
-              {pendingSent.partner_nickname}님에게 보낸 요청, 답변을 기다리고 있어요
-            </p>
-            <p className="home__status-hint">눌러서 남은 시간과 상태를 확인하세요.</p>
+            <div className="home__status-body">
+              <p className="home__status-desc">
+                {pendingSent.partner_nickname}님에게 보낸 요청, 답변을 기다리고 있어요
+              </p>
+              <p className="home__status-hint">눌러서 남은 시간과 상태를 확인하세요.</p>
+            </div>
           </Link>
         )}
 
@@ -144,27 +139,12 @@ export default function HomePage() {
               <span className="tag">매칭 진행 중</span>
               <span className="dot-pulse" aria-hidden="true" />
             </div>
-            <p className="home__status-desc">
-              {current.food_type} · {current.meal_time} 밥친구를 찾고 있어요
-            </p>
-            <p className="home__status-hint">취소하기 전에는 새로운 매칭을 시작할 수 없어요.</p>
-
-            {/*
-              조건이 좁으면 아무도 안 잡히는데 화면에는 계속 "찾는 중" 만 뜬다.
-              왜 못 찾는지 알려주고, 조건을 넓혀서 다시 찾을 수 있게 한다.
-            */}
-            {diag?.reasons?.length > 0 && (
-              <div className="home__diag">
-                <ul>{diag.reasons.map((r) => <li key={r}>{r}</li>)}</ul>
-                <p className="home__status-hint">지금 매칭 중인 다른 사람: {diag.searching}명</p>
-                {diag.searching > 0 && (
-                  <button type="button" className="home__diag-btn"
-                          onClick={() => nav(`/matching/${current.id}/result?relax=1`)}>
-                    조건 넓혀서 찾기
-                  </button>
-                )}
-              </div>
-            )}
+            <div className="home__status-body">
+              <p className="home__status-desc">
+                {current.food_type} · {current.meal_time} 밥친구를 찾고 있어요
+              </p>
+              <p className="home__status-hint">취소하기 전에는 새로운 매칭을 시작할 수 없어요.</p>
+            </div>
 
             <div className="home__status-actions">
               <button type="button" className="home__status-btn" onClick={() => setConfirmCancel(true)}>매칭 취소</button>
@@ -213,6 +193,10 @@ export default function HomePage() {
           onConfirm={doCancel}
         />
       )}
+
+      <button type="button" className="home__ai-fab" onClick={() => nav('/assistant')} aria-label="AI 도우미">
+        <Sparkles size={22} strokeWidth={2} />
+      </button>
 
       <BottomNav />
     </div>

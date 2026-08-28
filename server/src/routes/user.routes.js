@@ -1,11 +1,33 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import multer from 'multer';
 import { q, one, tx } from '../db/pool.js';
 import { auth } from '../middlewares/auth.js';
 import { wrap } from '../middlewares/error.js';
 
 const r = Router();
 r.use(auth);
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const avatarDir = path.join(__dirname, '..', '..', 'uploads', 'avatars');
+fs.mkdirSync(avatarDir, { recursive: true });
+
+const avatarUpload = multer({
+  storage: multer.diskStorage({
+    destination: avatarDir,
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+      cb(null, `u${req.user.id}-${Date.now()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    cb(null, /^image\/(jpeg|png|webp|gif)$/.test(file.mimetype));
+  },
+});
 
 /** 기본선택페이지 저장 (MBTI/알레르기/맵기/느끼함/관심사 최대 3개) → 회원가입 완료 */
 r.post('/profile', wrap(async (req, res) => {
@@ -33,6 +55,23 @@ r.post('/profile', wrap(async (req, res) => {
     await c.execute("UPDATE users SET signup_step='DONE' WHERE id = :u", { u: req.user.id });
   });
   res.json({ ok: true, nextStep: 'DONE' });
+}));
+
+/** 프로필 사진 업로드 — 마이페이지 아바타 연필 버튼 */
+r.post('/me/avatar', avatarUpload.single('avatar'), wrap(async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: '이미지 파일이 필요합니다.' });
+
+  const prev = await one('SELECT profile_image FROM users WHERE id = :u', { u: req.user.id });
+  const url = `/api/uploads/avatars/${req.file.filename}`;
+  await q('UPDATE users SET profile_image = :url WHERE id = :u', { url, u: req.user.id });
+
+  // 이전 파일이 우리가 올린 것이면 정리한다(외부 URL 이었을 수도 있으니 경로 확인)
+  if (prev?.profile_image?.startsWith('/api/uploads/avatars/')) {
+    const oldPath = path.join(avatarDir, path.basename(prev.profile_image));
+    fs.unlink(oldPath, () => {});
+  }
+
+  res.json({ profileImage: url });
 }));
 
 /** 마이페이지 — 프로필 + 이용 현황(함께한 밥 / 만난 밥친구) + 알림 설정 */

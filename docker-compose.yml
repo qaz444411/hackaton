@@ -61,6 +61,9 @@ services:
       # (api 이미지는 ./server 컨텍스트로 빌드돼서 db/ 가 들어있지 않다)
       # run-sql.js 는 cwd(/app) 기준 ../db/x.sql 로 열므로 /db 에 붙인다.
       - ./db:/db:ro
+      # 프로필 사진 등 업로드 파일 — named volume 없이 컨테이너 로컬에 두면
+      # docker compose build 로 컨테이너가 재생성될 때마다 사라진다.
+      - uploads-data:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -119,3 +122,4 @@ volumes:
   mysql-data:
   certbot-conf:   # 발급된 인증서. 컨테이너를 지워도 남아야 한다
   certbot-www:    # ACME 챌린지 파일을 nginx 와 certbot 이 공유
+  uploads-data:   # 사용자 업로드 파일(프로필 사진 등). 컨테이너를 지워도 남아야 한다

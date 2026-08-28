@@ -241,7 +241,7 @@
 .home__status-card {
   align-self: stretch;
   margin-top: 16px;
-  padding: 16px;
+  padding: 18px;
   background: var(--c-white);
   box-shadow: var(--shadow-card-soft);
   border-radius: var(--r-xl);
@@ -252,8 +252,14 @@
 
 .home__status-row { display: flex; align-items: center; justify-content: space-between; }
 
+.home__status-body {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--c-select-tint-07);
+  border-radius: var(--r-md);
+}
+
 .home__status-desc {
-  margin-top: 10px;
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 14px;
@@ -267,29 +273,21 @@
   letter-spacing: -0.32px;
   color: var(--c-text-sub);
 }
+.home__status-body .home__status-hint { margin-top: 3px; }
 
-.home__diag { margin-top: 10px; }
-.home__diag ul { margin: 0; padding-left: 18px; font-size: 12px; color: var(--c-text-sub); }
-.home__diag-btn {
-  margin-top: 8px;
-  padding: 8px 14px;
-  border: 1.2px solid var(--c-select);
-  border-radius: 10px;
-  color: var(--c-select);
-  font-size: 12.5px;
-  font-weight: 600;
-}
-
-.home__status-actions { display: flex; gap: 8px; margin-top: 14px; }
+.home__status-actions { display: flex; gap: 8px; margin-top: 16px; }
 
 .home__status-btn {
   flex: 1;
-  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
   border: 1px solid var(--c-line-strong);
   border-radius: 12px;
   font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 13px;
+  font-weight: 600;
+  font-size: 13.5px;
   letter-spacing: -0.26px;
   color: var(--c-text-sub);
   background: var(--c-white);
@@ -299,6 +297,7 @@
   border: none;
   background: var(--c-primary);
   color: var(--c-white);
+  box-shadow: var(--shadow-btn-primary);
 }
 
 .home__note {
@@ -359,4 +358,21 @@
   font-weight: 500;
   letter-spacing: -0.26px;
   text-align: left;
+}
+
+/* AI 도우미 빠른 진입 — 우측 하단 원형 버튼 */
+.home__ai-fab {
+  position: absolute;
+  right: 20px;
+  bottom: 108px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 26px;
+  background: var(--c-primary);
+  color: var(--c-white);
+  box-shadow: var(--shadow-btn-primary);
 }

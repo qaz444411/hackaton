@@ -65,6 +65,10 @@ const MIGRATIONS = [
     file: '07_schema_patch_v7.sql', label: 'v7 음식 종류 기타(ETC) 추가',
     checks: [['row', 'food_type_code', "code = 'ETC'"]],
   },
+  {
+    file: '08_schema_patch_v8.sql', label: 'v8 채팅 메시지에 RESTAURANT(식당 카드) 타입 추가',
+    checks: [['check_contains', 'ck_chat_message_type', 'RESTAURANT']],
+  },
 ];
 
 const one = async (sql, params = []) => {

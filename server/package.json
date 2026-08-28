@@ -24,6 +24,7 @@
     "db:status": "node scripts/check-migrations.js",
     "db:patch5": "node scripts/run-sql.js ../db/05_schema_patch_v5.sql",
     "db:patch7": "node scripts/run-sql.js ../db/07_schema_patch_v7.sql",
+    "db:patch8": "node scripts/run-sql.js ../db/08_schema_patch_v8.sql",
     "food:reclassify": "node scripts/reclassify-food-type.js"
   },
   "dependencies": {
@@ -35,6 +36,7 @@
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "multer": "^2.2.0",
     "mysql2": "^3.11.0",
     "socket.io": "^4.7.5",
     "zod": "^3.23.8"

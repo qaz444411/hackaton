@@ -2,7 +2,6 @@ import { NavLink } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Home, MessageCircle, Archive } from 'lucide-react';
 import { getHome } from '../api/endpoints.js';
-import { useInboxSocket } from '../hooks/useInboxSocket.js';
 import './BottomNav.css';
 
 const ITEMS = [
@@ -13,7 +12,6 @@ const ITEMS = [
 
 /** 하단 네비게이션 — 홈 / 채팅 / 보관함 (지도는 홈에서 진입) */
 export default function BottomNav() {
-  useInboxSocket();
   const { data } = useQuery({ queryKey: ['home'], queryFn: getHome, refetchInterval: 30000 });
   const newCount = data?.inboxNewCount || 0;
 

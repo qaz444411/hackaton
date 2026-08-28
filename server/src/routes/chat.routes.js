@@ -79,6 +79,94 @@ r.post('/rooms/:matchId/messages', wrap(async (req, res) => {
   res.status(201).json(await one('SELECT * FROM chat_message WHERE id = :id', { id: ins.insertId }));
 }));
 
+/** 방 참여자인지 + 열려 있는지 확인. 아니면 던진다. */
+async function assertOpenRoom(req, matchId) {
+  const guard = await one(
+    `SELECT cr.status FROM chat_room cr
+       JOIN match_participant mp ON mp.match_id = cr.match_id AND mp.user_id = :u
+      WHERE cr.match_id = :m`,
+    { m: matchId, u: req.user.id });
+  if (!guard) { const e = new Error('참여자가 아닙니다.'); e.status = 403; throw e; }
+  if (guard.status !== 'OPEN') { const e = new Error('종료된 대화입니다.'); e.status = 409; throw e; }
+}
+
+/** "+" → 식당 보내기 — 카드형 메시지. 지도/목록과 같은 restaurant 테이블을 그대로 참조한다. */
+r.post('/rooms/:matchId/restaurant', wrap(async (req, res) => {
+  const matchId = Number(req.params.matchId);
+  const b = z.object({ restaurantId: z.number().int() }).parse(req.body);
+  await assertOpenRoom(req, matchId);
+
+  const rest = await one(
+    `SELECT id, name, road_address, rating, category_name, place_url, food_type_code
+       FROM restaurant WHERE id = :id`, { id: b.restaurantId });
+  if (!rest) return res.status(404).json({ message: '음식점을 찾을 수 없어요.' });
+
+  const card = {
+    restaurantId: rest.id, name: rest.name,
+    category: rest.category_name || rest.food_type_code, rating: rest.rating,
+    address: rest.road_address, placeUrl: rest.place_url,
+  };
+  const [ins] = await pool.execute(
+    `INSERT INTO chat_message (match_id, sender_id, message_type, content)
+     VALUES (:m, :u, 'RESTAURANT', :c)`,
+    { m: matchId, u: req.user.id, c: JSON.stringify(card) });
+  const msg = await one('SELECT * FROM chat_message WHERE id = :id', { id: ins.insertId });
+  req.app.get('io')?.to(`room:${matchId}`).emit('message:new', msg);
+  res.status(201).json(msg);
+}));
+
+/**
+ * "+" → 약속 잡기 — 식당 + 날짜/시간을 카드형 메시지로 남긴다.
+ * meal_match 에도 반영해서 홈 화면 "확정된 매칭" 카드와 채팅 상단 약속 정보가 같이 갱신되게 한다.
+ */
+r.post('/rooms/:matchId/meeting', wrap(async (req, res) => {
+  const matchId = Number(req.params.matchId);
+  const b = z.object({
+    restaurantId: z.number().int().optional(),
+    mealDate: z.string(),           // 'YYYY-MM-DD'
+    mealTimeCode: z.string(),       // 'LUNCH' | 'DINNER' 등 meal_time_code
+  }).parse(req.body);
+  await assertOpenRoom(req, matchId);
+
+  const [partner, mealTime] = await Promise.all([
+    one('SELECT u.nickname FROM match_participant mp JOIN users u ON u.id = mp.user_id WHERE mp.match_id=:m AND mp.user_id<>:u',
+      { m: matchId, u: req.user.id }),
+    one('SELECT label FROM meal_time_code WHERE code = :c', { c: b.mealTimeCode }),
+  ]);
+  if (!mealTime) return res.status(400).json({ message: '알 수 없는 식사 시간이에요.' });
+
+  let restName = null;
+  if (b.restaurantId) {
+    const rest = await one('SELECT name FROM restaurant WHERE id = :id', { id: b.restaurantId });
+    restName = rest?.name ?? null;
+  }
+
+  const card = {
+    restaurantId: b.restaurantId ?? null, restaurantName: restName,
+    mealDate: b.mealDate, mealTimeLabel: mealTime.label, partnerNickname: partner?.nickname,
+  };
+  const [ins] = await pool.execute(
+    `INSERT INTO chat_message (match_id, sender_id, message_type, content)
+     VALUES (:m, :u, 'MEETING', :c)`,
+    { m: matchId, u: req.user.id, c: JSON.stringify(card) });
+  const msg = await one('SELECT * FROM chat_message WHERE id = :id', { id: ins.insertId });
+  req.app.get('io')?.to(`room:${matchId}`).emit('message:new', msg);
+
+  // 베스트 에포트 — 실패해도 메시지 전송 자체는 이미 끝났으니 메시지는 살린다.
+  // "함께한 밥/만난 밥친구" 통계는 실제로 약속(날짜+식당)이 잡힌 매칭만 세야 하므로
+  // (v_user_stats 는 status='COMPLETED' 만 집계, ck_match_scheduled 가 이를 강제한다)
+  // 식당까지 정해졌을 때만 SCHEDULED 로 올린다. 날짜/시간만 잡았으면 CONFIRMED 그대로 둔다.
+  try {
+    await q(
+      `UPDATE meal_match SET meal_date = :d, meal_time_code = :t
+              ${b.restaurantId ? ", restaurant_id = :r, status = IF(status = 'CONFIRMED', 'SCHEDULED', status)" : ''}
+        WHERE id = :m`,
+      { d: b.mealDate, t: b.mealTimeCode, r: b.restaurantId, m: matchId });
+  } catch { /* 매칭 요약 갱신 실패는 무시 — 메시지는 이미 전송됨 */ }
+
+  res.status(201).json(msg);
+}));
+
 /**
  * 대화 주제 추천 — 제미나이 챗봇 API 가 들어가는 자리.
  * 두 사람의 공통 관심사·MBTI·음식점을 프롬프트로 넘겨 질문 3개를 받는다.

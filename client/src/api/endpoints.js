@@ -12,6 +12,11 @@ export const getMe = () => api.get('/auth/me').then((r) => r.data);
 
 /* ── 기본선택 / 마이페이지 ───────────────────── */
 export const saveProfile = (body) => api.post('/users/profile', body).then((r) => r.data);
+export const uploadAvatar = (file) => {
+  const form = new FormData();
+  form.append('avatar', file);
+  return api.post('/users/me/avatar', form).then((r) => r.data);
+};
 export const getMyPage = () => api.get('/users/me/mypage').then((r) => r.data);
 export const updateNotifications = (body) => api.patch('/users/me/notifications', body).then((r) => r.data);
 export const getHistory = () => api.get('/users/me/history').then((r) => r.data);
@@ -75,3 +80,7 @@ export const useSuggestion = (id) => api.post(`/chat/suggestions/${id}/use`).the
 export const reportChat = (matchId, body) => api.post(`/chat/rooms/${matchId}/report`, body).then((r) => r.data);
 export const closeChat = (matchId) => api.post(`/chat/rooms/${matchId}/close`).then((r) => r.data);
 export const deleteChatRoom = (matchId) => api.delete(`/chat/rooms/${matchId}`).then((r) => r.data);
+export const sendRestaurantMessage = (matchId, restaurantId) =>
+  api.post(`/chat/rooms/${matchId}/restaurant`, { restaurantId }).then((r) => r.data);
+export const sendMeetingMessage = (matchId, body) =>
+  api.post(`/chat/rooms/${matchId}/meeting`, body).then((r) => r.data);
