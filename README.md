@@ -550,6 +550,7 @@ Bedrock 에는 이런 일일 무료 캡이 없다 — 전환한 이유 중 하�
 docker compose --env-file .env.production ps
 docker compose --env-file .env.production logs -f api
 docker compose --env-file .env.production exec api npm run bedrock:check
+docker compose --env-file .env.production exec api npm run db:status   # ★ 패치 적용 상태
 docker compose --env-file .env.production exec api npm run db:check
 docker compose --env-file .env.production exec api npm run db:patch4
 docker compose --env-file .env.production exec api node scripts/smoke-spot.js --cleanup
@@ -557,3 +558,48 @@ docker compose --env-file .env.production exec api node scripts/smoke-assistant.
 ```
 
 > `docker compose down -v` 는 **절대 쓰지 않는다.** DB 볼륨이 지워져 실사용자 데이터가 날아간다.
+
+### 12-1. 배포 후에는 db:status 를 먼저 본다
+
+**자동 배포는 코드만 갱신한다.** `db/*.sql` 은 `docker-entrypoint-initdb.d` 로
+"최초 1회, 데이터가 없을 때만" 실행되므로 **운영 중인 DB 에는 새 패치가 반영되지 않는다.**
+
+실제로 v5 가 누락된 채 코드만 배포돼 **채팅 목록 전체가 500** 을 뱉은 적이 있다.
+
+```
+Error: Table 'bapfriend.chat_room_hidden' doesn't exist
+```
+
+그래서 **`db/*.sql` 이 포함된 커밋을 배포한 뒤에는 반드시 아래를 돌린다.**
+
+```bash
+docker compose --env-file .env.production exec api npm run db:status
+```
+
+v1~v6 각각을 실측해서 무엇이 빠졌는지와 어떤 명령을 돌려야 하는지까지 출력한다.
+버전 기록 테이블이 아니라 **"그 패치가 무엇을 만들었는가"를 직접 확인**하므로,
+손으로 적용했든 initdb 로 들어갔든 똑같이 잡힌다.
+빠진 게 있으면 종료 코드 1 을 반환한다(CI 에 붙일 수 있다).
+
+| 패치 | 판정 근거 |
+|---|---|
+| v1 | `users`/`restaurant`/`meal_match` 테이블, `sp_accept_proposal` |
+| v2 | `region_code`/`user_report` 테이블, `v_inbox` 뷰, `fn_taste_match_rate` |
+| v3 | `map_spot` 테이블, `matching_request.spot_id`, `v_spot_buddy` 뷰 |
+| v4 | `ck_csq_source` 제약에 `BEDROCK` 포함 |
+| v5 | `chat_room_hidden` 테이블, `user_notification_setting.ai_context_enabled` |
+| v6 | `v_restaurant_recruiting.category_name` |
+
+개별 패치 적용:
+
+```bash
+docker compose --env-file .env.production exec api npm run db:patch4   # v4
+docker compose --env-file .env.production exec api npm run db:patch5   # v5
+docker compose --env-file .env.production exec api npm run db:patch6   # v6
+
+# npm 스크립트가 없는 버전은 경로를 직접 지정한다
+docker compose --env-file .env.production exec api \
+  node scripts/run-sql.js ../db/0N_schema_patch_vN.sql
+```
+
+패치는 전부 재실행 안전하다(`CREATE OR REPLACE` 또는 존재 검사 프로시저).
