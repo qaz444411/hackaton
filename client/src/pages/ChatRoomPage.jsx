@@ -73,7 +73,7 @@ export default function ChatRoomPage() {
         <div className="card" style={{ margin: '0 16px 8px' }}>
           <span className="tag">약속</span>
           <p style={{ marginTop: 8 }}>
-            📍 {room.restaurant_name} · {room.meal_time_label}
+            📍 {room.restaurant_name} · {room.meal_time}
           </p>
         </div>
       )}

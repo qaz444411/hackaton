@@ -18,6 +18,7 @@ import ChatListPage from './pages/ChatListPage.jsx';
 import ChatRoomPage from './pages/ChatRoomPage.jsx';
 import InboxPage from './pages/InboxPage.jsx';
 import MyPage from './pages/MyPage.jsx';
+import AssistantPage from './pages/AssistantPage.jsx';
 
 function Private({ children }) {
   const { user, loading } = useAuth();
@@ -44,13 +45,15 @@ export default function App() {
         <Route path="/map" element={<Private><MapPage /></Private>} />
         <Route path="/restaurants" element={<Private><RestaurantListPage /></Private>} />
         <Route path="/recruit" element={<Private><RecruitPage /></Private>} />
-        <Route path="/restaurants/:id/buddies" element={<Private><BuddyListPage /></Private>} />
+        <Route path="/restaurants/:id/buddies" element={<Private><BuddyListPage kind="restaurant" /></Private>} />
+        <Route path="/spots/:id/buddies" element={<Private><BuddyListPage kind="spot" /></Private>} />
         <Route path="/proposals/:id/wait" element={<Private><ProposalWaitPage /></Private>} />
 
         <Route path="/chats" element={<Private><ChatListPage /></Private>} />
         <Route path="/chats/:matchId" element={<Private><ChatRoomPage /></Private>} />
         <Route path="/inbox" element={<Private><InboxPage /></Private>} />
         <Route path="/mypage" element={<Private><MyPage /></Private>} />
+        <Route path="/assistant" element={<Private><AssistantPage /></Private>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

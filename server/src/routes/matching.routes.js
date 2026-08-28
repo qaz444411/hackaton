@@ -11,21 +11,37 @@ r.use(auth);
 /** 취향 선택 페이지 — 조건 임시 저장(DRAFT). 사용자당 활성 1건이라 있으면 갱신 */
 r.post('/draft', wrap(async (req, res) => {
   const b = z.object({
-    matchingType: z.enum(['RANDOM', 'MAP']).default('RANDOM'),
+    matchingType: z.enum(['RANDOM', 'MAP', 'SPOT']).default('RANDOM'),
     restaurantId: z.number().int().nullable().optional(),
+    spotId: z.number().int().nullable().optional(),
     foodTypeCode: z.string(), talkStyleCode: z.string(), mealTimeCode: z.string(),
     priceMin: z.number().int(), priceMax: z.number().int(),
-  }).parse(req.body);
+  })
+    // DB의 ck_mr_map / ck_mr_spot 위반을 500 대신 400 으로 먼저 잡는다
+    .refine((v) => (v.matchingType === 'MAP') === (v.restaurantId != null),
+      { message: 'MAP 매칭은 restaurantId 가 필요합니다.' })
+    .refine((v) => (v.matchingType === 'SPOT') === (v.spotId != null),
+      { message: 'SPOT 매칭은 spotId 가 필요합니다.' })
+    .parse(req.body);
+
+  // MAP 은 (restaurant_id, food_type_code) 복합 FK 라 음식 종류가 식당과 달라지면 INSERT 가 깨진다.
+  // 사용자가 고른 값 대신 식당의 실제 종류로 맞춰 준다.
+  if (b.matchingType === 'MAP') {
+    const rest = await one('SELECT food_type_code FROM restaurant WHERE id = :id', { id: b.restaurantId });
+    if (!rest) return res.status(404).json({ message: '음식점을 찾을 수 없습니다.' });
+    b.foodTypeCode = rest.food_type_code;
+  }
 
   const active = await one(
     "SELECT id, status FROM matching_request WHERE active_user_id = :u", { u: req.user.id });
 
   if (active && active.status === 'DRAFT') {
     await q(`UPDATE matching_request
-                SET matching_type=:t, restaurant_id=:r, food_type_code=:f, talk_style_code=:ts,
+                SET matching_type=:t, restaurant_id=:r, spot_id=:s, food_type_code=:f, talk_style_code=:ts,
                     meal_time_code=:mt, price_min=:pmin, price_max=:pmax
               WHERE id=:id`,
-      { t: b.matchingType, r: b.restaurantId ?? null, f: b.foodTypeCode, ts: b.talkStyleCode,
+      { t: b.matchingType, r: b.restaurantId ?? null, s: b.spotId ?? null,
+        f: b.foodTypeCode, ts: b.talkStyleCode,
         mt: b.mealTimeCode, pmin: b.priceMin, pmax: b.priceMax, id: active.id });
     return res.json({ id: active.id, status: 'DRAFT' });
   }
@@ -33,10 +49,11 @@ r.post('/draft', wrap(async (req, res) => {
 
   const [ins] = await pool.execute(
     `INSERT INTO matching_request
-       (user_id, matching_type, restaurant_id, food_type_code, talk_style_code, meal_time_code, price_min, price_max)
-     VALUES (:u, :t, :r, :f, :ts, :mt, :pmin, :pmax)`,
-    { u: req.user.id, t: b.matchingType, r: b.restaurantId ?? null, f: b.foodTypeCode,
-      ts: b.talkStyleCode, mt: b.mealTimeCode, pmin: b.priceMin, pmax: b.priceMax });
+       (user_id, matching_type, restaurant_id, spot_id, food_type_code, talk_style_code, meal_time_code, price_min, price_max)
+     VALUES (:u, :t, :r, :s, :f, :ts, :mt, :pmin, :pmax)`,
+    { u: req.user.id, t: b.matchingType, r: b.restaurantId ?? null, s: b.spotId ?? null,
+      f: b.foodTypeCode, ts: b.talkStyleCode, mt: b.mealTimeCode,
+      pmin: b.priceMin, pmax: b.priceMax });
   res.status(201).json({ id: ins.insertId, status: 'DRAFT' });
 }));
 

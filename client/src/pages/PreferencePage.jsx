@@ -10,6 +10,7 @@ export default function PreferencePage() {
   const nav = useNavigate();
   const [sp] = useSearchParams();
   const restaurantId = sp.get('restaurantId') ? Number(sp.get('restaurantId')) : null;
+  const spotId = sp.get('spotId') ? Number(sp.get('spotId')) : null;
   const { data: codes } = useQuery({ queryKey: ['codes'], queryFn: getCodes });
 
   const [f, setF] = useState({
@@ -26,8 +27,9 @@ export default function PreferencePage() {
     try {
       const draft = await saveDraft({
         ...f,
-        matchingType: restaurantId ? 'MAP' : 'RANDOM',
+        matchingType: restaurantId ? 'MAP' : spotId ? 'SPOT' : 'RANDOM',
         restaurantId,
+        spotId,
       });
       await startMatching(draft.id);
       nav(`/matching/${draft.id}`, { replace: true });

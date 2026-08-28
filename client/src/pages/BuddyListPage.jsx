@@ -2,41 +2,71 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import AppBar from '../components/AppBar.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
-import { getRestaurant, getBuddies, getCurrentMatching, createProposal, saveDraft } from '../api/endpoints.js';
+import {
+  getRestaurant, getBuddies, getSpot, getSpotBuddies,
+  getCurrentMatching, createProposal, saveDraft,
+} from '../api/endpoints.js';
 
-/** 음식점별 밥친구 목록 — 취향 일치율 순, 매칭 요청 전송 */
-export default function BuddyListPage() {
+/**
+ * 밥친구 목록 — 취향 일치율 순, 매칭 요청 전송.
+ * 음식점 핀(kind='restaurant')과 지도 마커(kind='spot') 둘 다 여기로 들어온다.
+ * 두 API 의 응답 모양을 서버에서 맞춰 놨기 때문에 화면은 거의 공유한다.
+ */
+export default function BuddyListPage({ kind = 'restaurant' }) {
   const { id } = useParams();
   const nav = useNavigate();
-  const { data: place } = useQuery({ queryKey: ['restaurant', id], queryFn: () => getRestaurant(id) });
-  const { data: buddies = [] } = useQuery({ queryKey: ['buddies', id], queryFn: () => getBuddies(id) });
+  const isSpot = kind === 'spot';
 
-  /** 내 활성 요청이 없으면 이 음식점 기준으로 즉석 생성 후 제안 */
+  const { data: place } = useQuery({
+    queryKey: [kind, id],
+    queryFn: () => (isSpot ? getSpot(id) : getRestaurant(id)),
+  });
+  const { data: buddies = [] } = useQuery({
+    queryKey: [kind, id, 'buddies'],
+    queryFn: () => (isSpot ? getSpotBuddies(id) : getBuddies(id)),
+  });
+
+  const title = isSpot ? place?.label : place?.name;
+
+  /** 내 활성 요청이 없으면 이 지점 기준으로 즉석 생성 후 제안 */
   const request = async (b) => {
-    let mine = await getCurrentMatching();
-    if (!mine) {
-      mine = await saveDraft({
-        matchingType: 'MAP', restaurantId: Number(id),
-        foodTypeCode: place.food_type_code, talkStyleCode: 'ANY',
-        mealTimeCode: b.meal_time_code || 'LUNCH', priceMin: 0, priceMax: 100000,
-      });
+    try {
+      let mine = await getCurrentMatching();
+      if (!mine) {
+        mine = await saveDraft(isSpot
+          ? {
+              matchingType: 'SPOT', spotId: Number(id),
+              // 마커에는 음식 종류가 없으므로 상대에게 맞춘다(ANY 면 무엇이든 매칭)
+              foodTypeCode: 'ANY', talkStyleCode: 'ANY',
+              mealTimeCode: b.meal_time_code || 'LUNCH', priceMin: 0, priceMax: 100000,
+            }
+          : {
+              matchingType: 'MAP', restaurantId: Number(id),
+              foodTypeCode: place.food_type_code, talkStyleCode: 'ANY',
+              mealTimeCode: b.meal_time_code || 'LUNCH', priceMin: 0, priceMax: 100000,
+            });
+      }
+      const proposal = await createProposal({ requesterRequestId: mine.id, receiverUserId: b.user_id });
+      nav(`/proposals/${proposal.id}/wait`);
+    } catch (e) {
+      alert(e.response?.data?.message || '매칭 요청을 보내지 못했어요.');
     }
-    const proposal = await createProposal({ requesterRequestId: mine.id, receiverUserId: b.user_id });
-    nav(`/proposals/${proposal.id}/wait`);
   };
 
   return (
     <div className="screen">
-      <AppBar title={place?.name || '밥친구 목록'} />
+      <AppBar title={title || '밥친구 목록'} onBack={() => nav(-1)} />
       <div className="screen__body">
         {place && (
           <div className="card">
             <div className="row" style={{ justifyContent: 'space-between' }}>
-              <strong>{place.name}</strong>
+              <strong>{title}</strong>
               {place.is_popular ? <span className="tag">🔥 인기</span> : null}
             </div>
             <p className="muted" style={{ marginTop: 4 }}>
-              ⭐ {place.rating ?? '-'} · {place.food_type_label} · {place.road_address}
+              {isSpot
+                ? (place.address || '지도에 찍힌 지점')
+                : `⭐ ${place.rating ?? '-'} · ${place.food_type_label} · ${place.road_address}`}
             </p>
           </div>
         )}
@@ -50,7 +80,13 @@ export default function BuddyListPage() {
                         onClick={() => request(b)}>매칭 요청하기</button>
               } />
           ))}
-          {!buddies.length && <p className="muted">아직 이 음식점에서 모집 중인 밥친구가 없어요.</p>}
+          {!buddies.length && (
+            <p className="muted">
+              {isSpot
+                ? '아직 이 지점에서 모집 중인 밥친구가 없어요.'
+                : '아직 이 음식점에서 모집 중인 밥친구가 없어요.'}
+            </p>
+          )}
         </div>
       </div>
     </div>

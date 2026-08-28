@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppBar from '../components/AppBar.jsx';
 import BottomNav from '../components/BottomNav.jsx';
+import { useMyLocation, FALLBACK_CENTER, GEO_MESSAGE } from '../hooks/useKakaoMap.js';
 import { getRestaurants } from '../api/endpoints.js';
 
 /** 음식점 목록 페이지 — 지도 ↔ 리스트 전환 */
@@ -9,16 +10,14 @@ export default function RestaurantListPage() {
   const nav = useNavigate();
   const [list, setList] = useState([]);
   const [keyword, setKeyword] = useState('');
-  const [pos, setPos] = useState({ lat: 35.9675, lng: 126.7370 });
+  const { pos: myPos, state: geoState } = useMyLocation({ watch: false });
+
+  // 위치를 못 받으면 기본 좌표로라도 목록을 채운다
+  const pos = myPos ?? FALLBACK_CENTER;
 
   useEffect(() => {
-    navigator.geolocation?.getCurrentPosition(
-      (p) => setPos({ lat: p.coords.latitude, lng: p.coords.longitude }), () => {});
-  }, []);
-
-  useEffect(() => {
-    getRestaurants({ ...pos, radius: 2000, keyword }).then(setList);
-  }, [pos]);
+    getRestaurants({ lat: pos.lat, lng: pos.lng, radius: 2000, keyword }).then(setList);
+  }, [pos.lat, pos.lng]);
 
   return (
     <div className="screen">
@@ -28,7 +27,11 @@ export default function RestaurantListPage() {
         <input className="input" placeholder="음식점 검색" value={keyword}
                onChange={(e) => setKeyword(e.target.value)}
                onKeyDown={(e) => e.key === 'Enter' &&
-                 getRestaurants({ ...pos, radius: 2000, keyword }).then(setList)} />
+                 getRestaurants({ lat: pos.lat, lng: pos.lng, radius: 2000, keyword }).then(setList)} />
+
+        {!myPos && GEO_MESSAGE[geoState] && (
+          <p className="muted" style={{ marginTop: 8 }}>{GEO_MESSAGE[geoState]}</p>
+        )}
 
         <div className="list" style={{ marginTop: 14 }}>
           {list.map((r) => (

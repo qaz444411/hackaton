@@ -5,7 +5,15 @@
   "main": "src/app.js",
   "scripts": {
     "dev": "nodemon src/app.js",
-    "start": "node src/app.js"
+    "start": "node src/app.js",
+    "db:patch": "node scripts/run-sql.js ../db/03_schema_patch_v3.sql",
+    "db:check": "node scripts/check-schema.js",
+    "kakao:check": "node scripts/check-kakao.js",
+    "gemini:check": "node scripts/check-gemini.js",
+    "smoke:ai": "node scripts/smoke-assistant.js",
+    "smoke": "node scripts/smoke-spot.js --cleanup",
+    "smoke:keep": "node scripts/smoke-spot.js",
+    "smoke:clean": "node scripts/clean-smoke.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",

@@ -31,6 +31,12 @@ export const getRestaurant = (id) => api.get(`/restaurants/${id}`).then((r) => r
 export const addRestaurant = (body) => api.post('/restaurants', body).then((r) => r.data);
 export const getBuddies = (id) => api.get(`/restaurants/${id}/buddies`).then((r) => r.data);
 
+/* ── 지도 마커("여기서 먹고싶어요") ──────────── */
+export const getSpots = (params) => api.get('/spots', { params }).then((r) => r.data);
+export const createSpot = (body) => api.post('/spots', body).then((r) => r.data);
+export const getSpot = (id) => api.get(`/spots/${id}`).then((r) => r.data);
+export const getSpotBuddies = (id) => api.get(`/spots/${id}/buddies`).then((r) => r.data);
+
 /* ── 매칭 요청 / 보관함 ──────────────────────── */
 export const createProposal = (body) => api.post('/proposals', body).then((r) => r.data);
 export const getProposal = (id) => api.get(`/proposals/${id}`).then((r) => r.data);
@@ -39,6 +45,12 @@ export const readProposal = (id) => api.post(`/proposals/${id}/read`).then((r) =
 export const acceptProposal = (id) => api.post(`/proposals/${id}/accept`).then((r) => r.data);
 export const declineProposal = (id) => api.post(`/proposals/${id}/decline`).then((r) => r.data);
 export const cancelProposal = (id) => api.post(`/proposals/${id}/cancel`).then((r) => r.data);
+
+/* ── AI 도우미 (홈 챗봇) ─────────────────────── */
+export const getAssistantStatus = () => api.get('/assistant/status').then((r) => r.data);
+export const getAssistantStarters = () => api.get('/assistant/starters').then((r) => r.data);
+export const askAssistant = (message, history) =>
+  api.post('/assistant/chat', { message, history }).then((r) => r.data);
 
 /* ── 채팅 ────────────────────────────────────── */
 export const getChatRooms = () => api.get('/chat/rooms').then((r) => r.data);

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import AppBar from '../components/AppBar.jsx';
 import ChipGroup from '../components/ChipGroup.jsx';
+import { useMyLocation, FALLBACK_CENTER, GEO_MESSAGE } from '../hooks/useKakaoMap.js';
 import { getCodes, getRestaurants } from '../api/endpoints.js';
 
 /** 밥친구 모집 페이지 — 식당 검색·선택 + 시간대 → 취향 선택으로 이어 모집 시작 */
@@ -13,15 +14,13 @@ export default function RecruitPage() {
   const [list, setList] = useState([]);
   const [picked, setPicked] = useState(null);
   const [mealTime, setMealTime] = useState(null);
-  const [pos, setPos] = useState({ lat: 35.9675, lng: 126.7370 });
+  const { pos: myPos, state: geoState } = useMyLocation({ watch: false });
 
-  useEffect(() => {
-    navigator.geolocation?.getCurrentPosition(
-      (p) => setPos({ lat: p.coords.latitude, lng: p.coords.longitude }), () => {});
-  }, []);
+  // 위치를 못 받으면 기본 좌표로라도 목록을 채운다
+  const pos = myPos ?? FALLBACK_CENTER;
 
-  const search = () => getRestaurants({ ...pos, radius: 3000, keyword }).then(setList);
-  useEffect(() => { search(); }, [pos]);
+  const search = () => getRestaurants({ lat: pos.lat, lng: pos.lng, radius: 3000, keyword }).then(setList);
+  useEffect(() => { search(); }, [pos.lat, pos.lng]);
 
   return (
     <div className="screen">
@@ -32,6 +31,10 @@ export default function RecruitPage() {
         <input className="input" placeholder="함께 식사할 음식점 검색" value={keyword}
                onChange={(e) => setKeyword(e.target.value)}
                onKeyDown={(e) => e.key === 'Enter' && search()} />
+
+        {!myPos && GEO_MESSAGE[geoState] && (
+          <p className="muted" style={{ marginTop: 8 }}>{GEO_MESSAGE[geoState]}</p>
+        )}
 
         <h2 className="section-title">음식점 선택</h2>
         <div className="list">

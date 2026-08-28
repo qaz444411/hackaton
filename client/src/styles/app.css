@@ -118,11 +118,68 @@ body {
   background: var(--c-primary); color: #fff; font-size: 24px; box-shadow: var(--shadow-card); cursor: pointer;
 }
 .map-fab--list { bottom: 160px; background: var(--c-white); color: var(--c-primary); font-size: 18px; }
+.map-fab--me { bottom: 224px; background: var(--c-white); color: #2C7BE5; font-size: 20px; }
+
 .map-pin {
+  display: flex; align-items: center; gap: 4px;
   transform: translate(-50%, -100%); background: var(--c-white); border: 2px solid var(--c-primary);
   border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 800; color: var(--c-primary);
   white-space: nowrap; box-shadow: var(--shadow-card); cursor: pointer;
+  max-width: 44vw;
 }
+.map-pin__label { overflow: hidden; text-overflow: ellipsis; }
+.map-pin__icon { flex: none; }
+.map-pin__count {
+  flex: none; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+  background: var(--c-primary); color: #fff; font-size: 11px; line-height: 18px; text-align: center;
+}
+/* 내가 찍은 지점은 식당과 색으로 구분한다 */
+.map-pin--spot { border-color: #2C7BE5; color: #2C7BE5; }
+.map-pin--spot .map-pin__count { background: #2C7BE5; }
+/* 아무도 모집 중이 아닌 핀은 한 단계 죽여서 붐비지 않게 */
+.map-pin:not(.is-recruiting) { border-color: var(--c-line-strong); color: var(--c-text-sub); font-weight: 700; }
+.map-pin--draft {
+  border-color: #2C7BE5; color: #2C7BE5; border-style: dashed;
+  animation: draft-pop .18s ease-out;
+}
+@keyframes draft-pop { from { transform: translate(-50%, -100%) scale(.7); opacity: 0; }
+                       to   { transform: translate(-50%, -100%) scale(1); opacity: 1; } }
+
+/* 내 위치 */
+.my-dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #2C7BE5; border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.15);
+}
+
+/* 지도 위 안내 배너 */
+.geo-notice {
+  position: absolute; top: 68px; left: 16px; right: 16px; z-index: 6;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; border-radius: var(--r-md);
+  background: var(--c-white); box-shadow: var(--shadow-card);
+  font-size: 12px; line-height: 1.45; color: var(--c-text-sub);
+}
+.geo-notice--insecure, .geo-notice--denied { color: var(--c-primary); background: var(--c-primary-tint); }
+.geo-notice__btn {
+  flex: none; border: none; border-radius: 999px; padding: 6px 10px; cursor: pointer;
+  background: var(--c-primary); color: #fff; font-size: 11px; font-weight: 700;
+}
+
+.map-loading {
+  position: absolute; top: 68px; left: 50%; transform: translateX(-50%); z-index: 6;
+  padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,.6); color: #fff; font-size: 11px;
+}
+.map-hint {
+  position: absolute; bottom: 84px; left: 16px; right: 84px; z-index: 4;
+  padding: 8px 12px; border-radius: var(--r-md);
+  background: rgba(0,0,0,.55); color: #fff; font-size: 11px; line-height: 1.4;
+}
+.map-blocked {
+  position: absolute; inset: 0; z-index: 7; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; padding: 32px;
+  background: var(--c-bg);
+}
+.map-blocked code { background: var(--c-surface); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
 
 /* 음식점 배너 (지도 하단 시트) */
 .sheet {
@@ -143,6 +200,49 @@ body {
 .chat-input { display: flex; gap: 8px; padding: 12px 16px; background: var(--c-white); border-top: 1px solid var(--c-line); }
 .chat-input .input { height: 44px; }
 .chat-input .send { width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--c-primary); color: #fff; font-size: 18px; }
+
+/* AI 도우미 (홈 카드 + 전용 화면) */
+.ai-card { margin-top: 10px; cursor: pointer; }
+.ai-card__icon {
+  width: 44px; height: 44px; border-radius: 50%; flex: none;
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+  background: var(--c-primary-tint);
+}
+.ai-starters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.ai-starter {
+  padding: 8px 12px; border-radius: 999px; border: 1.5px solid var(--c-line);
+  background: var(--c-white); color: var(--c-text-sub);
+  font-family: var(--font-body); font-size: 12.5px; font-weight: 600;
+  cursor: pointer; text-align: left;
+}
+.ai-starter:hover { border-color: var(--c-primary); color: var(--c-primary); }
+
+.ai-hello { text-align: center; padding: 32px 16px 8px; }
+.ai-hello__icon {
+  width: 64px; height: 64px; margin: 0 auto 12px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 30px;
+  background: var(--c-primary-tint);
+}
+.ai-warn {
+  margin: 0 16px; padding: 10px 12px; border-radius: var(--r-md);
+  background: var(--c-primary-tint); color: var(--c-primary);
+  font-size: 12px; line-height: 1.5;
+}
+.ai-warn code {
+  background: var(--c-white); padding: 1px 5px; border-radius: 4px; font-size: 11px;
+}
+
+/* 응답 대기 점 3개 */
+.ai-typing { display: flex; gap: 4px; align-items: center; padding: 14px; }
+.ai-typing span {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--c-text-mute);
+  animation: ai-blink 1.2s infinite ease-in-out;
+}
+.ai-typing span:nth-child(2) { animation-delay: .18s; }
+.ai-typing span:nth-child(3) { animation-delay: .36s; }
+@keyframes ai-blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+
+.chat-input .send:disabled { background: var(--c-line-strong); cursor: not-allowed; }
 
 /* 제미나이 추천 질문 */
 .suggest {
