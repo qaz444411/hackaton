@@ -141,18 +141,28 @@
 .rl__card-sub { margin-top: 3px; font-size: 12px; letter-spacing: -0.32px; color: var(--c-text-sub); }
 .rl__card-recruit { margin-top: 4px; font-family: var(--font-display); font-weight: 600; font-size: 12px; letter-spacing: -0.32px; color: #9A6A45; }
 
+.rl__card-actions {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .rl__card-cta {
   flex: none;
-  padding: 8px 12px;
-  background: #B98154;
+  padding: 7px 12px;
+  background: var(--c-white);
+  box-shadow: var(--shadow-card-soft);
   border-radius: 10px;
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 12px;
   letter-spacing: -0.24px;
-  color: var(--c-white);
+  color: var(--c-text-sub);
   white-space: nowrap;
 }
+
+.rl__card-cta--accent { background: #B98154; color: var(--c-white); box-shadow: none; }
 
 /* ── RecruitPage 전용 (식당 선택 — 썸네일 없음) ───────────────────── */
 .rc__section-title {

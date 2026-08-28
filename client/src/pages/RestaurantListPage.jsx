@@ -67,10 +67,16 @@ export default function RestaurantListPage() {
                 <p className="rl__card-sub">{formatDistance(r.distance_m)} · {r.food_type_label} · ★{r.rating ?? '-'}</p>
                 <p className="rl__card-recruit">{r.recruiting_count}명이 밥친구 찾는 중</p>
               </div>
-              <button type="button" className="rl__card-cta"
-                      onClick={(e) => { e.stopPropagation(); nav(`/restaurants/${r.restaurant_id}/buddies`); }}>
-                밥친구 보기
-              </button>
+              <div className="rl__card-actions">
+                <button type="button" className="rl__card-cta"
+                        onClick={(e) => { e.stopPropagation(); nav(`/restaurants/${r.restaurant_id}/buddies`); }}>
+                  보기
+                </button>
+                <button type="button" className="rl__card-cta rl__card-cta--accent"
+                        onClick={(e) => { e.stopPropagation(); nav(`/preference?restaurantId=${r.restaurant_id}`); }}>
+                  모집하기
+                </button>
+              </div>
             </div>
           ))}
           {!list.length && <p className="rl__empty">주변에 표시할 음식점이 없습니다.</p>}
