@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   List, LocateFixed, Plus, Utensils, Soup, Fish, CookingPot, Pizza, UtensilsCrossed,
 } from 'lucide-react';
@@ -31,6 +31,8 @@ const FILTER_ICONS = { Utensils, Soup, Fish, CookingPot, Pizza, UtensilsCrossed 
  */
 export default function MapPage() {
   const nav = useNavigate();
+  const [sp] = useSearchParams();
+  const focusRestaurantId = sp.get('restaurantId');
   const { containerRef, map, ready, failed, getCenter, getRadius, panTo, setCenter } = useKakaoMap();
   const { pos, state: geoState, request: requestLocation } = useMyLocation();
 
@@ -84,6 +86,23 @@ export default function MapPage() {
     setCenter(pos.lat, pos.lng);
     load();
   }, [ready, pos, setCenter, load]);
+
+  /* ── 채팅 "지도에서 보기" 등으로 특정 식당을 지정해 들어온 경우 그 식당으로 이동 ── */
+  useEffect(() => {
+    if (!ready || !focusRestaurantId) return;
+    centeredOnce.current = true; // 내 위치로 옮기는 위 효과가 이 지정 위치를 덮어쓰지 않게 막는다
+    getRestaurant(focusRestaurantId).then((r) => {
+      const lat = Number(r.latitude);
+      const lng = Number(r.longitude);
+      setCenter(lat, lng);
+      setSelected({
+        kind: 'restaurant', raw: r, label: r.name, lat, lng,
+        count: r.recruiting_count, isPopular: !!r.is_popular,
+      });
+      load();
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, focusRestaurantId]);
 
   /* ── 핀을 고르면 상세(모집자 목록)를 받아온다 ── */
   useEffect(() => {
@@ -318,7 +337,8 @@ export default function MapPage() {
             <p className="muted" style={{ marginTop: 4 }}>
               {isSpot
                 ? (selected.raw.address || '지도에 찍힌 지점')
-                : `${shortCategory(selected.raw) || selected.raw.food_type_label} · ${formatDistance(selected.raw.distance_m)}`}
+                : [shortCategory(selected.raw) || selected.raw.food_type_label, formatDistance(selected.raw.distance_m)]
+                    .filter(Boolean).join(' · ')}
             </p>
 
             {detailBusy && <p className="muted" style={{ marginTop: 12 }}>불러오는 중…</p>}

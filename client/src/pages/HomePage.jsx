@@ -1,16 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Dices, MapPin, Sparkles, ChevronRight, UtensilsCrossed } from 'lucide-react';
+import { Dices, MapPin, Sparkles, ChevronRight, UtensilsCrossed, Shuffle } from 'lucide-react';
 import BottomNav from '../components/BottomNav.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { useMyLocation, FALLBACK_CENTER } from '../hooks/useKakaoMap.js';
 import { formatDistance } from '../lib/format.js';
 import { SCALE_STEPS, loadA11y, saveA11y, applyA11y } from '../lib/a11y.js';
 import {
-  getHome, getCurrentMatching, cancelMatching, getSentProposals, getRestaurants,
+  getHome, getCurrentMatching, cancelMatching, getSentProposals, getRestaurants, startBlindMatching,
 } from '../api/endpoints.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import logo from '../assets/logo.png';
 import './HomePage.css';
 
 // 한글 받침 유무에 따라 "이/가" 조사를 고른다 (한식 → 이, 기타 → 가)
@@ -68,6 +69,7 @@ export default function HomePage() {
     queryKey: ['matching', 'current'],
     queryFn: getCurrentMatching,
     refetchOnWindowFocus: true,
+    refetchInterval: 5000, // 진짜 랜덤 매칭은 다른 사람이 붙는 순간을 홈에서도 바로 알아채야 한다
   });
 
   // 내가 보낸 대기 중인 요청 — 화면(대기 페이지)을 나갔다 와도 여기서 다시 열 수 있어야 한다.
@@ -82,6 +84,7 @@ export default function HomePage() {
   // 직접 요청(지도/밥친구목록)은 매칭 요청과 제안이 함께 생기므로, 보낸 요청 카드가 있으면
   // 아래 "진행 중 매칭" 카드는 같은 상태를 중복해서 보여주는 셈이라 숨긴다.
   const searching = current && current.status === 'SEARCHING' && !pendingSent;
+  const isBlindSearching = current?.matching_type === 'BLIND' && current.status === 'SEARCHING';
 
   const doCancel = async () => {
     if (!current) return;
@@ -96,9 +99,62 @@ export default function HomePage() {
     }
   };
 
+  // 진짜 랜덤 매칭 — 조건 없이 눌러서 같은 모드로 기다리는 사람과 즉시 이어진다.
+  // 대기 중에도 홈을 벗어날 수 있어야 해서(전용 대기 화면으로 가두지 않음) 버튼 자리에서
+  // 바로 카운트다운 + 취소로 바뀐다. 남은 시간은 서버의 started_at 기준으로 매초 다시 계산한다.
+  const [blindBusy, setBlindBusy] = useState(false);
+  const [blindCancelling, setBlindCancelling] = useState(false);
+  const [, forceTick] = useState(0);
+
+  useEffect(() => {
+    if (!isBlindSearching) return;
+    const timer = setInterval(() => forceTick((n) => n + 1), 1000);
+    return () => clearInterval(timer);
+  }, [isBlindSearching]);
+
+  const blindSecondsLeft = isBlindSearching
+    ? Math.max(0, 30 * 60 - Math.floor((Date.now() - new Date(current.started_at).getTime()) / 1000))
+    : 0;
+  const blindMmss = `${String(Math.floor(blindSecondsLeft / 60)).padStart(2, '0')}:${String(blindSecondsLeft % 60).padStart(2, '0')}`;
+
+  useEffect(() => {
+    if (isBlindSearching && blindSecondsLeft === 0) {
+      cancelMatching(current.id).finally(() => {
+        qc.invalidateQueries({ queryKey: ['matching', 'current'] });
+      });
+    }
+  }, [isBlindSearching, blindSecondsLeft, current?.id, qc]);
+
+  const startBlind = async () => {
+    setBlindBusy(true);
+    try {
+      const res = await startBlindMatching();
+      if (res.matched) nav(`/chats/${res.matchId}`);
+      else qc.invalidateQueries({ queryKey: ['matching', 'current'] });
+    } catch (e) {
+      alert(e.response?.data?.message || '진짜 랜덤 매칭을 시작하지 못했어요.');
+    } finally {
+      setBlindBusy(false);
+    }
+  };
+
+  const cancelBlind = async () => {
+    if (!current) return;
+    setBlindCancelling(true);
+    try {
+      await cancelMatching(current.id);
+      qc.invalidateQueries({ queryKey: ['matching', 'current'] });
+    } catch (e) {
+      alert(e.response?.data?.message || '취소하지 못했어요.');
+    } finally {
+      setBlindCancelling(false);
+    }
+  };
+
   return (
     <div className="screen">
       <div className="screen__body home__body">
+        <img className="home__logo" src={logo} alt="DO밥" />
         <header className="home__header">
           <div className="home__greet">
             <p className="home__title">안녕하세요, {user?.nickname}님</p>
@@ -186,8 +242,9 @@ export default function HomePage() {
           </Link>
         )}
 
-        {/* 진행 중인 매칭 — 이어보기 / 취소 (취소 전엔 새 매칭을 시작할 수 없다) */}
-        {searching && (
+        {/* 진행 중인 매칭 — 이어보기 / 취소 (취소 전엔 새 매칭을 시작할 수 없다). 진짜 랜덤
+            매칭은 아래 버튼 자리에서 카운트다운으로 따로 보여주므로 여기선 제외한다. */}
+        {searching && !isBlindSearching && (
           <div className="home__status-card">
             <div className="home__status-row">
               <span className="tag">매칭 진행 중</span>
@@ -210,6 +267,32 @@ export default function HomePage() {
 
         {!m && (searching || pendingSent) && (
           <p className="home__note">진행 중인 매칭을 취소하면 다시 시작할 수 있어요.</p>
+        )}
+
+        {/* 진짜 랜덤 매칭 — 취향 조건 없이 눌러서 30분 안에 무작위로 바로 이어진다.
+            대기 중엔 홈을 나가도 되게(전용 화면으로 안 가두고) 버튼 자리에서 카운트다운으로 보여준다. */}
+        {isBlindSearching ? (
+          <div className="home__blind-row">
+            <div className="home__blind-btn home__blind-btn--waiting">
+              <span className="home__blind-icon"><Shuffle size={16} strokeWidth={2.2} /></span>
+              <span className="home__blind-text">
+                <strong>진짜 랜덤 매칭 찾는 중… {blindMmss}</strong>
+                <span>다른 분이 누르면 바로 이어져요</span>
+              </span>
+            </div>
+            <button type="button" className="home__blind-cancel" disabled={blindCancelling} onClick={cancelBlind}>
+              취소
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="home__blind-btn" disabled={blindBusy || searching || !!pendingSent}
+                  onClick={startBlind}>
+            <span className="home__blind-icon"><Shuffle size={16} strokeWidth={2.2} /></span>
+            <span className="home__blind-text">
+              <strong>진짜 랜덤 매칭</strong>
+              <span>조건 없이, 30분 안에 무작위로 바로 이어져요</span>
+            </span>
+          </button>
         )}
 
         {/* 오늘의 추천 맛집 — 주변 음식점 중 평점 높은 순 */}

@@ -81,6 +81,10 @@ const MIGRATIONS = [
     file: '11_schema_patch_v11.sql', label: 'v11 지역 선택지 확대(광주 등 추가)',
     checks: [['row', 'region_code', "code = 'GWANGJU'"]],
   },
+  {
+    file: '12_schema_patch_v12.sql', label: 'v12 진짜 랜덤 매칭(BLIND) 타입 추가',
+    checks: [['check_contains', 'ck_mr_type', 'BLIND']],
+  },
 ];
 
 const one = async (sql, params = []) => {

@@ -36,6 +36,7 @@ export const getCandidates = (id, relax = false) =>
 export const getMatchingDiagnosis = (id) =>
   api.get(`/matching/${id}/diagnosis`).then((r) => r.data);
 export const cancelMatching = (id) => api.post(`/matching/${id}/cancel`).then((r) => r.data);
+export const startBlindMatching = () => api.post('/matching/blind/start').then((r) => r.data);
 
 /* ── 음식점 / 지도 ───────────────────────────── */
 export const getRestaurants = (params) => api.get('/restaurants', { params }).then((r) => r.data);

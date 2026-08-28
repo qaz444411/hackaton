@@ -40,6 +40,13 @@ export function AuthProvider({ children }) {
       }
     });
 
+    // 진짜 랜덤 매칭 — 먼저 기다리던 쪽은 홈 화면 버튼이 카운트다운을 보여주고 있다가
+    // 상대가 붙는 순간 바로 갱신돼야 한다(5초 폴링도 있지만 이걸로 더 빠르게 반영한다).
+    socket.on('blind:matched', () => {
+      qc.invalidateQueries({ queryKey: ['matching', 'current'] });
+      qc.invalidateQueries({ queryKey: ['home'] });
+    });
+
     socket.on('chat:new', ({ matchId, senderNickname, preview }) => {
       if (notify?.chat_push) {
         showNotification(senderNickname, preview, {

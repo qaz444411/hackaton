@@ -56,6 +56,11 @@ export async function findCandidates(requestId, meId, { limit = 10, relax = fals
        LEFT JOIN map_spot s     ON s.id = o.spot_id
       WHERE o.status = 'SEARCHING'
         AND o.user_id <> :me
+        -- "진짜 랜덤 매칭"(BLIND)은 완전히 분리된 풀이라 여기 후보 탐색에 절대 섞이면 안 된다.
+        -- BLIND 는 food_type_code='ANY'/가격 0~100000 처럼 뭐든 통과하는 값으로 채워져 있어서,
+        -- 이 줄이 없으면 아래 취향 조건(FOOD_OK/PRICE_OK)을 다 통과해 버려 일반 랜덤 매칭
+        -- 사용자한테까지 후보로 노출될 수 있다. 짝짓기는 오직 POST /matching/blind/start 에서만.
+        AND o.matching_type <> 'BLIND'
         -- 장소: 한쪽이라도 RANDOM 이면 OK, 둘 다 장소 지정이면 같은 곳이어야 한다
         AND (
               :myType = 'RANDOM'

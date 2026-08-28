@@ -51,7 +51,6 @@ export default function ChatRoomPage() {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const bottomRef = useRef(null);
-  const chatListRef = useRef(null);
 
   // "+" 버튼 플로우 — 'menu' | 'pick-send' | 'pick-meeting' | 'datetime' | null
   const [plusStep, setPlusStep] = useState(null);
@@ -223,7 +222,7 @@ export default function ChatRoomPage() {
         </div>
       )}
 
-      <div className="chat-list" ref={chatListRef}>
+      <div className="chat-list">
         {messages.map((m) => {
           if (m.message_type === 'SYSTEM') {
             return <div key={m.id} className="bubble bubble--sys">{m.content}</div>;
@@ -246,7 +245,7 @@ export default function ChatRoomPage() {
                       </p>
                       <p className="restaurant-card__caption">이 음식점 어때요?</p>
                       <button type="button" className="restaurant-card__cta"
-                              onClick={() => nav(`/restaurants/${card.restaurantId}/buddies`)}>
+                              onClick={() => nav(`/map?restaurantId=${card.restaurantId}`)}>
                         지도에서 보기
                       </button>
                     </div>
@@ -258,10 +257,7 @@ export default function ChatRoomPage() {
                     {card.restaurantName && <strong className="meeting-card__name">{card.restaurantName}</strong>}
                     <p className="meeting-card__when">{dateLabel(card.mealDate)} · {card.mealTimeLabel}</p>
                     <p className="meeting-card__with">{card.partnerNickname}님과 함께</p>
-                    <button type="button" className="meeting-card__cta"
-                            onClick={() => chatListRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}>
-                      약속 보기
-                    </button>
+                    <div className="meeting-card__cta">약속을 잡았어요!</div>
                   </div>
                 )}
               </div>

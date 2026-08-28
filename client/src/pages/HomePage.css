@@ -6,6 +6,65 @@
   align-items: flex-start;
 }
 
+.home__logo { height: 26px; width: auto; object-fit: contain; margin-bottom: 14px; }
+
+/* 진짜 랜덤 매칭 — 좌우로 꽉 찬 버튼 */
+.home__blind-btn {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: var(--c-accent);
+  border-radius: var(--r-lg);
+  box-shadow: 0 4px 16px rgba(172, 110, 57, 0.28);
+  text-align: left;
+}
+.home__blind-btn:disabled { opacity: 0.55; }
+.home__blind-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--c-white);
+}
+.home__blind-text { display: flex; flex-direction: column; gap: 2px; }
+.home__blind-text strong {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.32px;
+  color: var(--c-white);
+}
+.home__blind-text span {
+  font-size: 11.5px;
+  letter-spacing: -0.26px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* 대기 중 — 버튼 + 취소가 나란히, 버튼 자체는 카운트다운만 보여주는 비활성 표시로 바뀐다 */
+.home__blind-row { align-self: stretch; display: flex; gap: 8px; margin-top: 16px; }
+.home__blind-row .home__blind-btn { flex: 1; margin-top: 0; }
+.home__blind-btn--waiting { background: var(--c-select); box-shadow: none; }
+.home__blind-cancel {
+  flex: none;
+  padding: 0 18px;
+  background: var(--c-white);
+  box-shadow: var(--shadow-card-soft);
+  border-radius: var(--r-lg);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: -0.26px;
+  color: var(--c-text-sub);
+}
+.home__blind-cancel:disabled { opacity: 0.5; }
+
 /* 화면 크게 보기 — 발표용 접근성 위젯, 홈 최하단 */
 .home__a11y {
   align-self: stretch;
