@@ -133,6 +133,71 @@ jobs:
 
           echo "배포 확인 완료: $SITE"
 
+      # 자동 배포는 코드만 갱신한다. db/*.sql 은 docker-entrypoint-initdb.d 로
+      # "최초 1회, 데이터가 없을 때만" 실행되므로 운영 DB 에는 반영되지 않는다.
+      # 실제로 v5 가 누락된 채 코드만 나가서 채팅 목록 전체가 500 을 뱉은 적이 있다.
+      # 조용히 넘어가는 것보다 배포를 실패로 표시하는 편이 낫다.
+      - name: Verify DB migrations
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          SSH_KEY: ${{ runner.temp }}/.ssh/ec2.pem
+        run: |
+          set -uo pipefail
+
+          # exec -T : CI 에는 TTY 가 없다. 붙이지 않으면 compose 가 TTY 를 잡으려다 실패한다.
+          # 빠진 패치가 있으면 db:status 가 종료 코드 1 을 반환한다.
+          out=$(ssh -i "$SSH_KEY" -o StrictHostKeyChecking=yes ubuntu@"$EC2_HOST" \
+            'cd /home/ubuntu/bapfriend && sudo docker compose --env-file .env.production exec -T api npm run --silent db:status' 2>&1) \
+            && rc=0 || rc=$?
+
+          echo "::group::db:status 전체 출력"
+          echo "$out"
+          echo "::endgroup::"
+
+          if [ "$rc" = "0" ]; then
+            echo "DB 마이그레이션 최신 상태."
+            {
+              echo "### DB 마이그레이션"
+              echo ""
+              echo "v1~v6 전부 적용됨."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # --- 실패: 무엇이 빠졌고 무슨 명령을 돌려야 하는지 로그에 바로 보이게 한다 ---
+          echo ""
+          echo "================================================================"
+          echo " DB 마이그레이션이 밀려 있다 — 코드는 배포됐지만 스키마가 예전이다"
+          echo "================================================================"
+          echo ""
+          echo "[빠진 패치]"
+          echo "$out" | grep '빠짐' || echo "  (db:status 출력을 확인한다)"
+          echo ""
+          echo "[돌려야 할 명령] — ssh 로 접속해서 실행한다"
+          echo "  ssh -i <pem> ubuntu@<EC2_HOST>"
+          echo "  cd ~/bapfriend"
+          echo "$out" | grep -E 'docker compose|node scripts/run-sql' | grep -v '<파일>' || true
+          echo ""
+          echo "  적용 후 다시 확인:"
+          echo "    docker compose --env-file .env.production exec api npm run db:status"
+          echo ""
+
+          # 어느 패치가 빠졌는지 한 줄로 요약해 상단 annotation 에 띄운다
+          missing=$(echo "$out" | grep '빠짐' | sed -E "s/.*'(0[0-9][^']*)'.*/\1/" | tr '\n' ' ')
+          echo "::error title=DB 마이그레이션 누락::빠진 패치: ${missing:-확인 필요} — 서버에서 db:patch 를 실행해야 한다"
+
+          {
+            echo "### ❌ DB 마이그레이션 누락"
+            echo ""
+            echo "코드는 배포됐지만 스키마가 예전 상태다. 서버에서 아래를 실행한다."
+            echo ""
+            echo '```'
+            echo "$out"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit 1
+
       # 성공/실패와 무관하게 키와 호스트키를 지운다
       - name: Remove SSH key
         if: always()
