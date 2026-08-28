@@ -27,7 +27,7 @@
   margin-top: 12px;
 }
 
-.pref__price-card { margin-top: 12px; padding: 16px; }
+.pref__price-card { align-self: stretch; margin-top: 12px; padding: 16px; }
 
 .pref__price-labels {
   display: flex;
