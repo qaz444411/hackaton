@@ -2,10 +2,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import AppBar from '../components/AppBar.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
-import {
-  getRestaurant, getBuddies, getSpot, getSpotBuddies,
-  getCurrentMatching, createProposal, saveDraft,
-} from '../api/endpoints.js';
+import { getRestaurant, getBuddies, getSpot, getSpotBuddies } from '../api/endpoints.js';
+import { proposeTo, matchingErrorMessage } from '../lib/matching.js';
 
 /**
  * 밥친구 목록 — 취향 일치율 순, 매칭 요청 전송.
@@ -28,28 +26,18 @@ export default function BuddyListPage({ kind = 'restaurant' }) {
 
   const title = isSpot ? place?.label : place?.name;
 
-  /** 내 활성 요청이 없으면 이 지점 기준으로 즉석 생성 후 제안 */
+  /** "밥 같이 할까요?" — 내 활성 요청이 없으면 이 지점 기준으로 만들고 요청을 보낸다 */
   const request = async (b) => {
     try {
-      let mine = await getCurrentMatching();
-      if (!mine) {
-        mine = await saveDraft(isSpot
-          ? {
-              matchingType: 'SPOT', spotId: Number(id),
-              // 마커에는 음식 종류가 없으므로 상대에게 맞춘다(ANY 면 무엇이든 매칭)
-              foodTypeCode: 'ANY', talkStyleCode: 'ANY',
-              mealTimeCode: b.meal_time_code || 'LUNCH', priceMin: 0, priceMax: 100000,
-            }
-          : {
-              matchingType: 'MAP', restaurantId: Number(id),
-              foodTypeCode: place.food_type_code, talkStyleCode: 'ANY',
-              mealTimeCode: b.meal_time_code || 'LUNCH', priceMin: 0, priceMax: 100000,
-            });
-      }
-      const proposal = await createProposal({ requesterRequestId: mine.id, receiverUserId: b.user_id });
+      const proposal = await proposeTo(b, {
+        kind,
+        placeId: Number(id),
+        // 마커에는 음식 종류가 없다 (ANY 면 무엇이든 매칭)
+        foodTypeCode: isSpot ? 'ANY' : place?.food_type_code,
+      });
       nav(`/proposals/${proposal.id}/wait`);
     } catch (e) {
-      alert(e.response?.data?.message || '매칭 요청을 보내지 못했어요.');
+      alert(matchingErrorMessage(e, '매칭 요청을 보내지 못했어요.'));
     }
   };
 

@@ -5,7 +5,10 @@ import {
   useKakaoMap, useMyLocation, renderPins, renderMyLocation,
   attachLongPress, renderDraftPin, GEO, GEO_MESSAGE,
 } from '../hooks/useKakaoMap.js';
-import { getRestaurants, getSpots, createSpot } from '../api/endpoints.js';
+import {
+  getRestaurants, getSpots, createSpot, getSpot, getRestaurant,
+} from '../api/endpoints.js';
+import { proposeTo, matchingErrorMessage } from '../lib/matching.js';
 
 /**
  * 지도 페이지 — 카카오 지도 API 사용 지점 ①
@@ -14,9 +17,9 @@ import { getRestaurants, getSpots, createSpot } from '../api/endpoints.js';
  *  · 내 마커:     서버 /api/spots      ("여기서 먹고싶어요" — 식당이 아닌 지점도 가능)
  *
  * 조작
- *  · 핀 탭       → 배너 → 밥친구 목록
+ *  · 핀 탭        → 배너에서 바로 "밥 같이 할까요?" / "아니요"
  *  · 지도 길게 누르기 → 그 자리에 마커 만들기
- *  · ◎ 버튼      → 내 위치로
+ *  · ◎ 버튼       → 내 위치로
  */
 export default function MapPage() {
   const nav = useNavigate();
@@ -26,6 +29,9 @@ export default function MapPage() {
   const [restaurants, setRestaurants] = useState([]);
   const [spots, setSpots] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [detail, setDetail] = useState(null);     // 선택한 핀의 상세(모집 중인 사람 목록)
+  const [detailBusy, setDetailBusy] = useState(false);
+  const [sending, setSending] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [draft, setDraft] = useState(null);       // 롱프레스로 찍은 임시 지점
   const [draftLabel, setDraftLabel] = useState('');
@@ -65,6 +71,20 @@ export default function MapPage() {
     load();
   }, [ready, pos, setCenter, load]);
 
+  /* ── 핀을 고르면 상세(모집자 목록)를 받아온다 ── */
+  useEffect(() => {
+    if (!selected) { setDetail(null); return; }
+    let alive = true;
+    setDetail(null);
+    setDetailBusy(true);
+    const id = selected.kind === 'spot' ? selected.raw.spot_id : selected.raw.restaurant_id;
+    (selected.kind === 'spot' ? getSpot(id) : getRestaurant(id))
+      .then((d) => { if (alive) setDetail(d); })
+      .catch(() => { if (alive) setDetail(null); })
+      .finally(() => { if (alive) setDetailBusy(false); });
+    return () => { alive = false; };
+  }, [selected]);
+
   /* ── 오버레이 ─────────────────────────────── */
   useEffect(() => {
     if (!ready || !map.current) return;
@@ -96,13 +116,13 @@ export default function MapPage() {
   /* ── 지도 이동이 끝나면 그 영역 다시 조회 ───── */
   useEffect(() => {
     if (!ready || !map.current) return;
-    const m = map.current;
+    const mp = map.current;
     const handler = () => load();
-    window.kakao.maps.event.addListener(m, 'dragend', handler);
-    window.kakao.maps.event.addListener(m, 'zoom_changed', handler);
+    window.kakao.maps.event.addListener(mp, 'dragend', handler);
+    window.kakao.maps.event.addListener(mp, 'zoom_changed', handler);
     return () => {
-      window.kakao.maps.event.removeListener(m, 'dragend', handler);
-      window.kakao.maps.event.removeListener(m, 'zoom_changed', handler);
+      window.kakao.maps.event.removeListener(mp, 'dragend', handler);
+      window.kakao.maps.event.removeListener(mp, 'zoom_changed', handler);
     };
   }, [ready, load, map]);
 
@@ -128,7 +148,7 @@ export default function MapPage() {
       // 마커만 만들면 아무도 못 만난다 → 바로 취향 선택으로 이어서 모집 시작
       nav(`/preference?spotId=${spot.spot_id}`);
     } catch (e) {
-      alert(e.response?.data?.message || '마커를 만들지 못했어요.');
+      alert(matchingErrorMessage(e, '마커를 만들지 못했어요.'));
       setSaving(false);
     }
   };
@@ -138,8 +158,32 @@ export default function MapPage() {
     else requestLocation();
   };
 
-  const geoNotice = GEO_MESSAGE[geoState];
   const isSpot = selected?.kind === 'spot';
+  const placeId = isSpot ? selected?.raw.spot_id : selected?.raw.restaurant_id;
+  const buddies = detail?.preview || [];
+
+  /** "밥 같이 할까요?" — 1명이면 바로 요청, 여러 명이면 목록에서 고르게 */
+  const askToEat = async () => {
+    if (!buddies.length) return;
+    if (buddies.length > 1) {
+      nav(isSpot ? `/spots/${placeId}/buddies` : `/restaurants/${placeId}/buddies`);
+      return;
+    }
+    setSending(true);
+    try {
+      const proposal = await proposeTo(buddies[0], {
+        kind: selected.kind,
+        placeId,
+        foodTypeCode: isSpot ? 'ANY' : selected.raw.food_type_code,
+      });
+      nav(`/proposals/${proposal.id}/wait`);
+    } catch (e) {
+      alert(matchingErrorMessage(e, '매칭 요청을 보내지 못했어요.'));
+      setSending(false);
+    }
+  };
+
+  const geoNotice = GEO_MESSAGE[geoState];
 
   return (
     <div className="screen">
@@ -204,7 +248,7 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* 핀 배너 */}
+        {/* 핀 배너 — 모집 중인 사람이 있으면 여기서 바로 "밥 같이 할까요?" */}
         {selected && !draft && (
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
             <div className="sheet__handle" onClick={() => setSelected(null)} />
@@ -219,26 +263,54 @@ export default function MapPage() {
                 : `⭐ ${selected.raw.rating ?? '-'} · ${selected.raw.food_type_label} · ${selected.raw.distance_m}m`}
             </p>
 
-            <p style={{ marginTop: 10, fontWeight: 700, color: 'var(--c-primary)' }}>
-              {selected.count > 0
-                ? `지금 ${selected.count}명이 밥친구를 찾고 있어요`
-                : '아직 아무도 없어요 — 먼저 모집해 보세요'}
-            </p>
+            {detailBusy && <p className="muted" style={{ marginTop: 12 }}>불러오는 중…</p>}
 
-            {selected.count > 0 ? (
-              <button className="btn" style={{ marginTop: 14 }}
-                      onClick={() => nav(isSpot
-                        ? `/spots/${selected.raw.spot_id}/buddies`
-                        : `/restaurants/${selected.raw.restaurant_id}/buddies`)}>
-                밥친구 보기
-              </button>
-            ) : (
-              <button className="btn" style={{ marginTop: 14 }}
-                      onClick={() => nav(isSpot
-                        ? `/preference?spotId=${selected.raw.spot_id}`
-                        : `/preference?restaurantId=${selected.raw.restaurant_id}`)}>
-                여기서 모집 시작하기
-              </button>
+            {!detailBusy && buddies.length > 0 && (
+              <>
+                <div className="row" style={{ marginTop: 14, alignItems: 'center' }}>
+                  <div className="avatar-stack">
+                    {buddies.slice(0, 4).map((u) => (
+                      <img key={u.user_id} className="avatar"
+                           src={u.profile_image || '/avatar-default.png'} alt="" />
+                    ))}
+                  </div>
+                  <div className="list-item__body">
+                    <strong>
+                      {buddies[0].nickname}
+                      {buddies.length > 1 ? `님 외 ${buddies.length - 1}명` : '님'}
+                    </strong>
+                    <div className="muted">이 자리에서 밥친구를 찾고 있어요</div>
+                  </div>
+                </div>
+
+                <p className="ask-title">밥 같이 할까요?</p>
+                <div className="row" style={{ marginTop: 10 }}>
+                  <button className="btn btn--line" onClick={() => setSelected(null)}>
+                    아니요
+                  </button>
+                  <button className="btn" disabled={sending} onClick={askToEat}>
+                    {sending ? '보내는 중…'
+                      : buddies.length > 1 ? '누구와 먹을까요?' : '네, 좋아요'}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {!detailBusy && buddies.length === 0 && (
+              <>
+                <p style={{ marginTop: 12, fontWeight: 700, color: 'var(--c-primary)' }}>
+                  아직 아무도 없어요 — 먼저 모집해 보세요
+                </p>
+                <div className="row" style={{ marginTop: 12 }}>
+                  <button className="btn btn--line" onClick={() => setSelected(null)}>닫기</button>
+                  <button className="btn"
+                          onClick={() => nav(isSpot
+                            ? `/preference?spotId=${placeId}`
+                            : `/preference?restaurantId=${placeId}`)}>
+                    여기서 모집 시작
+                  </button>
+                </div>
+              </>
             )}
           </div>
         )}

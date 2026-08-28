@@ -275,3 +275,25 @@ input[type='range'] { flex: 1; accent-color: var(--c-primary); }
 .list-item { display: flex; gap: 12px; align-items: center; }
 .list-item__body { flex: 1; min-width: 0; }
 .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 진행 중 매칭 카드 (홈) */
+.matching-card { border-color: var(--c-primary); }
+.dot-pulse {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--c-primary);
+  animation: dot-pulse 1.2s infinite ease-in-out;
+}
+@keyframes dot-pulse { 0%, 100% { opacity: .3; transform: scale(.8); }
+                       50%      { opacity: 1;  transform: scale(1.15); } }
+
+/* 지도 배너 — "밥 같이 할까요?" */
+.ask-title {
+  margin-top: 16px; text-align: center;
+  font-family: var(--font-display); font-size: 17px; font-weight: 800;
+  color: var(--c-text);
+}
+/* 참여자 아바타 겹쳐 보여주기 */
+.avatar-stack { display: flex; flex: none; }
+.avatar-stack .avatar {
+  width: 36px; height: 36px; border: 2px solid var(--c-white); margin-right: -10px;
+}
+.avatar-stack .avatar:last-child { margin-right: 0; }
