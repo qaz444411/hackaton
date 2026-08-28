@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { Check } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
-import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { getChatRoom, getRating, submitRating, reportChat } from '../api/endpoints.js';
 import './RatingPage.css';
 
@@ -24,11 +24,10 @@ const TAGS = [
 ];
 
 const REPORT_REASONS = [
-  { code: 'SPAM', label: '스팸·도배' },
-  { code: 'ABUSE', label: '욕설·괴롭힘' },
-  { code: 'SEXUAL', label: '성적 불쾌감' },
-  { code: 'NOSHOW', label: '약속 불이행(노쇼)' },
-  { code: 'FRAUD', label: '사기·허위정보' },
+  { code: 'ABUSE', label: '불쾌한 언행' },
+  { code: 'NOSHOW', label: '약속 불이행' },
+  { code: 'FRAUD', label: '허위 정보' },
+  { code: 'SEXUAL', label: '부적절한 목적의 만남' },
   { code: 'ETC', label: '기타' },
 ];
 
@@ -46,9 +45,13 @@ export default function RatingPage() {
     if (existing) { setScore(existing.score); setTags(new Set(existing.tags)); }
   }, [existing]);
   const [submitting, setSubmitting] = useState(false);
-  const [reportOpen, setReportOpen] = useState(false);
+  // 신고 — '사유 선택' 시트 다음 '접수할까요?' 확인 시트로 이어지는 2단계
+  const [reportStep, setReportStep] = useState(null); // 'reason' | 'confirm' | null
   const [reportReason, setReportReason] = useState(null);
+  const [reportDetail, setReportDetail] = useState('');
   const [reporting, setReporting] = useState(false);
+
+  const closeReport = () => { setReportStep(null); setReportReason(null); setReportDetail(''); };
 
   const toggleTag = (code) => {
     setTags((prev) => {
@@ -74,12 +77,11 @@ export default function RatingPage() {
   const confirmReport = async () => {
     setReporting(true);
     try {
-      await reportChat(matchId, { reasonCode: reportReason.code });
+      await reportChat(matchId, { reasonCode: reportReason.code, detail: reportDetail.trim() || undefined });
       nav('/chats', { replace: true });
     } catch (e) {
       alert(e.response?.data?.message || '신고하지 못했어요.');
       setReporting(false);
-      setReportReason(null);
     }
   };
 
@@ -130,7 +132,7 @@ export default function RatingPage() {
 
         <div className="rating__report-row">
           <span>문제가 있었나요?</span>
-          <button type="button" className="rating__report-link" onClick={() => setReportOpen(true)}>신고하기</button>
+          <button type="button" className="rating__report-link" onClick={() => setReportStep('reason')}>신고하기</button>
         </div>
       </div>
 
@@ -140,30 +142,52 @@ export default function RatingPage() {
         </button>
       </div>
 
-      {reportOpen && (
+      {/* 신고 1단계 — 사유 선택 + 상세 내용 */}
+      {reportStep === 'reason' && (
         <>
-          <div className="sheet-backdrop" onClick={() => setReportOpen(false)} />
-          <div className="sheet plus-menu">
-            <div className="sheet__handle" onClick={() => setReportOpen(false)} />
-            {REPORT_REASONS.map((r) => (
-              <button key={r.code} type="button" className="plus-menu__item"
-                      onClick={() => { setReportOpen(false); setReportReason(r); }}>
-                {r.label}
-              </button>
-            ))}
+          <div className="sheet-backdrop" onClick={closeReport} />
+          <div className="sheet report-sheet">
+            <div className="sheet__handle" onClick={closeReport} />
+            <p className="report-sheet__title">신고 사유를 선택해주세요</p>
+            <div className="report-sheet__list">
+              {REPORT_REASONS.map((r) => (
+                <button key={r.code} type="button"
+                        className={`report-sheet__reason${reportReason?.code === r.code ? ' report-sheet__reason--active' : ''}`}
+                        onClick={() => setReportReason(r)}>
+                  {r.label}
+                  {reportReason?.code === r.code && <Check size={16} strokeWidth={2.4} />}
+                </button>
+              ))}
+            </div>
+            <textarea className="report-sheet__detail" maxLength={300} placeholder="상세 내용을 입력해주세요"
+                      value={reportDetail} onChange={(e) => setReportDetail(e.target.value)} />
+            <div className="report-sheet__actions">
+              <button type="button" className="report-sheet__cancel" onClick={closeReport}>취소</button>
+              <button type="button" className="report-sheet__next" disabled={!reportReason}
+                      onClick={() => setReportStep('confirm')}>신고하기</button>
+            </div>
           </div>
         </>
       )}
 
-      {reportReason && (
-        <ConfirmDialog
-          title="신고하고 매칭을 종료할까요?"
-          desc={`"${reportReason.label}"로 신고해요. 신고하면 이 매칭 대화가 종료되고 되돌릴 수 없어요.`}
-          confirmLabel={reporting ? '신고하는 중…' : '신고하기'}
-          cancelLabel="취소"
-          onCancel={() => !reporting && setReportReason(null)}
-          onConfirm={confirmReport}
-        />
+      {/* 신고 2단계 — 접수 확인 */}
+      {reportStep === 'confirm' && (
+        <>
+          <div className="sheet-backdrop" onClick={closeReport} />
+          <div className="sheet report-confirm">
+            <div className="sheet__handle" onClick={closeReport} />
+            <p className="report-sheet__title">신고를 접수할까요?</p>
+            <p className="report-confirm__desc">
+              &ldquo;{reportReason?.label}&rdquo; 사유로 신고가 접수돼요. 검토 후 조치가 이루어져요.
+            </p>
+            <button type="button" className="report-confirm__cancel" disabled={reporting} onClick={closeReport}>
+              취소
+            </button>
+            <button type="button" className="report-confirm__submit" disabled={reporting} onClick={confirmReport}>
+              {reporting ? '접수하는 중…' : '신고 접수하기'}
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

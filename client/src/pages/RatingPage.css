@@ -104,3 +104,90 @@
   color: var(--c-white);
 }
 .rating__submit:disabled { opacity: 0.5; box-shadow: none; }
+
+/* 신고 1단계 — 사유 선택 + 상세 내용 (추가 디자인/신고-1) */
+.report-sheet__title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.32px;
+  color: var(--c-text);
+  margin-bottom: 14px;
+}
+.report-sheet__list { display: flex; flex-direction: column; gap: 6px; }
+.report-sheet__reason {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 50px;
+  padding: 0 14px;
+  background: var(--c-white);
+  border: 1.2px solid var(--c-line);
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-size: 14px;
+  letter-spacing: -0.32px;
+  color: var(--c-text);
+}
+.report-sheet__reason--active {
+  background: rgba(172, 110, 57, 0.06);
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+}
+.report-sheet__detail {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 80px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: var(--c-bg);
+  border: 0.6px solid var(--c-line);
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-size: 14px;
+  letter-spacing: -0.28px;
+  color: var(--c-text);
+  resize: none;
+}
+.report-sheet__detail::placeholder { color: rgba(34, 34, 34, 0.5); }
+.report-sheet__actions { display: flex; gap: 10px; margin-top: 16px; }
+.report-sheet__cancel, .report-sheet__next {
+  box-sizing: border-box;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  letter-spacing: -0.28px;
+}
+.report-sheet__cancel { background: var(--c-white); border: 0.6px solid var(--c-line-strong); color: var(--c-text); }
+.report-sheet__next { background: var(--c-white); border: 1.2px solid var(--c-accent); color: var(--c-accent); }
+.report-sheet__next:disabled { opacity: 0.4; }
+
+/* 신고 2단계 — 접수 확인 (추가 디자인/신고-2) */
+.report-confirm__desc {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  letter-spacing: -0.32px;
+  color: var(--c-text-sub);
+}
+.report-confirm__cancel, .report-confirm__submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 52px;
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-size: 14px;
+  letter-spacing: -0.28px;
+}
+.report-confirm__cancel { margin-top: 24px; background: var(--c-select); color: var(--c-white); }
+.report-confirm__submit { margin-top: 10px; background: var(--c-white); border: 1.2px solid var(--c-accent); color: var(--c-accent); }
+.report-confirm__cancel:disabled, .report-confirm__submit:disabled { opacity: 0.6; }
