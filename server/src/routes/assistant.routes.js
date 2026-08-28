@@ -1,17 +1,16 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { one } from '../db/pool.js';
-import { config } from '../config.js';
 import { auth } from '../middlewares/auth.js';
 import { wrap } from '../middlewares/error.js';
-import { chatWithAssistant } from '../services/gemini.service.js';
+import { chatWithAssistant, providerStatus } from '../services/ai.service.js';
 
 const r = Router();
 r.use(auth);
 
 /** 홈 화면에서 "키가 없다"는 걸 미리 알려주기 위한 상태 조회 */
 r.get('/status', wrap(async (req, res) => {
-  res.json({ enabled: !!config.gemini.key, model: config.gemini.model });
+  res.json(providerStatus());
 }));
 
 /** 처음 열었을 때 보여줄 추천 질문 — 사용자 상황에 맞춰 조금씩 다르게 */

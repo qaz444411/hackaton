@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { q, one, pool } from '../db/pool.js';
 import { auth } from '../middlewares/auth.js';
 import { wrap } from '../middlewares/error.js';
-import { suggestQuestions } from '../services/gemini.service.js';
+import { suggestQuestions } from '../services/ai.service.js';
 
 const r = Router();
 r.use(auth);

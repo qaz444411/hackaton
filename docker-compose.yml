@@ -52,6 +52,10 @@ services:
       DB_HOST: db
       DB_PORT: "3306"
       TZ: Asia/Seoul
+      # Bedrock 리전. 코드에 하드코딩하지 않고 여기서만 정한다.
+      # 배정 리전 밖은 IAM 이 전부 막혀 있어 다른 값을 넣으면 AccessDenied 가 난다.
+      # 자격증명은 EC2 인스턴스 프로파일이 처리한다 — Access Key 는 넣지 않는다.
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-west-2}
     depends_on:
       db:
         condition: service_healthy
