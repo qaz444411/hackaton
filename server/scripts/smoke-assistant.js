@@ -9,7 +9,10 @@ import mysql from 'mysql2/promise';
 
 const BASE = `http://localhost:${process.env.PORT || 4000}/api`;
 const stamp = Date.now().toString().slice(-9);
-const hasKey = !!process.env.GEMINI_API_KEY;
+const provider = (process.env.AI_PROVIDER || 'gemini').trim().toLowerCase();
+// bedrock 은 인스턴스 프로파일로 인증하므로 키 설정 여부라는 개념이 없다
+const hasKey = provider === 'bedrock' ? true : !!process.env.GEMINI_API_KEY;
+const expectedSource = provider === 'bedrock' ? 'BEDROCK' : 'GEMINI';
 
 const results = [];
 const check = (name, ok, detail = '') => {
@@ -31,7 +34,9 @@ async function call(path, { method = 'GET', token, body } = {}) {
 }
 
 console.log(`서버: ${BASE}`);
-console.log(`GEMINI_API_KEY: ${hasKey ? '설정됨' : '비어 있음 (폴백 경로 검증)'}\n`);
+console.log(`AI_PROVIDER   : ${provider} (기대 source=${expectedSource})`);
+console.log(`인증          : ${provider === "bedrock" ? "EC2 인스턴스 프로파일" : (hasKey ? "GEMINI_API_KEY 설정됨" : "키 없음 — 폴백 경로 검증")}
+`);
 
 // 테스트 계정
 const codes = await call('/codes');
@@ -64,7 +69,7 @@ check('첫 질문에 응답', !!a1.reply && a1.reply.length > 5, `source=${a1.so
 console.log(`\n[Q] 오늘 뭐 먹을지 못 정하겠어요\n[A] ${a1.reply}\n`);
 
 if (hasKey) {
-  check('제미나이가 실제로 응답', a1.source === 'GEMINI', `source=${a1.source}`);
+  check(`${expectedSource} 가 실제로 응답`, a1.source === expectedSource, `source=${a1.source}`);
 } else {
   check('키 없으면 안내 문구 반환', a1.source === 'NO_KEY', `source=${a1.source}`);
   check('안내에 GEMINI_API_KEY 언급', a1.reply.includes('GEMINI_API_KEY'));
