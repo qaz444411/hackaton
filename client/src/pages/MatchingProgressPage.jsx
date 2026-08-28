@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import AppBar from '../components/AppBar.jsx';
-import { getCandidates, cancelMatching } from '../api/endpoints.js';
+import { getCandidates, getMatchingDiagnosis, cancelMatching } from '../api/endpoints.js';
+
+/** 후보가 안 잡힐 때 원인을 보여주기까지 기다리는 시간 */
+const DIAGNOSE_AFTER_MS = 8000;
 
 /** 매칭 진행 페이지 — 로딩 + 진행 바, 후보를 찾으면 결과로 이동 */
 export default function MatchingProgressPage() {
@@ -11,21 +14,32 @@ export default function MatchingProgressPage() {
   const qc = useQueryClient();
   const [pct, setPct] = useState(8);
   const [leaving, setLeaving] = useState(false);   // 뒤로가기 시 뜨는 선택지
+  const [relax, setRelax] = useState(false);       // 조건 넓혀서 찾기
+  const [stalled, setStalled] = useState(false);   // 한참 못 찾은 상태
 
   // 후보 탐색 폴링 (2초 간격)
   const { data } = useQuery({
-    queryKey: ['candidates', id],
-    queryFn: () => getCandidates(id),
+    queryKey: ['candidates', id, relax],
+    queryFn: () => getCandidates(id, relax),
     refetchInterval: 2000,
+  });
+
+  // 왜 못 찾는지 — 조건별 원인
+  const { data: diag } = useQuery({
+    queryKey: ['matching', id, 'diagnosis'],
+    queryFn: () => getMatchingDiagnosis(id),
+    enabled: stalled,
+    refetchInterval: 5000,
   });
 
   useEffect(() => {
     const t = setInterval(() => setPct((p) => Math.min(p + 4, 95)), 600);
-    return () => clearInterval(t);
+    const s = setTimeout(() => setStalled(true), DIAGNOSE_AFTER_MS);
+    return () => { clearInterval(t); clearTimeout(s); };
   }, []);
 
   useEffect(() => {
-    if (data?.length) nav(`/matching/${id}/result`, { replace: true });
+    if (data?.length) nav(`/matching/${id}/result${relax ? '?relax=1' : ''}`, { replace: true });
   }, [data]);
 
   const refresh = () => {
@@ -44,6 +58,8 @@ export default function MatchingProgressPage() {
     }
   };
 
+  const noneYet = stalled && data && data.length === 0;
+
   return (
     <div className="screen">
       {/*
@@ -56,12 +72,37 @@ export default function MatchingProgressPage() {
       <div className="screen__body" style={{ display: 'flex', flexDirection: 'column',
                                             alignItems: 'center', justifyContent: 'center' }}>
         <div className="spinner" />
-        <h2 style={{ marginBottom: 6 }}>취향이 맞는 밥친구를 찾고 있어요</h2>
+        <h2 style={{ marginBottom: 6 }}>
+          {relax ? '조건을 넓혀서 찾고 있어요' : '취향이 맞는 밥친구를 찾고 있어요'}
+        </h2>
         <p className="muted" style={{ marginBottom: 24 }}>잠시만 기다려 주세요…</p>
         <div className="progress"><div className="progress__fill" style={{ width: `${pct}%` }} /></div>
         <p className="muted" style={{ marginTop: 8 }}>{pct}%</p>
 
-        <button className="btn btn--line" style={{ marginTop: 32 }} onClick={cancel}>
+        {/* 무한 스피너 대신 왜 못 찾는지 알려준다 */}
+        {noneYet && (
+          <div className="card stall-card">
+            <strong>아직 맞는 분을 못 찾았어요</strong>
+            <ul className="stall-list">
+              {(diag?.reasons?.length ? diag.reasons : ['조건에 맞는 사람을 찾는 중이에요.'])
+                .map((r) => <li key={r}>{r}</li>)}
+            </ul>
+            {diag && (
+              <p className="muted">지금 매칭 중인 다른 사람: {diag.searching}명</p>
+            )}
+            {!relax && diag?.searching > 0 && (
+              <button className="btn" style={{ marginTop: 12 }} onClick={() => setRelax(true)}>
+                조건 넓혀서 찾기
+              </button>
+            )}
+            <button className="btn btn--line" style={{ marginTop: 8 }}
+                    onClick={async () => { await cancelMatching(id); refresh(); nav('/preference'); }}>
+              조건 바꾸기
+            </button>
+          </div>
+        )}
+
+        <button className="btn btn--line" style={{ marginTop: 24 }} onClick={cancel}>
           매칭 취소하기
         </button>
       </div>

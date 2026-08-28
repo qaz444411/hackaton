@@ -297,3 +297,15 @@ input[type='range'] { flex: 1; accent-color: var(--c-primary); }
   width: 36px; height: 36px; border: 2px solid var(--c-white); margin-right: -10px;
 }
 .avatar-stack .avatar:last-child { margin-right: 0; }
+
+/* 매칭이 안 잡힐 때 원인 안내 */
+.stall-card { margin-top: 24px; width: 100%; text-align: left; }
+.stall-list { margin: 8px 0 10px; padding-left: 18px; }
+.stall-list li { font-size: 13px; color: var(--c-text-sub); line-height: 1.7; }
+
+/* 조건을 넓혀서 찾은 상대 */
+.near-note {
+  margin-top: 12px; padding: 10px 12px; border-radius: var(--r-md);
+  background: var(--c-primary-tint); color: var(--c-primary);
+  font-size: 12px; line-height: 1.5; font-weight: 600;
+}

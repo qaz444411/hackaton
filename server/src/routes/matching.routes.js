@@ -81,10 +81,70 @@ r.get('/current', wrap(async (req, res) => {
   res.json({ ...mr, history });
 }));
 
-/** 매칭 결과 페이지 — 후보 1명(랜덤) 또는 목록 */
+/**
+ * 매칭 결과 페이지 — 후보 목록.
+ * ?relax=1 이면 시간대·음식·가격 조건을 풀어 넓게 찾는다("조건 넓혀서 찾기").
+ */
 r.get('/:id/candidates', wrap(async (req, res) => {
-  const rows = await findCandidates(Number(req.params.id), req.user.id, Number(req.query.limit || 10));
+  const rows = await findCandidates(Number(req.params.id), req.user.id, {
+    limit: Number(req.query.limit || 10),
+    relax: req.query.relax === '1' || req.query.relax === 'true',
+  });
   res.json(rows);
+}));
+
+/**
+ * 왜 후보가 안 잡히는지 진단.
+ * 무한 스피너 대신 "시간대가 안 맞아요" 처럼 원인을 보여주기 위한 것.
+ */
+r.get('/:id/diagnosis', wrap(async (req, res) => {
+  const id = Number(req.params.id);
+  const mine = await one(
+    `SELECT mr.*, mt.sort_order AS meal_order FROM matching_request mr
+       JOIN meal_time_code mt ON mt.code = mr.meal_time_code
+      WHERE mr.id = :id AND mr.user_id = :me`, { id, me: req.user.id });
+  if (!mine) return res.status(404).json({ message: '매칭 요청을 찾을 수 없습니다.' });
+
+  const MEAL_OK  = 'ABS(mt.sort_order - :mealOrder) <= 1';
+  const FOOD_OK  = "(o.food_type_code = :food OR 'ANY' IN (o.food_type_code, :food))";
+  const PRICE_OK = '(o.price_max >= :pmin AND o.price_min <= :pmax)';
+
+  const [row] = await q(
+    `SELECT
+       COUNT(*) AS searching,
+       SUM(${MEAL_OK})  AS meal_ok,
+       SUM(${FOOD_OK})  AS food_ok,
+       SUM(${PRICE_OK}) AS price_ok,
+       SUM(${MEAL_OK} AND ${FOOD_OK} AND ${PRICE_OK}) AS all_ok
+     FROM matching_request o
+     JOIN users u           ON u.id = o.user_id AND u.status = 'ACTIVE'
+     JOIN meal_time_code mt ON mt.code = o.meal_time_code
+    WHERE o.status = 'SEARCHING' AND o.user_id <> :me`,
+    { me: req.user.id, mealOrder: mine.meal_order, food: mine.food_type_code,
+      pmin: mine.price_min, pmax: mine.price_max });
+
+  const n = (v) => Number(v || 0);
+  const searching = n(row.searching);
+  const reasons = [];
+
+  if (!searching) {
+    reasons.push('지금 매칭 중인 다른 사람이 없어요.');
+  } else {
+    if (!n(row.meal_ok))  reasons.push('시간대가 맞는 사람이 없어요.');
+    if (!n(row.food_ok))  reasons.push('음식 종류가 맞는 사람이 없어요.');
+    if (!n(row.price_ok)) reasons.push('가격대가 맞는 사람이 없어요.');
+    // 조건별로는 맞는 사람이 있는데 셋을 동시에 만족하는 사람이 없는 경우.
+    // 이걸 빼면 "왜 안 잡히지" 상태에서 아무 설명도 못 준다.
+    if (!reasons.length && !n(row.all_ok)) {
+      reasons.push('조건을 모두 만족하는 사람이 없어요. 조건을 넓혀서 찾아보세요.');
+    }
+  }
+
+  res.json({
+    searching,
+    matched: n(row.all_ok),
+    reasons,
+  });
 }));
 
 /** 뒤로가기/취소 */

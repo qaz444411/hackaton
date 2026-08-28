@@ -12,6 +12,7 @@
     "gemini:check": "node scripts/check-gemini.js",
     "smoke:ai": "node scripts/smoke-assistant.js",
     "smoke:cancel": "node scripts/smoke-cancel.js",
+    "smoke:match": "node scripts/smoke-match.js",
     "smoke": "node scripts/smoke-spot.js --cleanup",
     "smoke:keep": "node scripts/smoke-spot.js",
     "smoke:clean": "node scripts/clean-smoke.js"

@@ -22,7 +22,10 @@ export const getHome = () => api.get('/matching/home').then((r) => r.data);
 export const saveDraft = (body) => api.post('/matching/draft', body).then((r) => r.data);
 export const startMatching = (id) => api.post(`/matching/${id}/start`).then((r) => r.data);
 export const getCurrentMatching = () => api.get('/matching/current').then((r) => r.data);
-export const getCandidates = (id) => api.get(`/matching/${id}/candidates`).then((r) => r.data);
+export const getCandidates = (id, relax = false) =>
+  api.get(`/matching/${id}/candidates`, { params: relax ? { relax: 1 } : {} }).then((r) => r.data);
+export const getMatchingDiagnosis = (id) =>
+  api.get(`/matching/${id}/diagnosis`).then((r) => r.data);
 export const cancelMatching = (id) => api.post(`/matching/${id}/cancel`).then((r) => r.data);
 
 /* ── 음식점 / 지도 ───────────────────────────── */

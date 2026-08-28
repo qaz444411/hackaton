@@ -1,16 +1,22 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import AppBar from '../components/AppBar.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
 import { getCandidates, createProposal } from '../api/endpoints.js';
+import { matchingErrorMessage } from '../lib/matching.js';
 
 /** 매칭 결과 페이지 — 상대 프로필 + 취향 일치율 / 같이 밥 먹기 · 다른 친구 찾기 */
 export default function MatchResultPage() {
   const { id } = useParams();
   const nav = useNavigate();
+  const [sp] = useSearchParams();
+  const relax = sp.get('relax') === '1';
   const [idx, setIdx] = useState(0);
-  const { data = [], isLoading } = useQuery({ queryKey: ['candidates', id], queryFn: () => getCandidates(id) });
+  const { data = [], isLoading } = useQuery({
+    queryKey: ['candidates', id, relax],
+    queryFn: () => getCandidates(id, relax),
+  });
 
   if (isLoading) return <div className="screen center">불러오는 중…</div>;
   const p = data[idx];
@@ -31,17 +37,28 @@ export default function MatchResultPage() {
 
   /** 같이 밥 먹기 → 매칭 요청(제안) 전송 후 대기 화면 */
   const accept = async () => {
-    const proposal = await createProposal({
-      requesterRequestId: Number(id),
-      receiverUserId: p.user_id,
-    });
-    nav(`/proposals/${proposal.id}/wait`);
+    try {
+      const proposal = await createProposal({
+        requesterRequestId: Number(id),
+        receiverUserId: p.user_id,
+      });
+      nav(`/proposals/${proposal.id}/wait`);
+    } catch (e) {
+      alert(matchingErrorMessage(e, '매칭 요청을 보내지 못했어요.'));
+    }
   };
 
   return (
     <div className="screen">
       <AppBar title="매칭 결과" onBack={() => nav('/home')} />
       <div className="screen__body">
+        {/* 조건을 넓혀서 찾은 상대는 취향이 다를 수 있으니 미리 알린다 */}
+        {p.match_level === 'NEAR' && (
+          <div className="near-note">
+            조건을 넓혀서 찾은 분이에요. 시간대·음식·가격이 조금 다를 수 있어요.
+          </div>
+        )}
+
         <ProfileCard p={p} onClick={() => nav(`/users/${p.user_id}`)} />
 
         <h2 className="section-title">이번 식사 취향</h2>
