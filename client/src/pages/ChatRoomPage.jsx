@@ -49,6 +49,7 @@ export default function ChatRoomPage() {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const bottomRef = useRef(null);
+  const chatListRef = useRef(null);
 
   // "+" 버튼 플로우 — 'menu' | 'pick-send' | 'pick-meeting' | 'datetime' | null
   const [plusStep, setPlusStep] = useState(null);
@@ -146,6 +147,10 @@ export default function ChatRoomPage() {
       await sendMeetingMessage(matchId, {
         restaurantId: pickedRestaurant?.restaurant_id, mealDate, mealTimeCode,
       });
+      // 약속이 잡히면 상단 약속 정보 배너(식당/시간)도 바로 바뀌어야 한다 —
+      // 안 그러면 화면을 나갔다 들어와야 반영된다.
+      qc.invalidateQueries({ queryKey: ['chatRoom', matchId] });
+      qc.invalidateQueries({ queryKey: ['home'] });
       closePlus();
     } catch (e) {
       alert(e.response?.data?.message || '약속을 보내지 못했어요.');
@@ -208,7 +213,7 @@ export default function ChatRoomPage() {
         </div>
       )}
 
-      <div className="chat-list">
+      <div className="chat-list" ref={chatListRef}>
         {messages.map((m) => {
           if (m.message_type === 'SYSTEM') {
             return <div key={m.id} className="bubble bubble--sys">{m.content}</div>;
@@ -243,7 +248,10 @@ export default function ChatRoomPage() {
                     {card.restaurantName && <strong className="meeting-card__name">{card.restaurantName}</strong>}
                     <p className="meeting-card__when">{dateLabel(card.mealDate)} · {card.mealTimeLabel}</p>
                     <p className="meeting-card__with">{card.partnerNickname}님과 함께</p>
-                    <button type="button" className="meeting-card__cta" onClick={() => setMenu(false)}>약속 보기</button>
+                    <button type="button" className="meeting-card__cta"
+                            onClick={() => chatListRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}>
+                      약속 보기
+                    </button>
                   </div>
                 )}
               </div>

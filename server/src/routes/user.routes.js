@@ -57,9 +57,22 @@ r.post('/profile', wrap(async (req, res) => {
   res.json({ ok: true, nextStep: 'DONE' });
 }));
 
-/** 프로필 사진 업로드 — 마이페이지 아바타 연필 버튼 */
-r.post('/me/avatar', avatarUpload.single('avatar'), wrap(async (req, res) => {
-  if (!req.file) return res.status(400).json({ message: '이미지 파일이 필요합니다.' });
+/**
+ * 프로필 사진 업로드 — 마이페이지 아바타 연필 버튼.
+ * multer 는 자체 에러(용량 초과 등)를 next(err) 로 넘기는데, 공용 errorHandler 는
+ * MulterError 를 모르는 채 500 으로 떨어뜨리므로 여기서 먼저 400 으로 바꿔준다.
+ */
+r.post('/me/avatar', (req, res, next) => {
+  avatarUpload.single('avatar')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      const message = err.code === 'LIMIT_FILE_SIZE' ? '이미지는 5MB 이하만 올릴 수 있어요.' : '업로드에 실패했어요.';
+      return res.status(400).json({ message });
+    }
+    if (err) return next(err);
+    next();
+  });
+}, wrap(async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: '이미지 파일(jpg/png/webp/gif)만 올릴 수 있어요.' });
 
   const prev = await one('SELECT profile_image FROM users WHERE id = :u', { u: req.user.id });
   const url = `/api/uploads/avatars/${req.file.filename}`;

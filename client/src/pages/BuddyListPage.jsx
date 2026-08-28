@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import AppBar from '../components/AppBar.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import './BuddyListPage.css';
 import { getRestaurant, getBuddies, getSpot, getSpotBuddies } from '../api/endpoints.js';
 import { proposeTo, matchingErrorMessage } from '../lib/matching.js';
@@ -15,6 +17,8 @@ export default function BuddyListPage({ kind = 'restaurant' }) {
   const { id } = useParams();
   const nav = useNavigate();
   const isSpot = kind === 'spot';
+  const [confirmTarget, setConfirmTarget] = useState(null);
+  const [sending, setSending] = useState(false);
 
   const { data: place } = useQuery({
     queryKey: [kind, id],
@@ -28,7 +32,10 @@ export default function BuddyListPage({ kind = 'restaurant' }) {
   const title = isSpot ? place?.label : place?.name;
 
   /** "밥 같이 할까요?" — 내 활성 요청이 없으면 이 지점 기준으로 만들고 요청을 보낸다 */
-  const request = async (b) => {
+  const request = async () => {
+    const b = confirmTarget;
+    if (!b) return;
+    setSending(true);
     try {
       const proposal = await proposeTo(b, {
         kind, placeId: Number(id),
@@ -38,6 +45,8 @@ export default function BuddyListPage({ kind = 'restaurant' }) {
       nav(`/proposals/${proposal.id}/wait`);
     } catch (e) {
       alert(matchingErrorMessage(e, '매칭 요청을 보내지 못했어요.'));
+      setSending(false);
+      setConfirmTarget(null);
     }
   };
 
@@ -67,7 +76,7 @@ export default function BuddyListPage({ kind = 'restaurant' }) {
           {buddies.map((b) => (
             <ProfileCard key={b.user_id} p={b}
               footer={
-                <button type="button" className="bl__cta" onClick={() => request(b)}>같이 먹기</button>
+                <button type="button" className="bl__cta" onClick={() => setConfirmTarget(b)}>같이 먹기</button>
               } />
           ))}
           {!buddies.length && (
@@ -79,6 +88,17 @@ export default function BuddyListPage({ kind = 'restaurant' }) {
           )}
         </div>
       </div>
+
+      {confirmTarget && (
+        <ConfirmDialog
+          title={`${confirmTarget.nickname}님과 ${title || '여기'}에서 같이 먹을까요?`}
+          desc={confirmTarget.match_rate != null ? `취향 일치 ${confirmTarget.match_rate}%` : undefined}
+          confirmLabel={sending ? '보내는 중…' : '매칭 요청하기'}
+          cancelLabel="취소"
+          onCancel={() => !sending && setConfirmTarget(null)}
+          onConfirm={request}
+        />
+      )}
     </div>
   );
 }

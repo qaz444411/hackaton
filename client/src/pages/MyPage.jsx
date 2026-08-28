@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronRight, Pencil } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
 import { getMyPage, getHistory, updateNotifications, updateAiContext, uploadAvatar } from '../api/endpoints.js';
-import { requestNotifyPermission } from '../lib/notify.js';
+import { requestNotifyPermission, notifySupported } from '../lib/notify.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import './MyPage.css';
 
@@ -51,7 +51,10 @@ export default function MyPage() {
 
   // 채팅 알림 + 매칭 알림을 하나로 묶었다 — 켜는 순간 브라우저 알림 권한을 직접 물어봐서
   // 동의해야만 실제로 알림이 뜨게 한다(동의 없이 켜두면 아무 일도 안 일어나 헷갈린다).
-  const chatMatchOn = !!notify.match_push && !!notify.chat_push;
+  // 서버 설정은 켜져 있어도 브라우저 권한이 없으면(꺼졌거나 나중에 취소됐으면) 실제로는
+  // 알림이 안 가므로, 체크박스는 "권한까지 있을 때"만 켜진 걸로 보여준다.
+  const permissionGranted = !notifySupported() || Notification.permission === 'granted';
+  const chatMatchOn = !!notify.match_push && !!notify.chat_push && permissionGranted;
   const toggleChatMatch = async () => {
     const turningOn = !chatMatchOn;
     if (turningOn) {
