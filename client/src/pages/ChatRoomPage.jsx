@@ -8,6 +8,7 @@ import AppBar from '../components/AppBar.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { useChatSocket } from '../hooks/useChatSocket.js';
 import { useMyLocation, FALLBACK_CENTER } from '../hooks/useKakaoMap.js';
+import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
 import {
   getChatRoom, getMessages, getSuggestions, useSuggestion, closeChat,
   getAiContext, updateAiContext, deleteChatRoom, getCodes, getRestaurants,
@@ -127,6 +128,12 @@ export default function ChatRoomPage() {
     setPlusStep(step);
     await searchRestaurants('');
   };
+
+  // 입력을 멈추면(300ms) 자동으로 검색 — 시트가 열려 있을 때만
+  const debouncedKeyword = useDebouncedValue(keyword, 300);
+  useEffect(() => {
+    if (plusStep === 'pick-send' || plusStep === 'pick-meeting') searchRestaurants(debouncedKeyword);
+  }, [debouncedKeyword]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sendRestaurant = async (r) => {
     setSending(true);

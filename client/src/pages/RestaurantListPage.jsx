@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Map, Search, UtensilsCrossed } from 'lucide-react';
 import BottomNav from '../components/BottomNav.jsx';
 import { useMyLocation, FALLBACK_CENTER, GEO_MESSAGE } from '../hooks/useKakaoMap.js';
+import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
 import { getRestaurants } from '../api/endpoints.js';
 import './RestaurantListPage.css';
 
@@ -11,14 +12,16 @@ export default function RestaurantListPage() {
   const nav = useNavigate();
   const [list, setList] = useState([]);
   const [keyword, setKeyword] = useState('');
+  const debouncedKeyword = useDebouncedValue(keyword, 300);
   const { pos: myPos, state: geoState } = useMyLocation({ watch: false });
 
   // 위치를 못 받으면 기본 좌표로라도 목록을 채운다
   const pos = myPos ?? FALLBACK_CENTER;
 
+  // 입력을 멈추면(300ms) 자동으로 검색 — 지도 앱처럼 "신전" → "신전떡볶이" 바로 뜨게
   useEffect(() => {
-    getRestaurants({ lat: pos.lat, lng: pos.lng, radius: 2000, keyword }).then(setList);
-  }, [pos.lat, pos.lng]);
+    getRestaurants({ lat: pos.lat, lng: pos.lng, radius: 2000, keyword: debouncedKeyword }).then(setList);
+  }, [pos.lat, pos.lng, debouncedKeyword]);
 
   return (
     <div className="screen">
@@ -36,9 +39,7 @@ export default function RestaurantListPage() {
         <label className="rl__search">
           <Search size={16} strokeWidth={2} />
           <input placeholder="음식점 검색" value={keyword}
-                 onChange={(e) => setKeyword(e.target.value)}
-                 onKeyDown={(e) => e.key === 'Enter' &&
-                   getRestaurants({ lat: pos.lat, lng: pos.lng, radius: 2000, keyword }).then(setList)} />
+                 onChange={(e) => setKeyword(e.target.value)} />
         </label>
 
         {!myPos && GEO_MESSAGE[geoState] && (

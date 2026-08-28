@@ -8,6 +8,7 @@ import {
   useKakaoMap, useMyLocation, renderPins, renderMyLocation,
   attachLongPress, renderDraftPin, renderClusters, GEO, GEO_MESSAGE,
 } from '../hooks/useKakaoMap.js';
+import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
 import {
   getRestaurants, getSpots, createSpot, getSpot, getRestaurant,
 } from '../api/endpoints.js';
@@ -70,6 +71,10 @@ export default function MapPage() {
   }, [getCenter, getRadius, map]);
 
   useEffect(() => { if (ready) load(); }, [ready, load]);
+
+  // 입력을 멈추면(300ms) 자동으로 검색 — 지도 앱처럼 타이핑 도중에 결과가 바뀐다
+  const debouncedKeyword = useDebouncedValue(keyword, 300);
+  useEffect(() => { if (ready) load(); }, [debouncedKeyword]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── 위치 확보되면 최초 1회 그쪽으로 이동 ───── */
   useEffect(() => {
