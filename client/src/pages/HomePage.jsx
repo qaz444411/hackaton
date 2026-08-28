@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Dices, MapPin, Sparkles, ChevronRight } from 'lucide-react';
+import { Dices, MapPin, Sparkles, ChevronRight, UtensilsCrossed } from 'lucide-react';
 import BottomNav from '../components/BottomNav.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
+import { useMyLocation, FALLBACK_CENTER } from '../hooks/useKakaoMap.js';
 import {
-  getHome, getAssistantStarters, getCurrentMatching, cancelMatching, getSentProposals,
+  getHome, getCurrentMatching, cancelMatching, getSentProposals, getRestaurants,
 } from '../api/endpoints.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import './HomePage.css';
 
-/** 홈 — 랜덤 매칭 진입 / 지도 매칭 진입 / 확정 매칭 정보 / 진행 중 매칭 / AI 도우미 */
+/** 홈 — 지도 매칭 진입 / 랜덤 매칭 진입 / 확정 매칭 정보 / 진행 중 매칭 / 오늘의 추천 맛집 */
 export default function HomePage() {
   const nav = useNavigate();
   const { user } = useAuth();
@@ -18,9 +19,16 @@ export default function HomePage() {
   const [confirmCancel, setConfirmCancel] = useState(false);
 
   const { data } = useQuery({ queryKey: ['home'], queryFn: getHome });
-  const { data: startersData } = useQuery({
-    queryKey: ['assistant', 'starters'], queryFn: getAssistantStarters,
+
+  // 오늘의 추천 맛집 — 주변 음식점 중 평점 높은 순으로 몇 개만 보여준다
+  const { pos: myPos } = useMyLocation({ watch: false });
+  const { data: nearby = [] } = useQuery({
+    queryKey: ['home', 'nearby', myPos?.lat, myPos?.lng],
+    queryFn: () => getRestaurants({ ...(myPos ?? FALLBACK_CENTER), radius: 2000 }),
   });
+  const recommended = [...nearby]
+    .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
+    .slice(0, 6);
 
   // 진행 중인 매칭.
   // 매칭 화면에서 뒤로가기로 빠져나와도 여기서 다시 찾아가거나 취소할 수 있어야 한다.
@@ -40,7 +48,6 @@ export default function HomePage() {
   });
 
   const m = data?.confirmedMatch;
-  const starters = startersData?.starters || [];
   const pendingSent = sentProposals?.[0];
   // 직접 요청(지도/밥친구목록)은 매칭 요청과 제안이 함께 생기므로, 보낸 요청 카드가 있으면
   // 아래 "진행 중 매칭" 카드는 같은 상태를 중복해서 보여주는 셈이라 숨긴다.
@@ -88,6 +95,19 @@ export default function HomePage() {
 
         {/* 확정된 매칭이 있어도 다른 밥친구를 계속 찾을 수 있어야 하므로 항상 보여준다 */}
         <section className="home__cards">
+          <button type="button" className="home__card home__card--outline" onClick={() => nav('/map')}>
+            <span className="home__card-badge home__card-badge--accent">
+              <MapPin size={13} strokeWidth={2.4} />
+            </span>
+            <span className="home__card-text">
+              <span className="home__card-eyebrow home__card-eyebrow--dark">음식점에서</span>
+              <span className="home__card-title home__card-title--dark">밥친구 찾기</span>
+            </span>
+            <span className="home__card-illust home__card-illust--map" aria-hidden="true">
+              <span className="home__card-illust-pin" />
+            </span>
+          </button>
+
           <button type="button" className="home__card home__card--primary" disabled={searching || !!pendingSent}
                   onClick={() => nav('/preference')}>
             <span className="home__card-badge">
@@ -99,19 +119,6 @@ export default function HomePage() {
             </span>
             <span className="home__card-illust home__card-illust--table" aria-hidden="true">
               <span className="home__card-illust-cup" />
-            </span>
-          </button>
-
-          <button type="button" className="home__card home__card--outline" onClick={() => nav('/map')}>
-            <span className="home__card-badge home__card-badge--accent">
-              <MapPin size={13} strokeWidth={2.4} />
-            </span>
-            <span className="home__card-text">
-              <span className="home__card-eyebrow home__card-eyebrow--dark">음식점에서</span>
-              <span className="home__card-title home__card-title--dark">밥친구 찾기</span>
-            </span>
-            <span className="home__card-illust home__card-illust--map" aria-hidden="true">
-              <span className="home__card-illust-pin" />
             </span>
           </button>
         </section>
@@ -158,29 +165,24 @@ export default function HomePage() {
           <p className="home__note">진행 중인 매칭을 취소하면 다시 시작할 수 있어요.</p>
         )}
 
-        {/* AI 도우미 — 질문을 누르면 그 질문으로 바로 대화가 시작된다 */}
-        <h2 className="home__section-title">AI 도우미</h2>
-        <div className="home__ai-card" onClick={() => nav('/assistant')}>
-          <div className="home__ai-row">
-            <div className="home__ai-icon"><Sparkles size={17} strokeWidth={2} /></div>
-            <div className="home__ai-body">
-              <div className="home__ai-title">무엇이든 물어보세요</div>
-              <div className="home__ai-desc">오늘 뭐 먹지? 앱은 어떻게 써요?</div>
-            </div>
-            <ChevronRight size={18} strokeWidth={2} className="home__ai-arrow" />
-          </div>
-
-          {starters.length > 0 && (
-            <div className="home__ai-starters" onClick={(e) => e.stopPropagation()}>
-              {starters.map((s) => (
-                <button key={s} type="button" className="home__ai-starter"
-                        onClick={() => nav(`/assistant?q=${encodeURIComponent(s)}`)}>
-                  {s}
+        {/* 오늘의 추천 맛집 — 주변 음식점 중 평점 높은 순 */}
+        {recommended.length > 0 && (
+          <>
+            <h2 className="home__section-title">오늘의 추천 맛집</h2>
+            <div className="home__reco-row">
+              {recommended.map((r) => (
+                <button type="button" key={r.restaurant_id} className="home__reco-card"
+                        onClick={() => nav(`/restaurants/${r.restaurant_id}/buddies`)}>
+                  <span className="home__reco-thumb"><UtensilsCrossed size={22} strokeWidth={1.8} /></span>
+                  <span className="home__reco-body">
+                    <span className="home__reco-name">{r.name}</span>
+                    <span className="home__reco-rating">★{r.rating ?? '-'}</span>
+                  </span>
                 </button>
               ))}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       {confirmCancel && (
