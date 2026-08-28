@@ -79,4 +79,8 @@ async function main() {
   }
 }
 
-main().catch(() => process.exit(1));
+main().catch((e) => {
+  // 오류를 삼키면 "아무 것도 안 찍히고 실패"가 되어 원인을 못 찾는다.
+  console.error("실행 실패: " + e.message);
+  process.exit(1);
+});
