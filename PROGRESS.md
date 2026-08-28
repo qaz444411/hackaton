@@ -8,16 +8,26 @@
 
 | 영역 | 상태 |
 |---|---|
-| DB 스키마 v1 / v2 / v3 | 적용 완료 |
-| 백엔드 API (8개 라우터) | 동작 |
-| 프론트 20개 화면 | 빌드 통과 (192 modules, 오류 0) |
-| 카카오 지도 — 렌더링 | 동작 (localhost / LAN 등록됨) |
-| 카카오 로컬 — 맛집 수집 | 동작 (캐시 90건) |
-| 제미나이 — AI 도우미 챗봇 | 동작 (`gemini-3.6-flash`) |
-| 제미나이 — 채팅 추천 질문 | 동작 |
-| 현재 위치(Geolocation) | PC 동작 / 휴대폰은 https 필요 |
-| 휴대폰 접속 | LAN(http) + Cloudflare 터널(https) — 둘 다 응답 확인 |
-| **미해결 1건** | 휴대폰용 오리진이 카카오 콘솔에 미등록 → 휴대폰에서 지도만 안 뜸 (§4 참고) |
+| DB 스키마 v1 / v2 / v3 / **v4** | 적용 완료 |
+| 백엔드 API (9개 라우터) | 동작 |
+| 프론트 21개 화면 | 빌드 통과 (193 modules, 오류 0) |
+| 카카오 지도 — 렌더링 | 동작 (AWS 도메인 등록 완료) |
+| 카카오 로컬 — 맛집 수집 | 동작 (캐시 135건) |
+| AI 도우미 챗봇 | 동작 — 제공자 전환 가능 (`AI_PROVIDER`) |
+| AI — 채팅 추천 질문 | 동작 |
+| 현재 위치(Geolocation) | 동작 (AWS HTTPS) |
+| **AWS 배포** | 동작 — `https://35.86.162.39.nip.io` |
+| **CI/CD** | main 푸시 시 GitHub Actions 자동 배포 |
+| 매칭 (랜덤 / 지도 / 마커) | 동작 — 교차 매칭 + 조건 완화 지원 |
+
+### AWS 배포 주소
+
+| 주소 | 용도 |
+|---|---|
+| `https://35.86.162.39.nip.io` | **정식 접속 주소.** 지도 + 현재 위치 모두 동작 |
+| `http://35.86.162.39` | http 라 위치 권한 차단됨 |
+
+로컬 개발용 Cloudflare 터널은 AWS 배포 이후 불필요하다(§2-2 는 참고용으로 남겨둔다).
 
 ---
 
@@ -97,6 +107,7 @@ powershell -ExecutionPolicy Bypass -File .\start-tunnel.ps1
 | bcryptjs | 2.4.3 | 비밀번호 해시 |
 | zod | 3.25.76 | 요청 본문 검증 |
 | @google/generative-ai | 0.21.0 | 제미나이 (AI 도우미 + 추천 질문) |
+| @aws-sdk/client-bedrock-runtime | 3.1120.0 | AWS Bedrock (AI_PROVIDER=bedrock 일 때) |
 | cors | 2.8.6 | CORS |
 | morgan | 1.11.0 | 요청 로그 |
 | dotenv | 16.6.1 | `.env` 로드 |
@@ -168,6 +179,37 @@ gemini-pro-latest          429 (무료 쿼터 초과)
 
 ---
 
+### AI 제공자 전환 (Gemini ↔ Bedrock)
+
+AI 호출은 `server/src/services/ai.service.js` 한 곳을 거친다. 라우트는 제공자별 구현을
+직접 import 하지 않으므로, 환경변수 하나로 갈아끼울 수 있다.
+
+```
+AI_PROVIDER=gemini    (기본) 제미나이 API 키로 호출
+AI_PROVIDER=bedrock   AWS Bedrock(Claude). EC2 인스턴스 프로파일로 인증
+```
+
+| 파일 | 역할 |
+|---|---|
+| `ai.service.js` | 제공자 선택기. 라우트는 이것만 본다 |
+| `ai.prompts.js` | 두 제공자가 공유하는 프롬프트·폴백 문구 |
+| `gemini.service.js` | 제미나이 구현 (모델 404/503/429 시 다음 모델로 폴백) |
+| `bedrock.service.js` | Bedrock 구현 |
+
+되돌리기: `.env.production` 의 `AI_PROVIDER` 를 `gemini` 로 바꾸고 api 컨테이너만 재시작.
+코드 변경이 필요 없다.
+
+> **Bedrock 은 로컬에서 검증할 수 없다.** EC2 인스턴스 프로파일로 인증하므로
+> 개발 PC 에는 자격증명이 없다. 실제 동작 확인은 서버에서 `npm run bedrock:check` 으로 한다.
+> `BEDROCK_MODEL_ID` 는 반드시 `global.` 접두사가 붙은 추론 프로파일이어야 하며,
+> raw 모델 ID 는 on-demand throughput 미지원 오류로 거부된다.
+
+`db/04_schema_patch_v4.sql` 은 `chat_suggested_question.source` 의 CHECK 제약에
+`'BEDROCK'` 을 추가한다. v2 가 `('GEMINI','FALLBACK')` 만 허용해서, Bedrock 으로
+추천 질문을 저장하면 INSERT 가 실패하기 때문이다.
+
+---
+
 ## 5. 구현된 기능
 
 ### 5-1. 기존 (v1 · v2)
@@ -205,7 +247,34 @@ gemini-pro-latest          429 (무료 쿼터 초과)
 기존에는 실패해도 조용히 기본 좌표(군산)로 폴백돼서 원인을 알 수 없었다.
 내 위치 점 + 정확도 원, `◎`(내 위치로) 버튼 포함.
 
-### 5-4. AI 도우미 챗봇 (신규)
+### 5-4. 매칭 탐색 — 안 잡히던 원인 4가지 수정
+
+두 사람이 각자 기기에서 매칭을 눌러도 후보가 안 뜨고 무한 스피너만 돌던 문제.
+재현해서 원인을 넷으로 좁혀 고쳤다.
+
+| 원인 | 수정 |
+|---|---|
+| `findCandidates` 가 `user_profile` 을 **INNER JOIN** → 기본선택을 건너뛴 사용자가 조용히 제외됨 | LEFT JOIN. 지도 쪽 뷰는 원래 LEFT JOIN 이라 "지도엔 보이는데 랜덤엔 안 보이는" 비대칭이 있었다 |
+| `matching_type` 이 정확히 같아야만 후보 → "랜덤" 과 "지도" 를 각각 누른 두 사람은 영원히 못 만남 | 한쪽이라도 RANDOM 이면 매칭. 둘 다 장소 지정이면 같은 장소여야 한다 |
+| 시간대·음식·가격을 모두 만족해야 해서 소규모에서는 사실상 매칭 불가 | `?relax=1` 로 조건을 풀어 찾는 경로 추가. 기본은 기존과 동일한 엄격 매칭 |
+| 왜 안 잡히는지 알 수 없었음 | `GET /matching/:id/diagnosis` 로 원인 집계. 8초간 후보가 없으면 화면에 이유와 "조건 넓혀서 찾기" 표시 |
+
+후보에는 `match_level`(`EXACT` / `NEAR`)이 실린다. 조건을 넓혀 찾은 상대는
+결과 화면에 "조건을 넓혀서 찾은 분이에요" 로 표시되고, 정렬은 EXACT 우선이다.
+
+### 5-5. 매칭 취소 — 갇히던 문제 수정
+
+활성 매칭 요청은 사용자당 1건만 허용되는데(`uq_matching_request_active`),
+취소 버튼이 매칭 진행 화면 안에만 있었다. 뒤로가기로 나가면 `SEARCHING` 인 채로 남고,
+홈에는 아무 표시도 없어서 **그 계정은 영영 새 매칭을 시작할 수 없었다**(409).
+
+- 홈에 "매칭 진행 중" 카드 — `매칭 취소` / `이어보기`
+- 진행 화면에서 뒤로가기 → "계속 찾기 / 매칭 취소" 를 묻는다
+- 지도 핀을 누르면 배너에서 바로 `밥 같이 할까요?` → `아니요` / `네, 좋아요`
+- (기존 버그) `talkStyleCode: 'ANY'` 로 요청을 만들어 FK 위반 500 이 나던 것 → `EASY`.
+  `talk_style_code` 에는 `EASY / QUIET / TALKATIVE` 만 있다
+
+### 5-6. AI 도우미 챗봇 (신규)
 
 홈 화면 하단 카드 → 탭하면 전용 대화 화면(`/assistant`).
 추천 질문을 누르면 그 질문으로 바로 대화가 시작된다.
@@ -237,16 +306,16 @@ gemini-pro-latest          429 (무료 쿼터 초과)
 | `npm run build` | 192 modules, 오류 0 |
 | 터널 `/`, `/api/health` | 200 |
 
-### 6-2. E2E 스모크
+### 6-2. E2E 스모크 — 4종 57항목 전부 PASS
 
-**지도 마커 매칭 — 16/16 PASS** (`npm run smoke`)
+| 스위트 | 항목 | 명령 | 내용 |
+|---|---|---|---|
+| 지도 마커 매칭 | 16 | `npm run smoke` | 마커 생성 · 15m 중복 재사용 · 모집 집계 · 거리 계산 · 밥친구 노출 · 취향 일치율 · 요청 · 수락 · `meal_match.spot_id` 보존 · 채팅방 트리거 · 확정 후 인원 복귀 |
+| 매칭 탐색 | 16 | `npm run smoke:match` | 프로필 미작성자 포함 · 랜덤↔지도 교차 · 엄격 조건 3종 · relax 3종 · 다른 식당끼리 안 섞임 · 진단 API |
+| 매칭 취소 | 13 | `npm run smoke:cancel` | 취소 전 차단(409) · 취소 후 재시작 가능 · 마커 직접 제안 · 보관함 노출 · 거절 · 중복 요청 409 |
+| AI 도우미 | 12 | `npm run smoke:ai` | 상태 조회 · 추천 질문 · 대화 · 이력 문맥 · 앱 사용법 정확도 · 입력 검증 · 비인증 401 |
 
-마커 생성 · 15m 중복 재사용 · 모집 집계 · 거리 계산 · 밥친구 노출 · 취향 일치율 ·
-매칭 요청 · 수락 · `meal_match.spot_id` 보존 · 채팅방 트리거 · 확정 후 인원 복귀 · 입력 검증
-
-**AI 도우미 — 12/12 PASS** (`npm run smoke:ai`)
-
-상태 조회 · 추천 질문 · 첫 대화 · 이력 문맥 유지 · 앱 사용법 정확도 · 입력 검증 · 비인증 401
+네 스위트 모두 **테스트 데이터를 스스로 정리**한다. `AI_PROVIDER` 와 무관하게 동작한다.
 
 실제 응답 예:
 
@@ -273,14 +342,21 @@ restaurant 캐시  90건 / 카카오 출처 90 / 상세링크 90 / 평점 0
 ```powershell
 cd server
 npm.cmd run db:patch      # v3 패치 적용 (몇 번 돌려도 안전)
-npm.cmd run db:check      # v1/v2/v3 적용 상태 실측
+npm.cmd run db:patch4     # v4 패치 적용 (Bedrock source 값 허용)
+npm.cmd run db:check      # 스키마 적용 상태 실측
 npm.cmd run kakao:check   # 카카오 API 연결 + 캐시 상태
 npm.cmd run gemini:check  # 제미나이 키 유효성 + 실제 되는 모델 찾기
-npm.cmd run smoke         # 마커→매칭 E2E 16항목 (정리 포함)
-npm.cmd run smoke:keep    # 위와 같되 데이터를 남김 (화면 확인용)
+npm.cmd run bedrock:check # Bedrock 연결 확인 (EC2 에서만 의미 있음)
+npm.cmd run smoke         # 지도 마커 매칭 E2E 16항목
+npm.cmd run smoke:match   # 매칭 탐색 E2E 16항목
+npm.cmd run smoke:cancel  # 매칭 취소 / 마커 직접 제안 E2E 13항목
 npm.cmd run smoke:ai      # AI 도우미 E2E 12항목
+npm.cmd run smoke:keep    # smoke 를 돌리되 데이터를 남김 (화면 확인용)
 npm.cmd run smoke:clean   # 남은 테스트 데이터만 삭제
 ```
+
+> 실제 스크립트 이름은 `server/package.json` 을 기준으로 한다.
+> 팀원이 추가한 명령이 있을 수 있으니 다르면 그쪽이 정답이다.
 
 ---
 
