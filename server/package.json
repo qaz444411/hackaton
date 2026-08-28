@@ -20,7 +20,9 @@
     "smoke:clean": "node scripts/clean-smoke.js",
     "db:patch4": "node scripts/run-sql.js ../db/04_schema_patch_v4.sql",
     "db:patch6": "node scripts/run-sql.js ../db/06_schema_patch_v6.sql",
-    "bedrock:check": "node scripts/check-bedrock.js"
+    "bedrock:check": "node scripts/check-bedrock.js",
+    "db:status": "node scripts/check-migrations.js",
+    "db:patch5": "node scripts/run-sql.js ../db/05_schema_patch_v5.sql"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1120.0",
