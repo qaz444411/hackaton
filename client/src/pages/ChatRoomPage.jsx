@@ -9,6 +9,7 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { useChatSocket } from '../hooks/useChatSocket.js';
 import { useMyLocation, FALLBACK_CENTER } from '../hooks/useKakaoMap.js';
 import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
+import { formatDistance } from '../lib/format.js';
 import {
   getChatRoom, getMessages, getSuggestions, useSuggestion, closeChat,
   getAiContext, updateAiContext, deleteChatRoom, getCodes, getRestaurants,
@@ -361,7 +362,7 @@ export default function ChatRoomPage() {
                   <span className="restaurant-sheet__info">
                     <strong>{r.name}</strong>
                     <span className="restaurant-sheet__meta">
-                      {r.distance_m}m · {r.food_type_label}
+                      {formatDistance(r.distance_m)} · {r.food_type_label}
                       {r.rating ? ` · ★${r.rating}` : ''}
                     </span>
                     {r.recruiting_count > 0 && (
@@ -396,7 +397,7 @@ export default function ChatRoomPage() {
                 <span>
                   <strong>{pickedRestaurant.name}</strong>
                   <span className="meeting-sheet__place-meta">
-                    {pickedRestaurant.distance_m}m · {pickedRestaurant.food_type_label}
+                    {formatDistance(pickedRestaurant.distance_m)} · {pickedRestaurant.food_type_label}
                   </span>
                 </span>
               </div>

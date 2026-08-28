@@ -5,6 +5,7 @@ import { Dices, MapPin, Sparkles, ChevronRight, UtensilsCrossed } from 'lucide-r
 import BottomNav from '../components/BottomNav.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { useMyLocation, FALLBACK_CENTER } from '../hooks/useKakaoMap.js';
+import { formatDistance } from '../lib/format.js';
 import {
   getHome, getCurrentMatching, cancelMatching, getSentProposals, getRestaurants,
 } from '../api/endpoints.js';
@@ -177,7 +178,7 @@ export default function HomePage() {
                   <span className="home__reco-thumb"><UtensilsCrossed size={22} strokeWidth={1.8} /></span>
                   <span className="home__reco-body">
                     <span className="home__reco-name">{r.name}</span>
-                    <span className="home__reco-meta">{r.distance_m}m</span>
+                    <span className="home__reco-meta">{formatDistance(r.distance_m)}</span>
                   </span>
                 </button>
               ))}

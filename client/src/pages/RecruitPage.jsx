@@ -6,6 +6,7 @@ import AppBar from '../components/AppBar.jsx';
 import { useMyLocation, FALLBACK_CENTER, GEO_MESSAGE } from '../hooks/useKakaoMap.js';
 import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
 import { getCodes, getRestaurants } from '../api/endpoints.js';
+import { formatDistance } from '../lib/format.js';
 import './RestaurantListPage.css';
 
 /** 밥친구 모집 페이지 — 식당 검색·선택 + 시간대 → 취향 선택으로 이어 모집 시작 */
@@ -50,7 +51,7 @@ export default function RecruitPage() {
                     onClick={() => setPicked(r)}>
               <span className="rc__option-name">{r.name}</span>
               <span className="rc__option-sub">{r.food_type_label} · {r.road_address}</span>
-              <span className="rc__option-meta">{r.distance_m}m · ★{r.rating ?? '-'}</span>
+              <span className="rc__option-meta">{formatDistance(r.distance_m)} · ★{r.rating ?? '-'}</span>
               {picked?.restaurant_id === r.restaurant_id && (
                 <span className="rc__option-check"><Check size={12} strokeWidth={3} /></span>
               )}

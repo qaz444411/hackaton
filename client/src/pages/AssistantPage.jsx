@@ -7,6 +7,7 @@ import {
 import AppBar from '../components/AppBar.jsx';
 import { askAssistant, getAssistantStatus, getAssistantStarters } from '../api/endpoints.js';
 import { useMyLocation, GEO } from '../hooks/useKakaoMap.js';
+import { formatDistance } from '../lib/format.js';
 import './AssistantPage.css';
 
 const STORAGE_KEY = 'assistant.history';
@@ -163,7 +164,7 @@ export default function AssistantPage() {
                   <div key={r.restaurant_id} className="rec-card">
                     <div className="rec-card__head">
                       <strong>{r.name}</strong>
-                      <span className="rec-card__dist">{r.distance_m}m</span>
+                      <span className="rec-card__dist">{formatDistance(r.distance_m)}</span>
                     </div>
                     <p className="muted">
                       {r.food_type_label}

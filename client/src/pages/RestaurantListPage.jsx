@@ -5,6 +5,7 @@ import BottomNav from '../components/BottomNav.jsx';
 import { useMyLocation, FALLBACK_CENTER, GEO_MESSAGE } from '../hooks/useKakaoMap.js';
 import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
 import { getRestaurants } from '../api/endpoints.js';
+import { formatDistance } from '../lib/format.js';
 import './RestaurantListPage.css';
 
 /** 음식점 목록 페이지 — 지도 ↔ 리스트 전환 */
@@ -56,7 +57,7 @@ export default function RestaurantListPage() {
                   <span className="rl__card-name ellipsis">{r.name}</span>
                   {r.is_popular && <span className="rl__card-hot">인기</span>}
                 </div>
-                <p className="rl__card-sub">{r.distance_m}m · {r.food_type_label} · ★{r.rating ?? '-'}</p>
+                <p className="rl__card-sub">{formatDistance(r.distance_m)} · {r.food_type_label} · ★{r.rating ?? '-'}</p>
                 <p className="rl__card-recruit">{r.recruiting_count}명이 밥친구 찾는 중</p>
               </div>
               <button type="button" className="rl__card-cta"

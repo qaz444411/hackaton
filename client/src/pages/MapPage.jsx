@@ -14,6 +14,7 @@ import {
 } from '../api/endpoints.js';
 import { proposeTo, matchingErrorMessage } from '../lib/matching.js';
 import { shortCategory, FOOD_FILTERS, applyFoodFilter } from '../lib/foodCategory.js';
+import { formatDistance } from '../lib/format.js';
 
 const FILTER_ICONS = { Utensils, Soup, Fish, CookingPot, Pizza, UtensilsCrossed };
 
@@ -317,7 +318,7 @@ export default function MapPage() {
             <p className="muted" style={{ marginTop: 4 }}>
               {isSpot
                 ? (selected.raw.address || '지도에 찍힌 지점')
-                : `${shortCategory(selected.raw) || selected.raw.food_type_label} · ${selected.raw.distance_m}m`}
+                : `${shortCategory(selected.raw) || selected.raw.food_type_label} · ${formatDistance(selected.raw.distance_m)}`}
             </p>
 
             {detailBusy && <p className="muted" style={{ marginTop: 12 }}>불러오는 중…</p>}
