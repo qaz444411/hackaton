@@ -65,7 +65,7 @@ jobs:
           chmod 600 "$RUNNER_TEMP/.ssh/ec2.pem"
 
           # 호스트 키를 미리 고정한다. accept-new 로 첫 접속을 무조건 믿는 것보다 낫다.
-          # deploy.sh 안의 ssh 는 기본 경로(~/.ssh/known_hosts)를 보므로 반드시
+          # deploy.sh 안의 ssh 가 기본 경로(~/.ssh/known_hosts)를 보므로 반드시
           # 거기에 써야 실제 검증에 쓰인다. 임시 경로에 두면 아무 효과가 없다.
           install -m 700 -d "$HOME/.ssh"
           ssh-keyscan -H "$EC2_HOST" > "$HOME/.ssh/known_hosts" 2>/dev/null
@@ -88,6 +88,9 @@ jobs:
       # deploy.sh 안에서도 헬스체크를 하지만, 워크플로우 레벨에서 한 번 더 본다.
       # 배포가 조용히 깨진 채로 성공 표시가 나는 것을 막는다.
       - name: Verify deployment
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          SSH_KEY: ${{ runner.temp }}/.ssh/ec2.pem
         run: |
           set -euo pipefail
           HEALTH="https://35.86.162.39.nip.io/api/health"
@@ -113,6 +116,18 @@ jobs:
           echo "TLS 인증서 검증: $verify (0 = 유효)"
           if [ "$verify" != "0" ]; then
             echo "::error::TLS 인증서 검증 실패"
+            exit 1
+          fi
+
+          # 서버가 정말 이 커밋을 받았는지 확인한다.
+          # git fetch 가 조용히 실패해도 사이트는 (예전 코드로) 계속 200 을 주기 때문에,
+          # 헬스체크만으로는 "배포가 안 됐는데 성공"을 잡아낼 수 없다.
+          deployed=$(ssh -i "$SSH_KEY" -o StrictHostKeyChecking=yes ubuntu@"$EC2_HOST" \
+            'cd /home/ubuntu/bapfriend && git rev-parse HEAD')
+          echo "서버에 반영된 커밋 : $deployed"
+          echo "이번 워크플로 커밋 : $GITHUB_SHA"
+          if [ "$deployed" != "$GITHUB_SHA" ]; then
+            echo "::error::서버 커밋이 이번 커밋과 다르다 — 배포가 실제로 이뤄지지 않았다"
             exit 1
           fi
 
