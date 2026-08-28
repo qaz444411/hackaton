@@ -16,6 +16,9 @@ export const getMyPage = () => api.get('/users/me/mypage').then((r) => r.data);
 export const updateNotifications = (body) => api.patch('/users/me/notifications', body).then((r) => r.data);
 export const getHistory = () => api.get('/users/me/history').then((r) => r.data);
 export const getPartnerProfile = (id) => api.get(`/users/${id}/profile`).then((r) => r.data);
+export const getAiContext = () => api.get('/users/me/ai-context').then((r) => r.data);
+export const updateAiContext = (enabled) =>
+  api.patch('/users/me/ai-context', { enabled }).then((r) => r.data);
 
 /* ── 매칭 ────────────────────────────────────── */
 export const getHome = () => api.get('/matching/home').then((r) => r.data);
@@ -71,3 +74,4 @@ export const getSuggestions = (matchId, refresh = false) =>
 export const useSuggestion = (id) => api.post(`/chat/suggestions/${id}/use`).then((r) => r.data);
 export const reportChat = (matchId, body) => api.post(`/chat/rooms/${matchId}/report`, body).then((r) => r.data);
 export const closeChat = (matchId) => api.post(`/chat/rooms/${matchId}/close`).then((r) => r.data);
+export const deleteChatRoom = (matchId) => api.delete(`/chat/rooms/${matchId}`).then((r) => r.data);

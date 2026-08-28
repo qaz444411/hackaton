@@ -24,6 +24,12 @@ r.post('/', wrap(async (req, res) => {
      VALUES (:rq, :ru, :cu, :cr, DATE_ADD(NOW(), INTERVAL :m MINUTE))`,
     { rq: b.requesterRequestId, ru: req.user.id, cu: b.receiverUserId,
       cr: receiverReq?.id ?? null, m: b.expiresInMinutes });
+
+  // 보관함 실시간 배지 — 상대가 지금 앱을 켜놓고 있으면 폴링을 기다릴 필요 없이 바로 뜬다.
+  req.app.get('io')?.to(`user:${b.receiverUserId}`).emit('inbox:new', {
+    proposalId: ins.insertId, fromNickname: req.user.nickname,
+  });
+
   res.status(201).json({ id: ins.insertId, status: 'PENDING' });
 }));
 

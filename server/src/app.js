@@ -36,5 +36,6 @@ app.use(notFound);
 app.use(errorHandler);
 
 const server = http.createServer(app);
-attachChatSocket(server);
+const io = attachChatSocket(server);
+app.set('io', io);   // REST 라우트에서도 실시간 알림(보관함 등)을 쏠 수 있게
 server.listen(config.port, () => console.log(`API on http://localhost:${config.port}`));

@@ -55,12 +55,20 @@ export const SUGGEST_RULES =
 
 /**
  * 추천 질문 프롬프트.
- * 사용자 메시지 원문은 절대 넘기지 않는다 — 공통 관심사/음식 종류/식당명만 쓴다.
+ * 사용자 메시지 원문은 기본적으로 넘기지 않는다 — 공통 관심사/음식 종류/식당명만 쓴다.
+ * ctx.recent_conversation 은 사용자가 마이페이지/채팅방에서 "AI 대화 참고"를
+ * 직접 켰을 때만 채워진다(user_notification_setting.ai_context_enabled).
  */
 export function buildSuggestPrompt(ctx = {}) {
-  return `공통 관심사: ${ctx.common_interests || '없음'}
+  const base = `공통 관심사: ${ctx.common_interests || '없음'}
 음식 종류: ${ctx.food_type || '미정'}
-식당: ${ctx.restaurant_name || '미정'}
+식당: ${ctx.restaurant_name || '미정'}`;
+
+  const conversation = ctx.recent_conversation
+    ? `\n\n최근 대화 (이어지는 자연스러운 다음 질문을 만들 때 참고. 그대로 되풀이하지 말 것):\n${ctx.recent_conversation}`
+    : '';
+
+  return `${base}${conversation}
 위 정보를 반영한 대화 시작 질문 3개를 JSON 으로만 답해라.
 형식: {"questions": ["...", "...", "..."]}`;
 }

@@ -15,6 +15,9 @@ export function attachChatSocket(server) {
   });
 
   io.on('connection', (socket) => {
+    // 개인 알림용(보관함 신규 요청 등). 특정 채팅방과 무관하게 항상 들어간다.
+    socket.join(`user:${socket.user.id}`);
+
     socket.on('room:join', async (matchId) => {
       const ok = await one('SELECT 1 AS ok FROM match_participant WHERE match_id=:m AND user_id=:u',
         { m: matchId, u: socket.user.id });

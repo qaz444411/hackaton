@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import AppBar from '../components/AppBar.jsx';
 import BottomNav from '../components/BottomNav.jsx';
-import { getMyPage, getHistory, updateNotifications } from '../api/endpoints.js';
+import { getMyPage, getHistory, updateNotifications, updateAiContext } from '../api/endpoints.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import './MyPage.css';
 
@@ -25,6 +25,12 @@ export default function MyPage() {
       [key]: !notify[{ matchPush: 'match_push', chatPush: 'chat_push', marketing: 'marketing' }[key]],
     });
     qc.invalidateQueries({ queryKey: ['mypage'] });
+  };
+
+  const toggleAiContext = async () => {
+    await updateAiContext(!notify?.ai_context_enabled);
+    qc.invalidateQueries({ queryKey: ['mypage'] });
+    qc.invalidateQueries({ queryKey: ['aiContext'] });
   };
 
   return (
@@ -67,6 +73,10 @@ export default function MyPage() {
               <input type="checkbox" checked={!!notify?.[col]} onChange={() => toggle(key)} />
             </label>
           ))}
+          <label className="mypage__notify-row">
+            <span>AI가 채팅 대화 내용 참고하기</span>
+            <input type="checkbox" checked={!!notify?.ai_context_enabled} onChange={toggleAiContext} />
+          </label>
         </div>
 
         <h2 className="section-title">매칭 기록</h2>

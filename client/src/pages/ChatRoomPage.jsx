@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { MoreVertical, Sparkles, Send, MapPin } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { MoreVertical, Sparkles, Send, MapPin, Trash2 } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { useChatSocket } from '../hooks/useChatSocket.js';
-import { getChatRoom, getMessages, getSuggestions, useSuggestion, closeChat } from '../api/endpoints.js';
+import {
+  getChatRoom, getMessages, getSuggestions, useSuggestion, closeChat,
+  getAiContext, updateAiContext, deleteChatRoom,
+} from '../api/endpoints.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import './ChatRoomPage.css';
 
@@ -19,6 +22,7 @@ const time = (v) => new Date(v).toLocaleTimeString('ko-KR', { hour: '2-digit', m
 export default function ChatRoomPage() {
   const { matchId } = useParams();
   const nav = useNavigate();
+  const qc = useQueryClient();
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
@@ -26,9 +30,11 @@ export default function ChatRoomPage() {
   const [suggestions, setSuggestions] = useState([]);
   const [menu, setMenu] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const bottomRef = useRef(null);
 
   const { data: room } = useQuery({ queryKey: ['chatRoom', matchId], queryFn: () => getChatRoom(matchId) });
+  const { data: aiContext } = useQuery({ queryKey: ['aiContext'], queryFn: getAiContext });
   const { send } = useChatSocket(matchId, (m) =>
     setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m])));
 
@@ -60,6 +66,24 @@ export default function ChatRoomPage() {
     nav('/chats', { replace: true });
   };
 
+  const toggleAiContext = async () => {
+    const next = !aiContext?.enabled;
+    await updateAiContext(next);
+    qc.invalidateQueries({ queryKey: ['aiContext'] });
+    if (openSuggest) setSuggestions(await getSuggestions(matchId, false));
+  };
+
+  const deleteRoom = async () => {
+    try {
+      await deleteChatRoom(matchId);
+      qc.invalidateQueries({ queryKey: ['chatRooms'] });
+      nav('/chats', { replace: true });
+    } catch (e) {
+      alert(e.response?.data?.message || '삭제하지 못했어요.');
+      setConfirmDelete(false);
+    }
+  };
+
   return (
     <div className="screen">
       <AppBar
@@ -69,8 +93,14 @@ export default function ChatRoomPage() {
 
       {menu && (
         <div className="card chat-menu-card">
-          <button className="btn btn--line" style={{ height: 42 }}
-                  onClick={() => { setMenu(false); setConfirmCancel(true); }}>매칭 취소하기</button>
+          {!readOnly && (
+            <button className="btn btn--line" style={{ height: 42 }}
+                    onClick={() => { setMenu(false); setConfirmCancel(true); }}>매칭 취소하기</button>
+          )}
+          {readOnly && (
+            <button className="btn btn--line" style={{ height: 42 }}
+                    onClick={() => { setMenu(false); setConfirmDelete(true); }}>채팅방 삭제</button>
+          )}
         </div>
       )}
 
@@ -82,6 +112,17 @@ export default function ChatRoomPage() {
           cancelLabel="닫기"
           onConfirm={cancelMatch}
           onCancel={() => setConfirmCancel(false)}
+        />
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="채팅방을 삭제하시겠습니까?"
+          desc="내 목록에서만 사라져요. 상대방 채팅방에는 남아있어요."
+          confirmLabel="삭제하기"
+          cancelLabel="닫기"
+          onConfirm={deleteRoom}
+          onCancel={() => setConfirmDelete(false)}
         />
       )}
 
@@ -111,7 +152,13 @@ export default function ChatRoomPage() {
         <div className="suggest">
           <div className="suggest__head">
             <b><Sparkles size={14} style={{ verticalAlign: -2, marginRight: 4 }} />이런 이야기 어때요?</b>
+            <button type="button" className="suggest__ai-toggle" onClick={toggleAiContext}>
+              대화 참고 {aiContext?.enabled ? '켜짐' : '꺼짐'}
+            </button>
           </div>
+          {aiContext?.enabled && (
+            <p className="suggest__ai-hint">대화 내용을 참고해 질문이 계속 바뀌어요. 상대방 메시지도 함께 전송돼요.</p>
+          )}
           {suggestions.map((s) => (
             <button key={s.id} className="suggest__item"
                     onClick={() => { setText(s.question); useSuggestion(s.id); setOpenSuggest(false); }}>

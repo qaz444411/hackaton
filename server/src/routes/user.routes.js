@@ -42,7 +42,7 @@ r.get('/me/mypage', wrap(async (req, res) => {
                 p.mbti_code, p.has_allergy, p.spicy_level, p.oily_level
            FROM users u LEFT JOIN user_profile p ON p.user_id = u.id WHERE u.id = :id`, { id: req.user.id }),
     one('SELECT meal_count, buddy_count FROM v_user_stats WHERE user_id = :id', { id: req.user.id }),
-    one('SELECT match_push, chat_push, marketing FROM user_notification_setting WHERE user_id = :id', { id: req.user.id }),
+    one('SELECT match_push, chat_push, marketing, ai_context_enabled FROM user_notification_setting WHERE user_id = :id', { id: req.user.id }),
   ]);
   const interests = await q(
     `SELECT i.id, i.name FROM user_interest ui JOIN interest i ON i.id = ui.interest_id
@@ -59,6 +59,24 @@ r.patch('/me/notifications', wrap(async (req, res) => {
               SET match_push=:m, chat_push=:c, marketing=:k WHERE user_id=:u`,
     { m: b.matchPush, c: b.chatPush, k: b.marketing, u: req.user.id });
   res.json({ ok: true });
+}));
+
+/**
+ * 채팅방 AI 추천 질문이 최근 대화를 참고하게 할지 — 기본 OFF.
+ * 켜면 상대방 메시지도 함께 제미나이/Bedrock 으로 나가므로 마이페이지와
+ * 채팅방 두 군데서 같은 값을 보고 바꿀 수 있게 별도 엔드포인트로 뺐다.
+ */
+r.get('/me/ai-context', wrap(async (req, res) => {
+  const row = await one(
+    'SELECT ai_context_enabled AS enabled FROM user_notification_setting WHERE user_id = :u', { u: req.user.id });
+  res.json({ enabled: !!row?.enabled });
+}));
+
+r.patch('/me/ai-context', wrap(async (req, res) => {
+  const b = z.object({ enabled: z.boolean() }).parse(req.body);
+  await q('UPDATE user_notification_setting SET ai_context_enabled=:e WHERE user_id=:u',
+    { e: b.enabled, u: req.user.id });
+  res.json({ ok: true, enabled: b.enabled });
 }));
 
 /** 매칭 기록 */
