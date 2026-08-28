@@ -1,0 +1,77 @@
+# ---------------------------------------------------------------
+# 랜덤 밥친구 — 배포 구성
+#
+#   실행:  docker compose --env-file .env.production up -d --build
+#   확인:  docker compose --env-file .env.production ps
+#   로그:  docker compose --env-file .env.production logs -f api
+#
+# 외부에 열리는 포트는 web 의 80 하나뿐이다.
+# api(4000) 와 db(3306) 은 도커 내부망에서만 서로 통신한다.
+# (EC2 보안그룹에도 4000/3306 은 열려 있지 않다)
+# ---------------------------------------------------------------
+services:
+  db:
+    image: mysql:8.0
+    container_name: bapfriend-db
+    restart: unless-stopped
+    command:
+      # 01_schema_v1.sql 의 ev_expire_pending 이벤트가 돌려면 스케줄러가 켜져 있어야 한다
+      - --event-scheduler=ON
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      # 스키마가 DATETIME 기준이라 서버 타임존을 KST 로 고정한다
+      - --default-time-zone=+09:00
+      # t2.medium(4GB) 기준. 기본값(128M)보다 키우되 메모리를 다 먹지 않게
+      - --innodb-buffer-pool-size=512M
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD 가 .env.production 에 없다}
+      MYSQL_DATABASE: ${DB_NAME:-bapfriend}
+      TZ: Asia/Seoul
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 01 -> 02 -> 03 알파벳 순으로 자동 실행된다 (최초 1회, 데이터 없을 때만).
+      # 공식 이미지가 mysql CLI 로 실행하므로 DELIMITER 블록도 그대로 동작한다.
+      - ./db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      # 스키마 3개(트리거/프로시저/뷰 포함) 적재에 시간이 걸린다
+      start_period: 90s
+
+  api:
+    build:
+      context: ./server
+    container_name: bapfriend-api
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      # .env.production 의 값보다 우선한다. DB 는 항상 컨테이너 이름으로 찾는다.
+      DB_HOST: db
+      DB_PORT: "3306"
+      TZ: Asia/Seoul
+    depends_on:
+      db:
+        condition: service_healthy
+    # ports 를 쓰지 않는다 = 외부 노출 없음. web 컨테이너만 접근한다.
+    expose:
+      - "4000"
+
+  web:
+    build:
+      context: ./client
+      args:
+        VITE_API_BASE: /api
+        VITE_SOCKET_URL: /
+        VITE_KAKAO_JS_KEY: ${VITE_KAKAO_JS_KEY:?VITE_KAKAO_JS_KEY 가 .env.production 에 없다}
+    container_name: bapfriend-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+
+volumes:
+  mysql-data:

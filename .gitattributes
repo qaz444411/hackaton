@@ -1,0 +1,17 @@
+# ---------------------------------------------------------------
+# 배포에 쓰이는 파일은 반드시 LF 로 유지한다.
+#   Windows 에서 CRLF 로 체크아웃되면
+#     - deploy.sh  → bash: bad interpreter (^M) 로 실행 실패
+#     - Dockerfile / nginx.conf → 리눅스 컨테이너 안에서 파싱 오류
+#   가 난다.
+# ---------------------------------------------------------------
+*.sh                text eol=lf
+Dockerfile          text eol=lf
+.dockerignore       text eol=lf
+*.conf              text eol=lf
+docker-compose.yml  text eol=lf
+*.sql               text eol=lf
+.env.production.example text eol=lf
+
+# PowerShell 스크립트는 Windows 전용이라 CRLF 유지
+*.ps1               text eol=crlf

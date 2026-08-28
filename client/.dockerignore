@@ -1,0 +1,9 @@
+node_modules
+dist
+# 로컬 개발용 .env 가 이미지에 섞여 들어가면 build arg 를 덮어쓸 수 있다
+.env
+.env.*
+!.env.example
+*.log
+Dockerfile
+.dockerignore
