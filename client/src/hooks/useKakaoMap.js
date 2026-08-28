@@ -174,7 +174,8 @@ export function renderPins(map, items, onSelect) {
   const overlays = items.map((it) => {
     const el = document.createElement('div');
     el.className = `map-pin map-pin--${it.kind}${it.count > 0 ? ' is-recruiting' : ''}`;
-    const icon = it.kind === 'spot' ? '📍' : (it.isPopular ? '🔥' : '🍽');
+    // 아이콘은 호출부가 정한다(음식 종류별). 없으면 종류 기본값.
+    const icon = it.icon || (it.kind === 'spot' ? '📍' : '🍽');
     const count = it.count > 0
       ? `<b class="map-pin__count">${it.count}</b>`
       : '';
@@ -192,6 +193,54 @@ export function renderPins(map, items, onSelect) {
     return ov;
   });
   return () => overlays.forEach((o) => o.setMap(null));
+}
+
+/**
+ * 핀이 많을 때 겹치지 않게 묶어 보여준다.
+ * index.html 에서 clusterer 라이브러리를 이미 로드하고 있다(libraries=services,clusterer).
+ *
+ * 카카오 클러스터러는 Marker 만 묶을 수 있고 CustomOverlay 는 못 묶는다.
+ * 그래서 축소 상태에서는 클러스터(숫자 원)만 그리고, 확대하면 원래 핀으로 돌아간다.
+ * minLevel 보다 확대(레벨이 작음)되면 이 함수는 아무것도 그리지 않는다.
+ */
+export function renderClusters(map, items, { minLevel = 6, onZoomIn } = {}) {
+  if (!map || !window.kakao?.maps?.MarkerClusterer) return () => {};
+  if (map.getLevel() < minLevel || !items.length) return () => {};
+
+  const markers = items.map((it) => new window.kakao.maps.Marker({
+    position: new window.kakao.maps.LatLng(it.lat, it.lng),
+  }));
+
+  const clusterer = new window.kakao.maps.MarkerClusterer({
+    map,
+    markers,
+    gridSize: 60,
+    averageCenter: true,
+    minClusterSize: 2,
+    disableClickZoom: true,
+    styles: [{
+      width: '38px', height: '38px',
+      background: 'rgba(255,107,74,.92)',
+      borderRadius: '19px',
+      color: '#fff', textAlign: 'center', lineHeight: '38px',
+      fontSize: '14px', fontWeight: '800',
+      border: '2px solid #fff',
+      boxShadow: '0 4px 12px rgba(0,0,0,.2)',
+    }],
+  });
+
+  // 클러스터를 누르면 그 영역으로 확대해 개별 핀을 보여준다
+  const handler = (cluster) => {
+    map.setLevel(Math.max(1, map.getLevel() - 2), { anchor: cluster.getCenter() });
+    onZoomIn?.();
+  };
+  window.kakao.maps.event.addListener(clusterer, 'clusterclick', handler);
+
+  return () => {
+    window.kakao.maps.event.removeListener(clusterer, 'clusterclick', handler);
+    clusterer.clear();
+    clusterer.setMap(null);
+  };
 }
 
 /** 내 위치 점 + 정확도 원 */

@@ -356,3 +356,26 @@ input[type='range'] { flex: 1; accent-color: var(--c-primary); }
 }
 .home__searching-why ul { margin: 0 0 6px; padding-left: 18px; }
 .home__searching-why li { font-size: 13px; color: var(--c-text-sub); line-height: 1.7; }
+
+/* 지도 음식 종류 필터 */
+.map-filters {
+  position: absolute; top: 66px; left: 0; right: 0; z-index: 6;
+  display: flex; gap: 6px; padding: 0 16px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.map-filters::-webkit-scrollbar { display: none; }
+.map-filter {
+  flex: none; display: flex; align-items: center; gap: 4px;
+  height: 34px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid var(--c-line); background: var(--c-white);
+  color: var(--c-text-sub); font-family: var(--font-body);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  box-shadow: var(--shadow-card); white-space: nowrap;
+}
+.map-filter.is-on {
+  background: var(--c-primary); border-color: var(--c-primary); color: #fff;
+}
+
+/* 필터 칩이 생겨 아래 요소들을 밀어준다 */
+.geo-notice { top: 110px; }
+.map-loading { top: 110px; }

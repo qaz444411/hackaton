@@ -13,10 +13,13 @@
     "smoke:ai": "node scripts/smoke-assistant.js",
     "smoke:cancel": "node scripts/smoke-cancel.js",
     "smoke:match": "node scripts/smoke-match.js",
+    "smoke:mapcat": "node scripts/smoke-mapcat.js",
+    "smoke:recommend": "node scripts/smoke-recommend.js",
     "smoke": "node scripts/smoke-spot.js --cleanup",
     "smoke:keep": "node scripts/smoke-spot.js",
     "smoke:clean": "node scripts/clean-smoke.js",
     "db:patch4": "node scripts/run-sql.js ../db/04_schema_patch_v4.sql",
+    "db:patch6": "node scripts/run-sql.js ../db/06_schema_patch_v6.sql",
     "bedrock:check": "node scripts/check-bedrock.js"
   },
   "dependencies": {

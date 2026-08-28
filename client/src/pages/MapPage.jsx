@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav.jsx';
 import {
   useKakaoMap, useMyLocation, renderPins, renderMyLocation,
-  attachLongPress, renderDraftPin, GEO, GEO_MESSAGE,
+  attachLongPress, renderDraftPin, renderClusters, GEO, GEO_MESSAGE,
 } from '../hooks/useKakaoMap.js';
 import {
   getRestaurants, getSpots, createSpot, getSpot, getRestaurant,
 } from '../api/endpoints.js';
 import { proposeTo, matchingErrorMessage } from '../lib/matching.js';
+import { foodIcon, shortCategory, FOOD_FILTERS, applyFoodFilter } from '../lib/foodCategory.js';
 
 /**
  * 지도 페이지 — 카카오 지도 API 사용 지점 ①
@@ -33,6 +34,8 @@ export default function MapPage() {
   const [detailBusy, setDetailBusy] = useState(false);
   const [sending, setSending] = useState(false);
   const [keyword, setKeyword] = useState('');
+  const [foodFilter, setFoodFilter] = useState('ALL');   // 지도 상단 음식 종류 필터
+  const [zoomLevel, setZoomLevel] = useState(4);          // 클러스터 전환 판단용
   const [draft, setDraft] = useState(null);       // 롱프레스로 찍은 임시 지점
   const [draftLabel, setDraftLabel] = useState('');
   const [saving, setSaving] = useState(false);
@@ -86,22 +89,49 @@ export default function MapPage() {
   }, [selected]);
 
   /* ── 오버레이 ─────────────────────────────── */
+  // 필터는 식당에만 건다. 내가 찍은 마커는 음식 종류가 없으므로 항상 보여준다.
+  const shownRestaurants = applyFoodFilter(restaurants, foodFilter);
+
+  const pinItems = [
+    ...spots.map((s) => ({
+      key: `s${s.spot_id}`, kind: 'spot', raw: s, icon: '📍',
+      lat: Number(s.latitude), lng: Number(s.longitude),
+      label: s.label, count: s.recruiting_count, isPopular: !!s.is_popular,
+    })),
+    ...shownRestaurants.map((r) => ({
+      key: `r${r.restaurant_id}`, kind: 'restaurant', raw: r,
+      // 카카오 category_name 으로 음식 종류 아이콘을 고른다
+      icon: foodIcon(r),
+      lat: Number(r.latitude), lng: Number(r.longitude),
+      label: r.name, count: r.recruiting_count, isPopular: !!r.is_popular,
+    })),
+  ];
+
+  /*
+   * 축소 상태에서는 핀이 겹쳐 읽을 수 없으므로 클러스터(숫자 원)로 묶고,
+   * 확대하면 개별 핀으로 돌아간다. 둘을 동시에 그리면 이중으로 보인다.
+   */
+  const clustered = zoomLevel >= 6;
+
+  useEffect(() => {
+    if (!ready || !map.current || clustered) return;
+    return renderPins(map.current, pinItems, setSelected);
+  }, [ready, spots, shownRestaurants, map, clustered]);
+
+  useEffect(() => {
+    if (!ready || !map.current || !clustered) return;
+    return renderClusters(map.current, pinItems, { minLevel: 6 });
+  }, [ready, spots, shownRestaurants, map, clustered]);
+
+  // 줌이 바뀌면 클러스터/핀 전환을 판단해야 한다
   useEffect(() => {
     if (!ready || !map.current) return;
-    const items = [
-      ...spots.map((s) => ({
-        key: `s${s.spot_id}`, kind: 'spot', raw: s,
-        lat: Number(s.latitude), lng: Number(s.longitude),
-        label: s.label, count: s.recruiting_count, isPopular: !!s.is_popular,
-      })),
-      ...restaurants.map((r) => ({
-        key: `r${r.restaurant_id}`, kind: 'restaurant', raw: r,
-        lat: Number(r.latitude), lng: Number(r.longitude),
-        label: r.name, count: r.recruiting_count, isPopular: !!r.is_popular,
-      })),
-    ];
-    return renderPins(map.current, items, setSelected);
-  }, [ready, spots, restaurants, map]);
+    const mp = map.current;
+    const onZoom = () => setZoomLevel(mp.getLevel());
+    setZoomLevel(mp.getLevel());
+    window.kakao.maps.event.addListener(mp, 'zoom_changed', onZoom);
+    return () => window.kakao.maps.event.removeListener(mp, 'zoom_changed', onZoom);
+  }, [ready, map]);
 
   useEffect(() => {
     if (!ready || !map.current) return;
@@ -205,6 +235,17 @@ export default function MapPage() {
                onChange={(e) => setKeyword(e.target.value)}
                onKeyDown={(e) => e.key === 'Enter' && load()} />
 
+        {/* 음식 종류 필터 — 식당 핀에만 적용된다 */}
+        <div className="map-filters">
+          {FOOD_FILTERS.map((f) => (
+            <button key={f.value} type="button"
+                    className={`map-filter${foodFilter === f.value ? ' is-on' : ''}`}
+                    onClick={() => setFoodFilter(f.value)}>
+              <span>{f.icon}</span>{f.label}
+            </button>
+          ))}
+        </div>
+
         {/* 위치 권한 안내 — 조용히 실패하지 않도록 이유를 띄운다 */}
         {geoNotice && (
           <div className={`geo-notice geo-notice--${geoState}`}>
@@ -260,7 +301,7 @@ export default function MapPage() {
             <p className="muted" style={{ marginTop: 4 }}>
               {isSpot
                 ? (selected.raw.address || '지도에 찍힌 지점')
-                : `⭐ ${selected.raw.rating ?? '-'} · ${selected.raw.food_type_label} · ${selected.raw.distance_m}m`}
+                : `${shortCategory(selected.raw) || selected.raw.food_type_label} · ${selected.raw.distance_m}m`}
             </p>
 
             {detailBusy && <p className="muted" style={{ marginTop: 12 }}>불러오는 중…</p>}
