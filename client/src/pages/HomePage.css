@@ -362,7 +362,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.home__reco-rating { margin-top: 2px; font-size: 12px; letter-spacing: -0.32px; color: var(--c-text-sub); }
+.home__reco-meta { margin-top: 2px; font-size: 12px; letter-spacing: -0.32px; color: var(--c-text-sub); }
 
 /* AI 도우미 빠른 진입 — 우측 하단 원형 버튼 */
 .home__ai-fab {

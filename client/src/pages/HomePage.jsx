@@ -20,14 +20,15 @@ export default function HomePage() {
 
   const { data } = useQuery({ queryKey: ['home'], queryFn: getHome });
 
-  // 오늘의 추천 맛집 — 주변 음식점 중 평점 높은 순으로 몇 개만 보여준다
+  // 오늘의 추천 맛집 — 카카오 API는 평점을 안 주므로(항상 null) 별점 대신
+  // 현재 위치에서 가까운 순으로 보여준다
   const { pos: myPos } = useMyLocation({ watch: false });
   const { data: nearby = [] } = useQuery({
     queryKey: ['home', 'nearby', myPos?.lat, myPos?.lng],
     queryFn: () => getRestaurants({ ...(myPos ?? FALLBACK_CENTER), radius: 2000 }),
   });
   const recommended = [...nearby]
-    .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
+    .sort((a, b) => a.distance_m - b.distance_m)
     .slice(0, 6);
 
   // 진행 중인 매칭.
@@ -176,7 +177,7 @@ export default function HomePage() {
                   <span className="home__reco-thumb"><UtensilsCrossed size={22} strokeWidth={1.8} /></span>
                   <span className="home__reco-body">
                     <span className="home__reco-name">{r.name}</span>
-                    <span className="home__reco-rating">★{r.rating ?? '-'}</span>
+                    <span className="home__reco-meta">{r.distance_m}m</span>
                   </span>
                 </button>
               ))}
