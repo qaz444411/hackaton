@@ -1,0 +1,44 @@
+/* MatchManagePage — 최종 디자인 (매칭관리) */
+.mm__eyebrow {
+  font-size: 13px;
+  letter-spacing: -0.32px;
+  color: var(--c-text-sub);
+}
+
+.mm__card {
+  margin-top: 16px;
+  padding: 18px;
+  background: var(--c-white);
+  box-shadow: var(--shadow-card-soft);
+  border-radius: var(--r-xl);
+}
+
+.mm__card-top { display: flex; align-items: center; justify-content: space-between; }
+
+.mm__card-name-row { display: flex; align-items: center; gap: 8px; }
+.mm__card-name-row strong {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: -0.32px;
+  color: var(--c-text);
+}
+
+.mm__badge {
+  padding: 2px 9px;
+  background: var(--c-select-tint-10);
+  border-radius: 20px;
+  font-size: 11px;
+  letter-spacing: -0.32px;
+  color: var(--c-select);
+}
+
+.mm__delete {
+  font-size: 13px;
+  letter-spacing: -0.32px;
+  color: var(--c-text-mute);
+  text-decoration: underline;
+}
+
+.mm__when { margin-top: 8px; font-size: 13px; letter-spacing: -0.32px; color: var(--c-text-sub); }
+.mm__recruit { margin-top: 6px; font-size: 12px; letter-spacing: -0.32px; color: var(--c-primary); }

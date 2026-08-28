@@ -127,7 +127,7 @@ export default function MyPage() {
             <span className="mypage__menu-title">취향 설정 변경</span>
             <ChevronRight size={16} strokeWidth={2} className="mypage__menu-arrow" />
           </button>
-          <button type="button" className="mypage__menu-item" onClick={() => nav('/inbox')}>
+          <button type="button" className="mypage__menu-item" onClick={() => nav('/matching/manage')}>
             <div>
               <p className="mypage__menu-title">매칭 관리</p>
               <p className="mypage__menu-desc">내가 보내고 받은 매칭 요청을 관리해요</p>

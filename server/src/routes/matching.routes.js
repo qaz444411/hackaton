@@ -68,11 +68,15 @@ r.post('/:id/start', wrap(async (req, res) => {
 /** 매칭 진행 페이지 — 상태 폴링 */
 r.get('/current', wrap(async (req, res) => {
   const mr = await one(
-    `SELECT mr.*, ft.label AS food_type, ts.label AS talk_style, mt.label AS meal_time
+    `SELECT mr.*, ft.label AS food_type, ts.label AS talk_style, mt.label AS meal_time,
+            vr.name AS restaurant_name, vr.recruiting_count AS restaurant_recruiting_count,
+            vs.label AS spot_label, vs.recruiting_count AS spot_recruiting_count
        FROM matching_request mr
        JOIN food_type_code ft ON ft.code=mr.food_type_code
        JOIN talk_style_code ts ON ts.code=mr.talk_style_code
        JOIN meal_time_code mt ON mt.code=mr.meal_time_code
+       LEFT JOIN v_restaurant_recruiting vr ON vr.restaurant_id = mr.restaurant_id
+       LEFT JOIN v_spot_recruiting vs        ON vs.spot_id       = mr.spot_id
       WHERE mr.active_user_id = :u`, { u: req.user.id });
   if (!mr) return res.json(null);
   const history = await q(

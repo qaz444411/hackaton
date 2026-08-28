@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import AppBar from '../components/AppBar.jsx';
 import BottomNav from '../components/BottomNav.jsx';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { getInbox, readProposal, acceptProposal, declineProposal } from '../api/endpoints.js';
 import './InboxPage.css';
 
-const LABEL = { PENDING: '대기 중', ACCEPTED: '수락됨', DECLINED: '거절함',
+const LABEL = { PENDING: '매칭 전', ACCEPTED: '수락됨', DECLINED: '거절함',
                 CANCELLED: '취소됨', EXPIRED: '만료됨' };
 
 function acceptErrorMessage(e) {
@@ -16,11 +18,13 @@ function acceptErrorMessage(e) {
   return msg || '수락하지 못했어요. 새로고침 후 다시 시도해 주세요.';
 }
 
-/** 보관함 — 받은 매칭 요청 목록 (읽음 처리 / 수락 / 거절) */
+/** 보관함 — 받은 매칭 요청 목록 (읽음 처리 / 수락 / 취소) */
 export default function InboxPage() {
   const nav = useNavigate();
   const qc = useQueryClient();
   const { data = [] } = useQuery({ queryKey: ['inbox'], queryFn: getInbox, refetchInterval: 10000 });
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
 
   const refresh = () => { qc.invalidateQueries({ queryKey: ['inbox'] }); qc.invalidateQueries({ queryKey: ['home'] }); };
 
@@ -34,6 +38,20 @@ export default function InboxPage() {
       // 만료됐거나 상대가 이미 다른 매칭을 확정한 경우 등, 실패 사유를 알려준다.
       alert(acceptErrorMessage(e));
       refresh();
+    }
+  };
+
+  const confirmCancel = async () => {
+    if (!cancelTarget) return;
+    setCancelling(true);
+    try {
+      await declineProposal(cancelTarget.proposal_id);
+      refresh();
+    } catch (e) {
+      alert(e.response?.data?.message || '취소하지 못했어요.');
+    } finally {
+      setCancelling(false);
+      setCancelTarget(null);
     }
   };
 
@@ -62,8 +80,8 @@ export default function InboxPage() {
               {p.status === 'PENDING' && (
                 <div className="notif-card__actions">
                   <button type="button" className="btn btn--line"
-                          onClick={(e) => { e.stopPropagation(); declineProposal(p.proposal_id).then(refresh); }}>
-                    거절
+                          onClick={(e) => { e.stopPropagation(); setCancelTarget(p); }}>
+                    매칭 취소
                   </button>
                   <button type="button" className="btn"
                           onClick={(e) => { e.stopPropagation(); accept(p); }}>
@@ -76,6 +94,18 @@ export default function InboxPage() {
           {!data.length && <p className="muted">아직 받은 매칭 요청이 없어요.</p>}
         </div>
       </div>
+
+      {cancelTarget && (
+        <ConfirmDialog
+          title="매칭을 취소할까요?"
+          desc={`${cancelTarget.partner_nickname}님과의 ${cancelTarget.meal_time} 밥친구 매칭이 취소돼요.`}
+          confirmLabel={cancelling ? '취소하는 중…' : '매칭 취소'}
+          cancelLabel="매칭 유지"
+          onCancel={() => !cancelling && setCancelTarget(null)}
+          onConfirm={confirmCancel}
+        />
+      )}
+
       <BottomNav />
     </div>
   );

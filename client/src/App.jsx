@@ -17,6 +17,7 @@ import ProposalWaitPage from './pages/ProposalWaitPage.jsx';
 import ChatListPage from './pages/ChatListPage.jsx';
 import ChatRoomPage from './pages/ChatRoomPage.jsx';
 import InboxPage from './pages/InboxPage.jsx';
+import MatchManagePage from './pages/MatchManagePage.jsx';
 import MyPage from './pages/MyPage.jsx';
 import AssistantPage from './pages/AssistantPage.jsx';
 import DevPreviewPage from './pages/DevPreviewPage.jsx';
@@ -54,6 +55,7 @@ export default function App() {
         <Route path="/chats" element={<Private><ChatListPage /></Private>} />
         <Route path="/chats/:matchId" element={<Private><ChatRoomPage /></Private>} />
         <Route path="/inbox" element={<Private><InboxPage /></Private>} />
+        <Route path="/matching/manage" element={<Private><MatchManagePage /></Private>} />
         <Route path="/mypage" element={<Private><MyPage /></Private>} />
         <Route path="/assistant" element={<Private><AssistantPage /></Private>} />
 
