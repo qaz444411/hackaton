@@ -12,6 +12,23 @@ import {
 import { useAuth } from '../context/AuthContext.jsx';
 import './HomePage.css';
 
+// 한글 받침 유무에 따라 "이/가" 조사를 고른다 (한식 → 이, 기타 → 가)
+function withEunGa(word, withBatchim, withoutBatchim) {
+  const code = word.charCodeAt(word.length - 1) - 0xac00;
+  if (code < 0 || code > 11171) return withoutBatchim;
+  return code % 28 === 0 ? withoutBatchim : withBatchim;
+}
+
+// 시간대별 인사말 — 매번 같은 문구 대신 지금 시간에 맞는 한마디
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 11)  return '든든한 아침으로 하루를 시작해봐요.';
+  if (h >= 11 && h < 14) return '오늘 점심 메뉴는 정하셨나요?';
+  if (h >= 14 && h < 18) return '출출한 오후, 간식 친구는 어때요?';
+  if (h >= 18 && h < 22) return '오늘 저녁, 같이 먹을 친구를 찾아볼까요?';
+  return '야식 친구 구하기 딱 좋은 시간이에요.';
+}
+
 /** 홈 — 지도 매칭 진입 / 랜덤 매칭 진입 / 확정 매칭 정보 / 진행 중 매칭 / 오늘의 추천 맛집 */
 export default function HomePage() {
   const nav = useNavigate();
@@ -74,7 +91,7 @@ export default function HomePage() {
         <header className="home__header">
           <div className="home__greet">
             <p className="home__title">안녕하세요, {user?.nickname}님</p>
-            <p className="home__sub">오늘도 맛있는 한 끼 함께해요.</p>
+            <p className="home__sub">{getGreeting()}</p>
           </div>
           <button type="button" className="home__avatar" onClick={() => nav('/mypage')} aria-label="마이페이지">
             <img src={user?.profile_image || '/avatar-default.png'} alt="" />
@@ -125,11 +142,20 @@ export default function HomePage() {
           </button>
         </section>
 
-        {/* 지금 매칭 찾는 인원 — 가벼운 사회적 증거, 0명이면 굳이 안 보여준다 */}
-        {!!data?.searchingCount && (
-          <div className="home__live-pill">
-            <span className="dot-pulse" aria-hidden="true" />
-            지금 {data.searchingCount}명이 밥친구를 찾고 있어요
+        {/* 지금 매칭 찾는 인원 / 이번 주 인기 음식 — 가벼운 사회적 증거, 데이터 없으면 안 보여준다 */}
+        {(!!data?.searchingCount || data?.popularFood) && (
+          <div className="home__stats-row">
+            {!!data?.searchingCount && (
+              <div className="home__stat-pill">
+                <span className="dot-pulse" aria-hidden="true" />
+                지금 {data.searchingCount}명이 밥친구를 찾고 있어요
+              </div>
+            )}
+            {data?.popularFood && (
+              <div className="home__stat-pill">
+                이번 주는 {data.popularFood.label}{withEunGa(data.popularFood.label, '이', '가')} 인기예요 ({data.popularFood.pct}%)
+              </div>
+            )}
           </div>
         )}
 

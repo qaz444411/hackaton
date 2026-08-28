@@ -237,13 +237,19 @@
   box-shadow: 0 2px 6px rgba(106, 114, 78, 0.35);
 }
 
-/* 지금 매칭 찾는 인원 */
-.home__live-pill {
-  align-self: center;
+/* 지금 매칭 찾는 인원 / 이번 주 인기 음식 */
+.home__stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  align-self: stretch;
+  margin-top: 16px;
+}
+.home__stat-pill {
   display: flex;
   align-items: center;
   gap: 7px;
-  margin-top: 16px;
   padding: 8px 14px;
   background: var(--c-select-tint-10);
   border-radius: 999px;

@@ -172,7 +172,7 @@ r.post('/:id/cancel', wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
-/** 홈 화면 — 확정 매칭 정보 + 지금 매칭 찾는 인원(가벼운 사회적 증거용) */
+/** 홈 화면 — 확정 매칭 정보 + 지금 매칭 찾는 인원 + 이번 주 인기 음식(가벼운 사회적 증거용) */
 r.get('/home', wrap(async (req, res) => {
   const confirmed = await one(
     'SELECT * FROM v_home_confirmed_match WHERE user_id = :u ORDER BY match_id DESC LIMIT 1',
@@ -181,7 +181,26 @@ r.get('/home', wrap(async (req, res) => {
     "SELECT COUNT(*) AS c FROM v_inbox WHERE user_id=:u AND status='PENDING' AND is_new", { u: req.user.id });
   const searching = await one(
     "SELECT COUNT(*) AS c FROM matching_request WHERE status='SEARCHING' AND user_id <> :u", { u: req.user.id });
-  res.json({ confirmedMatch: confirmed, inboxNewCount: inboxNew.c, searchingCount: searching.c });
+
+  // 이번 주(최근 7일) 매칭 요청 중 가장 많이 고른 음식 종류. 'ANY'(아무거나)는 통계에서 뺀다 —
+  // 취향을 알려주는 신호가 아니라서.
+  const popularFood = await one(
+    `SELECT ft.label, COUNT(*) AS cnt,
+            ROUND(COUNT(*) * 100.0 / (
+              SELECT COUNT(*) FROM matching_request
+               WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) AND food_type_code <> 'ANY'
+            )) AS pct
+       FROM matching_request mr
+       JOIN food_type_code ft ON ft.code = mr.food_type_code
+      WHERE mr.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) AND mr.food_type_code <> 'ANY'
+      GROUP BY ft.code, ft.label
+      ORDER BY cnt DESC
+      LIMIT 1`);
+
+  res.json({
+    confirmedMatch: confirmed, inboxNewCount: inboxNew.c, searchingCount: searching.c,
+    popularFood: popularFood ? { label: popularFood.label, pct: popularFood.pct } : null,
+  });
 }));
 
 export default r;
