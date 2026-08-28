@@ -172,14 +172,16 @@ r.post('/:id/cancel', wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
-/** 홈 화면 — 확정 매칭 정보 */
+/** 홈 화면 — 확정 매칭 정보 + 지금 매칭 찾는 인원(가벼운 사회적 증거용) */
 r.get('/home', wrap(async (req, res) => {
   const confirmed = await one(
     'SELECT * FROM v_home_confirmed_match WHERE user_id = :u ORDER BY match_id DESC LIMIT 1',
     { u: req.user.id });
   const inboxNew = await one(
     "SELECT COUNT(*) AS c FROM v_inbox WHERE user_id=:u AND status='PENDING' AND is_new", { u: req.user.id });
-  res.json({ confirmedMatch: confirmed, inboxNewCount: inboxNew.c });
+  const searching = await one(
+    "SELECT COUNT(*) AS c FROM matching_request WHERE status='SEARCHING' AND user_id <> :u", { u: req.user.id });
+  res.json({ confirmedMatch: confirmed, inboxNewCount: inboxNew.c, searchingCount: searching.c });
 }));
 
 export default r;

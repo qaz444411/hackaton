@@ -125,6 +125,14 @@ export default function HomePage() {
           </button>
         </section>
 
+        {/* 지금 매칭 찾는 인원 — 가벼운 사회적 증거, 0명이면 굳이 안 보여준다 */}
+        {!!data?.searchingCount && (
+          <div className="home__live-pill">
+            <span className="dot-pulse" aria-hidden="true" />
+            지금 {data.searchingCount}명이 밥친구를 찾고 있어요
+          </div>
+        )}
+
         {/* 내가 보낸 요청 — 화면을 나가도 여기서 다시 확인/취소할 수 있다 */}
         {pendingSent && (
           <Link to={`/proposals/${pendingSent.id}/wait`} className="home__status-card">

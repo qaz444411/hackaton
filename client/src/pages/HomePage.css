@@ -237,6 +237,22 @@
   box-shadow: 0 2px 6px rgba(106, 114, 78, 0.35);
 }
 
+/* 지금 매칭 찾는 인원 */
+.home__live-pill {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 16px;
+  padding: 8px 14px;
+  background: var(--c-select-tint-10);
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: -0.26px;
+  color: var(--c-select);
+}
+
 /* 보낸 요청 / 매칭 진행 중 카드 */
 .home__status-card {
   align-self: stretch;
