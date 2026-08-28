@@ -235,11 +235,16 @@ body {
 /* 채팅 — 최종 디자인 */
 .chat-list { flex: 1; overflow-y: auto; padding: 8px 16px; display: flex; flex-direction: column; gap: 10px; }
 .bubble {
-  /* width: fit-content 가 없으면 한글(단어 경계가 없어 아무 글자에서나 줄바꿈 가능한 CJK)
-     텍스트가 flex 자식으로 있을 때 min-content 기준으로 짜부라들어서, 짧은 문장도
-     세로로 길게 쪼개져 보인다("안녕하세요"가 2줄이 되는 식). max-width 는 그대로 상한으로 둔다. */
-  width: fit-content;
-  max-width: 78%; padding: 10px 14px; border-radius: 18px 18px 18px 4px;
+  /* 진짜 원인: max-width:78% 가 .bubble-row 를 기준으로 계산되는데, .bubble-row 자체의
+     폭은 (아바타가 없는 "내가 보낸" 말풍선의 경우) 이 .bubble 하나의 content 크기로
+     정해진다 — 즉 "내 max-width 는 내 부모 폭 기준인데, 그 부모 폭은 다시 나한테 달려있는"
+     순환 의존이 생긴다. 브라우저가 이걸 풀 때 실제 내용 폭 대신 보수적으로 훨씬 좁은
+     값을 씀 — 그래서 "안녕하세요"도 2줄, 10글자 문장은 3~4줄로 쪼개져 보였다.
+     % 대신 고정 px 로 상한을 주면 이 순환이 아예 끊긴다(390px 프레임 기준
+     .chat-list 안쪽 폭 358px 의 대략 78%). */
+  width: max-content;
+  flex-shrink: 0;
+  max-width: 280px; padding: 10px 14px; border-radius: 18px 18px 18px 4px;
   font-family: var(--font-body); font-size: 14px; letter-spacing: -0.32px; line-height: 1.5;
   background: var(--c-white); box-shadow: var(--shadow-card-soft); color: var(--c-text);
 }
@@ -248,7 +253,11 @@ body {
 .bubble--sys { align-self: center; background: var(--c-line); color: var(--c-text-mute); font-size: 11px; font-weight: 400; border-radius: 999px; box-shadow: none; padding: 6px 14px; max-width: 90%; text-align: center; }
 
 .bubble-row { display: flex; align-items: flex-end; gap: 6px; align-self: flex-start; max-width: 84%; }
-.bubble-row--me { align-self: flex-end; flex-direction: row-reverse; }
+/* flex-direction: row-reverse 를 썼었는데, 내가 보낸 말풍선엔 아바타가 없어(자식이 1개)
+   순서를 뒤집을 필요가 원래 없었다 — 그런데 row-reverse가 fit-content 폭 계산에
+   영향을 줘서 짧은 문장도 좁게 짜부라드는 원인이었다(상대방 쪽 .bubble-row는 row 그대로라
+   문제가 없었다). 오른쪽 정렬은 align-self: flex-end 만으로 충분하다. */
+.bubble-row--me { align-self: flex-end; }
 .bubble-row__avatar { flex: none; width: 30px; height: 30px; border-radius: 50%; object-fit: cover; background: var(--c-surface); }
 .chat-input { box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 10px 16px calc(20px + env(safe-area-inset-bottom)); background: var(--c-white); border-top: 0.6px solid var(--c-bg); }
 .chat-input .icon-btn { border: 1.2px solid rgba(106, 114, 78, 0.3); color: var(--c-select); }
