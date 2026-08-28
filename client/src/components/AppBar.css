@@ -9,33 +9,52 @@
   flex: none;
   width: 100%;
   min-height: 56px;
-  padding: max(22px, calc(env(safe-area-inset-top) + 14px)) 16px 0;
+  padding: 24px 24px 16px;
 }
 
 .appbar__title {
   flex: 1;
+  text-align: center;
   font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 18px;
-  line-height: 23px;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.32px;
   color: var(--c-text);
 }
+
+/* 탭 루트 화면(보관함/채팅목록/마이페이지)의 큰 좌측 정렬 타이틀 */
+.appbar--tab .appbar__title { text-align: left; font-size: 24px; }
 
 .icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   flex: none;
-  width: 40px;
-  height: 40px;
-  padding: 8px;
-  border-radius: 100px;
-  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background: var(--c-white);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  font-size: 18px;
   color: var(--c-text);
 }
 
 .icon-btn:active {
   background: var(--c-primary-tint);
+}
+
+.appbar__spacer {
+  flex: none;
+  width: 36px;
+  height: 36px;
+}
+
+.appbar__logo {
+  flex: 1;
+  height: 120px;
+  width: auto;
+  object-fit: contain;
+  margin: 0 auto;
 }
 
 .icon-btn--active {

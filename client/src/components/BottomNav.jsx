@@ -18,22 +18,24 @@ export default function BottomNav() {
   const newCount = data?.inboxNewCount || 0;
 
   return (
-    <nav className="bnav">
-      {ITEMS.map(({ to, Icon, label }) => (
-        <NavLink
-          key={to}
-          to={to}
-          className={({ isActive }) => `bnav__btn${isActive ? ' active' : ''}`}
-        >
-          <span className="bnav__icon-wrap">
-            <Icon className="bnav__icon" size={22} strokeWidth={2} />
-            {to === '/inbox' && newCount > 0 && (
-              <span className="bnav__badge">{newCount > 9 ? '9+' : newCount}</span>
-            )}
-          </span>
-          <span className="bnav__label">{label}</span>
-        </NavLink>
-      ))}
-    </nav>
+    <div className="bnav-wrap">
+      <nav className="bnav">
+        {ITEMS.map(({ to, Icon, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) => `bnav__btn${isActive ? ' active' : ''}`}
+          >
+            <span className="bnav__icon-wrap">
+              <Icon className="bnav__icon" size={22} strokeWidth={2} />
+              {to === '/inbox' && newCount > 0 && (
+                <span className="bnav__badge">{newCount > 9 ? '9+' : newCount}</span>
+              )}
+            </span>
+            <span className="bnav__label">{label}</span>
+          </NavLink>
+        ))}
+      </nav>
+    </div>
   );
 }

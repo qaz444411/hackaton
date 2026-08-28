@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  List, LocateFixed, Plus, Utensils, Soup, Fish, CookingPot, Pizza, UtensilsCrossed,
+} from 'lucide-react';
 import BottomNav from '../components/BottomNav.jsx';
 import {
   useKakaoMap, useMyLocation, renderPins, renderMyLocation,
@@ -9,7 +12,9 @@ import {
   getRestaurants, getSpots, createSpot, getSpot, getRestaurant,
 } from '../api/endpoints.js';
 import { proposeTo, matchingErrorMessage } from '../lib/matching.js';
-import { foodIcon, shortCategory, FOOD_FILTERS, applyFoodFilter } from '../lib/foodCategory.js';
+import { shortCategory, FOOD_FILTERS, applyFoodFilter } from '../lib/foodCategory.js';
+
+const FILTER_ICONS = { Utensils, Soup, Fish, CookingPot, Pizza, UtensilsCrossed };
 
 /**
  * 지도 페이지 — 카카오 지도 API 사용 지점 ①
@@ -100,8 +105,6 @@ export default function MapPage() {
     })),
     ...shownRestaurants.map((r) => ({
       key: `r${r.restaurant_id}`, kind: 'restaurant', raw: r,
-      // 카카오 category_name 으로 음식 종류 아이콘을 고른다
-      icon: foodIcon(r),
       lat: Number(r.latitude), lng: Number(r.longitude),
       label: r.name, count: r.recruiting_count, isPopular: !!r.is_popular,
     })),
@@ -237,13 +240,16 @@ export default function MapPage() {
 
         {/* 음식 종류 필터 — 식당 핀에만 적용된다 */}
         <div className="map-filters">
-          {FOOD_FILTERS.map((f) => (
-            <button key={f.value} type="button"
-                    className={`map-filter${foodFilter === f.value ? ' is-on' : ''}`}
-                    onClick={() => setFoodFilter(f.value)}>
-              <span>{f.icon}</span>{f.label}
-            </button>
-          ))}
+          {FOOD_FILTERS.map((f) => {
+            const Icon = FILTER_ICONS[f.icon];
+            return (
+              <button key={f.value} type="button"
+                      className={`map-filter${foodFilter === f.value ? ' is-on' : ''}`}
+                      onClick={() => setFoodFilter(f.value)}>
+                <Icon size={13} strokeWidth={2.2} />{f.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* 위치 권한 안내 — 조용히 실패하지 않도록 이유를 띄운다 */}
@@ -262,10 +268,15 @@ export default function MapPage() {
           <div className="map-hint">지도를 길게 누르면 “여기서 먹고싶어요” 마커를 찍을 수 있어요</div>
         )}
 
-        <button className="map-fab map-fab--list" onClick={() => nav('/restaurants')}>☰</button>
-        <button className="map-fab map-fab--me" onClick={goMyLocation}
-                aria-label="내 위치로">◎</button>
-        <button className="map-fab" onClick={() => nav('/recruit')}>+</button>
+        <button className="map-fab map-fab--list" onClick={() => nav('/restaurants')} aria-label="목록 보기">
+          <List size={18} strokeWidth={2.2} />
+        </button>
+        <button className="map-fab map-fab--me" onClick={goMyLocation} aria-label="내 위치로">
+          <LocateFixed size={20} strokeWidth={2.2} />
+        </button>
+        <button className="map-fab" onClick={() => nav('/recruit')} aria-label="밥친구 모집하기">
+          <Plus size={22} strokeWidth={2.4} />
+        </button>
 
         {/* 롱프레스 → 마커 만들기 시트 */}
         {draft && (
@@ -295,7 +306,7 @@ export default function MapPage() {
             <div className="sheet__handle" onClick={() => setSelected(null)} />
             <div className="row" style={{ justifyContent: 'space-between' }}>
               <strong style={{ fontSize: 17 }}>{selected.label}</strong>
-              {selected.isPopular ? <span className="tag">🔥 인기</span> : null}
+              {selected.isPopular ? <span className="tag tag--hot">인기</span> : null}
             </div>
 
             <p className="muted" style={{ marginTop: 4 }}>
@@ -308,19 +319,15 @@ export default function MapPage() {
 
             {!detailBusy && buddies.length > 0 && (
               <>
-                <div className="row" style={{ marginTop: 14, alignItems: 'center' }}>
-                  <div className="avatar-stack">
+                <div className="map-buddy-box">
+                  <strong style={{ fontSize: 14 }}>
+                    현재 {buddies.length}명이 여기서 밥친구를 찾고 있어요
+                  </strong>
+                  <div className="avatar-stack" style={{ marginTop: 12 }}>
                     {buddies.slice(0, 4).map((u) => (
                       <img key={u.user_id} className="avatar"
                            src={u.profile_image || '/avatar-default.png'} alt="" />
                     ))}
-                  </div>
-                  <div className="list-item__body">
-                    <strong>
-                      {buddies[0].nickname}
-                      {buddies.length > 1 ? `님 외 ${buddies.length - 1}명` : '님'}
-                    </strong>
-                    <div className="muted">이 자리에서 밥친구를 찾고 있어요</div>
                   </div>
                 </div>
 
@@ -329,7 +336,7 @@ export default function MapPage() {
                   <button className="btn btn--line" onClick={() => setSelected(null)}>
                     아니요
                   </button>
-                  <button className="btn" disabled={sending} onClick={askToEat}>
+                  <button className="btn btn--accent" disabled={sending} onClick={askToEat}>
                     {sending ? '보내는 중…'
                       : buddies.length > 1 ? '누구와 먹을까요?' : '네, 좋아요'}
                   </button>
@@ -339,12 +346,12 @@ export default function MapPage() {
 
             {!detailBusy && buddies.length === 0 && (
               <>
-                <p style={{ marginTop: 12, fontWeight: 700, color: 'var(--c-primary)' }}>
+                <p style={{ marginTop: 12, fontWeight: 600, fontSize: 14, color: 'var(--c-text-sub)' }}>
                   아직 아무도 없어요 — 먼저 모집해 보세요
                 </p>
                 <div className="row" style={{ marginTop: 12 }}>
                   <button className="btn btn--line" onClick={() => setSelected(null)}>닫기</button>
-                  <button className="btn"
+                  <button className="btn btn--accent"
                           onClick={() => nav(isSpot
                             ? `/preference?spotId=${placeId}`
                             : `/preference?restaurantId=${placeId}`)}>

@@ -1,43 +1,61 @@
-/* PreferencePage — app/ PreferenceSelect 디자인 이식 */
+/* PreferencePage — 최종 디자인 */
+.pref__intro {
+  align-self: stretch;
+  font-size: 14px;
+  letter-spacing: -0.32px;
+  color: var(--c-text-sub);
+}
+
 .pref__section {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   align-self: stretch;
-}
-
-.pref__section + .pref__section {
-  padding-top: 22px;
+  padding-top: 28px;
 }
 
 .pref__section-title {
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 13px;
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.32px;
   color: var(--c-text);
 }
 
-.pref__section .chip-grid {
-  margin-top: 10px;
+.pref__section .chip-grid,
+.pref__section .toggle-group {
+  margin-top: 12px;
 }
 
-.pref__price-card { align-self: stretch; width: 100%; box-sizing: border-box; margin-top: 10px; text-align: center; }
+.pref__price-card { margin-top: 12px; padding: 16px; }
 
-.pref__price-value {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 18px;
-  color: var(--c-primary);
-  margin-bottom: 14px;
-}
-
-.pref__price-caption {
+.pref__price-labels {
   display: flex;
   justify-content: space-between;
-  margin-top: 4px;
-  padding: 0 4px;
-  font-size: 11px;
-  color: var(--c-text-mute);
+  font-size: 13px;
+  letter-spacing: -0.32px;
+  color: var(--c-text-sub);
+}
+
+.pref__price-values {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.32px;
+  color: var(--c-select);
+}
+
+.pref__price-slider { margin-top: 14px; }
+
+.pref__price-caption {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: -0.32px;
+  color: var(--c-text-sub);
 }
 
 .pref__footer {
@@ -47,30 +65,25 @@
   align-self: stretch;
   flex: none;
   width: 100%;
-  padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+  padding: 12px 24px calc(36px + env(safe-area-inset-bottom));
   background: var(--c-bg);
-  border-top: 1px solid var(--c-line);
 }
 
 .pref__submit {
-  box-sizing: border-box;
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 6px;
   align-self: stretch;
   width: 100%;
   height: 54px;
-  background: var(--c-primary-grad);
-  box-shadow: var(--shadow-btn-primary);
-  border-radius: 18px;
+  background: var(--c-primary);
+  border-radius: var(--r-lg);
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.3px;
   color: var(--c-white);
 }
 
-.pref__submit:disabled {
-  opacity: 0.45;
-  box-shadow: none;
-  cursor: not-allowed;
-}
+.pref__submit:disabled { opacity: 0.45; cursor: not-allowed; }

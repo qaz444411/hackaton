@@ -174,13 +174,10 @@ export function renderPins(map, items, onSelect) {
   const overlays = items.map((it) => {
     const el = document.createElement('div');
     el.className = `map-pin map-pin--${it.kind}${it.count > 0 ? ' is-recruiting' : ''}`;
-    // 아이콘은 호출부가 정한다(음식 종류별). 없으면 종류 기본값.
-    const icon = it.icon || (it.kind === 'spot' ? '📍' : '🍽');
     const count = it.count > 0
       ? `<b class="map-pin__count">${it.count}</b>`
       : '';
-    el.innerHTML = `<span class="map-pin__icon">${icon}</span>
-                    <span class="map-pin__label">${escapeHtml(it.label)}</span>${count}`;
+    el.innerHTML = `<span class="map-pin__label">${escapeHtml(it.label)}</span>${count}`;
     el.onclick = (e) => { e.stopPropagation(); onSelect(it); };
 
     const ov = new window.kakao.maps.CustomOverlay({
@@ -220,7 +217,7 @@ export function renderClusters(map, items, { minLevel = 6, onZoomIn } = {}) {
     disableClickZoom: true,
     styles: [{
       width: '38px', height: '38px',
-      background: 'rgba(255,107,74,.92)',
+      background: 'rgba(81,90,56,.92)',
       borderRadius: '19px',
       color: '#fff', textAlign: 'center', lineHeight: '38px',
       fontSize: '14px', fontWeight: '800',
@@ -344,7 +341,7 @@ export function renderDraftPin(map, at) {
   if (!at) return () => {};
   const el = document.createElement('div');
   el.className = 'map-pin map-pin--draft';
-  el.innerHTML = '<span class="map-pin__icon">📍</span><span class="map-pin__label">여기</span>';
+  el.innerHTML = '<span class="map-pin__label">여기</span>';
   const ov = new window.kakao.maps.CustomOverlay({
     position: new window.kakao.maps.LatLng(at.lat, at.lng),
     content: el, yAnchor: 1, zIndex: 6,

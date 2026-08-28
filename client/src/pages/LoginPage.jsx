@@ -5,6 +5,7 @@ import AppBar from '../components/AppBar.jsx';
 import FormField from '../components/FormField.jsx';
 import { login, getMe } from '../api/endpoints.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import logo from '../assets/logo.png';
 import './LoginPage.css';
 
 export default function LoginPage() {
@@ -29,18 +30,10 @@ export default function LoginPage() {
 
   return (
     <div className="screen">
-      <AppBar title="로그인" />
+      <AppBar back center={<img className="appbar__logo" src={logo} alt="DO밥" />} />
       <div className="screen__body">
-        <div className="login">
-          <div className="login__logo-area">
-            <div className="login__logo">🍱</div>
-            <div className="login__logo-text">
-              <p className="login__brand">랜덤 밥친구</p>
-              <p className="login__tagline">맛있는 일상, 같이 먹어 더 즐겁게 👋</p>
-            </div>
-          </div>
-
-          <form className="login__form" onSubmit={submit}>
+        <div className="login2">
+          <form className="login2__form" onSubmit={submit}>
             <FormField
               label="이메일 또는 닉네임"
               placeholder="id@example.com 또는 닉네임"
@@ -63,14 +56,14 @@ export default function LoginPage() {
               variant={error ? 'error' : 'default'}
             />
 
-            <div className="login__actions">
-              <button type="submit" className="login__submit" disabled={!form.account || !form.password}>
+            <div className="login2__submit-wrap">
+              <button type="submit" className="login2__submit" disabled={!form.account || !form.password}>
                 로그인
               </button>
-              <div className="login__links">
+              <div className="login2__links">
                 <Link to="/find-password">비밀번호 찾기</Link>
-                <span>|</span>
-                <Link className="login__links--strong" to="/signup">회원가입하기</Link>
+                <span className="login2__links-divider" />
+                <Link className="login2__links--strong" to="/signup">회원가입하기</Link>
               </div>
             </div>
           </form>

@@ -1,73 +1,190 @@
-/* ProfileSetupPage — app/ SignupPreferences 디자인 이식 */
-.sp {
+/* ProfileSetupPage — 최종 디자인 (MBTI 4축 토글 + 알레르기/맵기/느끼함/관심사) */
+.sp2 {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   width: 100%;
   min-height: 100%;
-  gap: 20px;
+  gap: 14px;
 }
 
-.sp__intro {
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-  gap: 4px;
-}
-
-.sp__title {
+.sp2__intro { align-self: stretch; }
+.sp2__title {
   font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 22px;
-  line-height: 28px;
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: -0.32px;
   color: var(--c-text);
 }
-
-.sp__desc {
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 14px;
+.sp2__desc {
+  margin-top: 2px;
+  font-size: 13px;
+  letter-spacing: -0.32px;
   color: var(--c-text-sub);
 }
 
-.sp__section {
-  display: flex;
-  flex-direction: column;
+.sp2__mbti-card {
   align-self: stretch;
-  gap: 10px;
+  padding: 14px;
+  background: var(--c-white);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border-radius: var(--r-xl);
 }
 
-.sp__section-title {
+.sp2__mbti-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sp2__mbti-head-label {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 13px;
   color: var(--c-text);
 }
 
-.sp__cta-wrap {
+.sp2__mbti-code {
+  padding: 2px 10px;
+  background: var(--c-select-tint-10);
+  border-radius: 20px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--c-select);
+  min-width: 28px;
+  text-align: center;
+}
+
+.sp2__mbti-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.sp2__seg {
+  display: flex;
+  align-self: stretch;
+  padding: 3px;
+  gap: 3px;
+  background: var(--c-select-tint-07);
+  border-radius: 10px;
+}
+
+.sp2__seg-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: -0.26px;
+  color: var(--c-text);
+}
+
+.sp2__seg-btn--active {
+  background: var(--c-select);
+  color: var(--c-white);
+}
+
+.sp2__section { align-self: stretch; }
+.sp2__section-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: -0.32px;
+  color: var(--c-text);
+}
+
+.sp2__pill-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 7px;
+}
+
+.sp2__pill {
+  padding: 7px 18px;
+  height: 33.5px;
+  display: flex;
+  align-items: center;
+  background: var(--c-white);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border-radius: 30px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: -0.26px;
+  color: var(--c-text);
+}
+
+.sp2__pill--active {
+  background: var(--c-select);
+  color: var(--c-white);
+  box-shadow: none;
+}
+
+.sp2__scale-row {
+  display: flex;
+  gap: 7px;
+  margin-top: 7px;
+  align-self: stretch;
+}
+
+.sp2__scale-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  height: 46px;
+  background: var(--c-white);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: -0.28px;
+  color: var(--c-text);
+}
+
+.sp2__scale-btn--active {
+  background: var(--c-select);
+  color: var(--c-white);
+  box-shadow: none;
+}
+
+.sp2__scale-sub {
+  font-size: 9px;
+  letter-spacing: -0.28px;
+  color: var(--c-text-sub);
+}
+
+.sp2__scale-btn--active .sp2__scale-sub { color: rgba(255, 255, 255, 0.65); }
+
+.sp2__cta-wrap {
   align-self: stretch;
   padding-top: 12px;
 }
 
-.sp__submit {
-  box-sizing: border-box;
+.sp2__submit {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 6px;
   align-self: stretch;
   width: 100%;
-  height: 54px;
-  background: var(--c-primary-grad);
-  box-shadow: var(--shadow-btn-primary);
-  border-radius: 20px;
+  height: 52px;
+  background: var(--c-primary);
+  border-radius: var(--r-lg);
   font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.3px;
   color: var(--c-white);
 }
 
-.sp__submit:disabled {
-  opacity: 0.45;
-  box-shadow: none;
-  cursor: not-allowed;
-}
+.sp2__submit:disabled { opacity: 0.45; cursor: not-allowed; }

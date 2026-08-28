@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Trash2, Sparkles, ArrowUp } from 'lucide-react';
+import {
+  Trash2, Sparkles, ArrowUp, MapPin, Soup, Utensils, Users, MessageCircle,
+} from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
 import { askAssistant, getAssistantStatus, getAssistantStarters } from '../api/endpoints.js';
 import { useMyLocation, GEO } from '../hooks/useKakaoMap.js';
+import './AssistantPage.css';
 
 const STORAGE_KEY = 'assistant.history';
 const MAX_KEPT = 30;   // 서버가 받는 상한과 맞춘다
+const STARTER_ICONS = [Utensils, Users, MessageCircle];
 
 /**
  * AI 도우미 — 제미나이 챗봇.
@@ -81,10 +85,19 @@ export default function AssistantPage() {
 
   return (
     <div className="screen">
-      <AppBar title="AI 도우미" onBack={() => nav('/home')}
-              right={messages.length
-                ? <button className="icon-btn" onClick={reset} aria-label="대화 지우기"><Trash2 size={18} /></button>
-                : null} />
+      <AppBar
+        center={
+          <div className="assistant__title">
+            <span className="assistant__title-main">DO밥 AI</span>
+            <span className="assistant__title-sub">오늘의 한 끼를 같이 고민해드려요</span>
+          </div>
+        }
+        onBack={() => nav('/home')}
+        right={messages.length
+          ? <button className="icon-btn" onClick={reset} aria-label="대화 지우기"><Trash2 size={16} /></button>
+          : null}
+      />
+      <div className="assistant__divider-line" />
 
       {status && !status.enabled && (
         <div className="ai-warn">
@@ -96,20 +109,28 @@ export default function AssistantPage() {
       <div className="chat-list" ref={listRef}>
         {!messages.length && (
           <>
-            <div className="ai-hello">
-              <div className="ai-hello__icon"><Sparkles size={26} strokeWidth={2} /></div>
-              <strong>무엇이든 물어보세요</strong>
-              <p className="muted" style={{ marginTop: 6 }}>
-                오늘 뭐 먹을지, 앱 사용법, 처음 만나는 사람과의 대화 요령까지 도와드려요.
+            <div className="assistant__hero">
+              <div className="assistant__hero-icon"><Soup size={18} strokeWidth={2.2} /></div>
+              <p className="assistant__hero-title">오늘 뭐 먹을지 고민되나요?</p>
+              <p className="assistant__hero-desc">
+                음식점 추천부터 밥친구 매칭, 대화 주제까지 같이 찾아드릴게요.
               </p>
             </div>
-            <div className="ai-starters">
-              {starters.map((s) => (
-                <button key={s} className="ai-starter" onClick={() => send(s)}>{s}</button>
-              ))}
-              <button className="ai-starter" onClick={() => send('이 근처에서 뭐 먹을지 추천해줘')}>
-                📍 이 근처 맛집 추천해줘
-              </button>
+
+            <div className="assistant__divider">
+              <span /><b>이렇게 물어보세요!</b><span />
+            </div>
+
+            <div className="assistant__starters">
+              {[...starters, '이 근처에서 뭐 먹을지 추천해줘'].map((s, i) => {
+                const Icon = i === starters.length ? MapPin : STARTER_ICONS[i % STARTER_ICONS.length];
+                return (
+                  <button key={s} type="button" className="assistant__starter" onClick={() => send(s)}>
+                    <Icon size={16} strokeWidth={2.2} />
+                    <span>{i === starters.length ? '이 근처 맛집 추천해줘' : s}</span>
+                  </button>
+                );
+              })}
             </div>
           </>
         )}
@@ -181,12 +202,13 @@ export default function AssistantPage() {
         )}
       </div>
 
-      <div className="chat-input">
-        <input className="input" placeholder="메시지를 입력하세요" value={input} maxLength={500}
+      <div className="chat-input assistant__input-bar">
+        <button type="button" className="icon-btn" aria-hidden="true"><Sparkles size={15} strokeWidth={2.2} /></button>
+        <input className="input" placeholder="AI에게 물어보세요" value={input} maxLength={500}
                onChange={(e) => setInput(e.target.value)}
                onKeyDown={(e) => e.key === 'Enter' && send()} />
         <button className="send" onClick={() => send()} disabled={busy || !input.trim()}
-                aria-label="보내기"><ArrowUp size={18} strokeWidth={2.2} /></button>
+                aria-label="보내기"><ArrowUp size={16} strokeWidth={2.2} /></button>
       </div>
     </div>
   );

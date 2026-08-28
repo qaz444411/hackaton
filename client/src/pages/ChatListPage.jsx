@@ -15,7 +15,7 @@ export default function ChatListPage() {
 
   return (
     <div className="screen">
-      <AppBar title="채팅" back={false} />
+      <AppBar title="채팅" back={false} tab />
       <div className="screen__body">
         <div className="cl__list">
           {data.map((r) => (

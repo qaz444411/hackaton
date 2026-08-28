@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { X, Search, UtensilsCrossed } from 'lucide-react';
+import { X, Search, Check } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
-import ChipGroup from '../components/ChipGroup.jsx';
 import { useMyLocation, FALLBACK_CENTER, GEO_MESSAGE } from '../hooks/useKakaoMap.js';
 import { getCodes, getRestaurants } from '../api/endpoints.js';
 import './RestaurantListPage.css';
@@ -26,13 +25,12 @@ export default function RecruitPage() {
 
   return (
     <div className="screen">
-      <AppBar title="밥친구 모집하기"
-              onBack={() => nav(-1)}
-              right={<button className="icon-btn" onClick={() => nav('/map')}><X size={20} /></button>} />
+      <AppBar title="밥친구 모집하기" back={false}
+              right={<button className="icon-btn" onClick={() => nav(-1)}><X size={18} /></button>} />
       <div className="screen__body">
         <label className="rl__search">
-          <Search size={15} strokeWidth={2.2} />
-          <input placeholder="함께 식사할 음식점 검색" value={keyword}
+          <Search size={16} strokeWidth={2} />
+          <input placeholder="식당을 검색해주세요" value={keyword}
                  onChange={(e) => setKeyword(e.target.value)}
                  onKeyDown={(e) => e.key === 'Enter' && search()} />
         </label>
@@ -41,27 +39,37 @@ export default function RecruitPage() {
           <p className="muted" style={{ marginTop: 8 }}>{GEO_MESSAGE[geoState]}</p>
         )}
 
-        <h2 className="section-title">음식점 선택</h2>
-        <div className="rl__list">
+        <h2 className="rc__section-title">식당 선택</h2>
+        <div className="rl__list" style={{ marginTop: 0 }}>
           {list.map((r) => (
             <button type="button" key={r.restaurant_id}
-                    className={`rl__card${picked?.restaurant_id === r.restaurant_id ? ' rl__card--selected' : ''}`}
+                    className={`rc__option${picked?.restaurant_id === r.restaurant_id ? ' rc__option--selected' : ''}`}
                     onClick={() => setPicked(r)}>
-              <span className="rl__card-emoji"><UtensilsCrossed size={22} strokeWidth={2} /></span>
-              <div className="rl__card-body">
-                <span className="rl__card-name">{r.name}</span>
-                <p className="rl__card-sub">{r.food_type_label} · {r.road_address} · {r.distance_m}m · ⭐ {r.rating ?? '-'}</p>
-              </div>
+              <span className="rc__option-name">{r.name}</span>
+              <span className="rc__option-sub">{r.food_type_label} · {r.road_address}</span>
+              <span className="rc__option-meta">{r.distance_m}m · ★{r.rating ?? '-'}</span>
+              {picked?.restaurant_id === r.restaurant_id && (
+                <span className="rc__option-check"><Check size={12} strokeWidth={3} /></span>
+              )}
             </button>
           ))}
         </div>
 
-        <h2 className="section-title">식사 시간대</h2>
-        <ChipGroup options={(codes?.meal || []).map((c) => ({ value: c.code, label: c.label }))}
-                   value={mealTime} onChange={setMealTime} />
+        <h2 className="rc__section-title" style={{ marginTop: 8 }}>모집 정보</h2>
+        <p className="rc__sub-title">식사 시간</p>
+        <div className="rc__time-row">
+          {(codes?.meal || []).map((c) => (
+            <button key={c.code} type="button"
+                    className={`rc__time-pill${mealTime === c.code ? ' rc__time-pill--active' : ''}`}
+                    onClick={() => setMealTime(c.code)}>
+              {c.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        <button className="btn" style={{ margin: '24px 0' }}
-                disabled={!picked || !mealTime}
+      <div className="rc__footer">
+        <button className="btn" disabled={!picked || !mealTime}
                 onClick={() => nav(`/preference?restaurantId=${picked.restaurant_id}&mealTime=${mealTime}`)}>
           모집 시작하기
         </button>

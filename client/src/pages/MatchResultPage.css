@@ -1,0 +1,20 @@
+/* MatchResultPage — 최종 디자인 (매칭완료 스펙이 잘려있어 공용 카드/버튼 스타일로 재구성) */
+.mr__meta-card { display: flex; flex-direction: column; gap: 10px; }
+
+.mr__meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  letter-spacing: -0.32px;
+  color: var(--c-text);
+}
+.mr__meta-row .muted { font-size: 13px; }
+
+.mr__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+  padding-bottom: 24px;
+}

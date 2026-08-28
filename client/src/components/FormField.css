@@ -9,10 +9,11 @@
 
 .field__label {
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 14px;
-  line-height: 18px;
-  color: var(--c-text);
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 20px;
+  letter-spacing: -0.32px;
+  color: var(--c-text-sub);
 }
 
 .field__input-wrap {
@@ -25,8 +26,8 @@
   height: 52px;
   padding: 0 16px;
   background: var(--c-white);
-  border: 1.5px solid var(--c-line);
-  border-radius: 16px;
+  border: 1.5px solid transparent;
+  border-radius: var(--r-md);
 }
 
 .field__input-wrap:focus-within,
@@ -35,7 +36,7 @@
 }
 
 .field__input-wrap--error {
-  border-color: var(--c-primary);
+  border-color: var(--c-error);
 }
 
 .field__row {
@@ -59,21 +60,24 @@
   align-items: center;
   flex: none;
   height: 52px;
-  padding: 16px;
-  background: var(--c-primary-tint);
-  border: none;
-  border-radius: 16px;
+  padding: 0 14px;
+  background: var(--c-white);
+  border: 1.2px solid var(--c-primary-soft);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border-radius: var(--r-md);
   font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 14px;
-  line-height: 18px;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 20px;
+  letter-spacing: -0.26px;
   color: var(--c-primary);
   white-space: nowrap;
   cursor: pointer;
 }
 
 .field__action:disabled {
-  background: var(--c-line);
+  background: var(--c-surface);
+  border-color: var(--c-line);
   color: var(--c-text-disabled);
   cursor: not-allowed;
 }
@@ -94,23 +98,24 @@
 }
 
 .field__hint--default { color: var(--c-text-mute); }
-.field__hint--active,
-.field__hint--error { color: var(--c-primary); }
+.field__hint--active { color: var(--c-primary); }
+.field__hint--error { color: var(--c-error); }
 
 .field__input {
   flex: 1 1 auto;
   min-width: 0;
-  height: 20px;
+  height: 19px;
   font-family: var(--font-body);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 15px;
-  line-height: 20px;
+  line-height: 19px;
+  letter-spacing: -0.3px;
   color: var(--c-text);
   background: transparent;
   border: none;
 }
 
-.field__input::placeholder { color: var(--c-text-mute); }
+.field__input::placeholder { color: rgba(34, 34, 34, 0.5); }
 
 .field__icon-btn {
   display: flex;

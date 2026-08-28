@@ -47,12 +47,16 @@ export default function BuddyListPage({ kind = 'restaurant' }) {
       <div className="screen__body">
         {place && (
           <div className="bl__place">
+            <div className="bl__place-thumb" aria-hidden="true" />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p className="bl__place-name">{title} {place.is_popular ? '🔥' : ''}</p>
+              <div className="bl__place-name-row">
+                <p className="bl__place-name">{title}</p>
+                {place.is_popular && <span className="tag tag--hot">인기</span>}
+              </div>
               <p className="bl__place-desc">
                 {isSpot
                   ? (place.address || '지도에 찍힌 지점')
-                  : `⭐ ${place.rating ?? '-'} · ${place.food_type_label} · ${place.road_address}`}
+                  : `오늘 여기서 같이 먹을 사람 ${buddies.length}명`}
               </p>
             </div>
           </div>
@@ -63,7 +67,7 @@ export default function BuddyListPage({ kind = 'restaurant' }) {
           {buddies.map((b) => (
             <ProfileCard key={b.user_id} p={b}
               footer={
-                <button type="button" className="bl__cta" onClick={() => request(b)}>🍜 매칭 요청하기</button>
+                <button type="button" className="bl__cta" onClick={() => request(b)}>같이 먹기</button>
               } />
           ))}
           {!buddies.length && (

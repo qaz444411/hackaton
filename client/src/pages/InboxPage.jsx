@@ -39,7 +39,7 @@ export default function InboxPage() {
 
   return (
     <div className="screen">
-      <AppBar title="보관함" back={false} />
+      <AppBar title="보관함" back={false} tab />
       <div className="screen__body">
         <div className="inbox__list">
           {data.map((p) => (
@@ -49,15 +49,14 @@ export default function InboxPage() {
                 <img className="notif-card__avatar" src={p.partner_image || '/avatar-default.png'} alt="" />
                 <div className="notif-card__body">
                   <div className="notif-card__name-row">
-                    <span className="notif-card__name">{p.partner_nickname}</span>
-                    <span className="notif-card__age">{p.partner_age}세</span>
+                    <span className="notif-card__name">{p.partner_nickname} · {p.partner_age}세</span>
+                    <span className={`notif-card__badge notif-card__badge--${p.status}`}>{LABEL[p.status]}</span>
                     {p.is_new && <span className="notif-card__new">NEW</span>}
                   </div>
                   <p className="notif-card__message">
                     {p.meal_time} · {p.food_type}{p.restaurant_name ? ` · ${p.restaurant_name}` : ''}
                   </p>
                 </div>
-                <span className="notif-card__status">{LABEL[p.status]}</span>
               </div>
 
               {p.status === 'PENDING' && (

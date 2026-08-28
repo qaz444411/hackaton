@@ -87,8 +87,13 @@ export default function ChatRoomPage() {
   return (
     <div className="screen">
       <AppBar
-        title={room?.partner_nickname || '채팅'}
-        right={<button className="icon-btn" onClick={() => setMenu(!menu)}><MoreVertical size={20} /></button>}
+        center={
+          <div className="chatroom__title">
+            <img className="chatroom__avatar" src={room?.partner_image || '/avatar-default.png'} alt="" />
+            <span className="chatroom__name">{room?.partner_nickname || '채팅'}</span>
+          </div>
+        }
+        right={<button className="icon-btn" onClick={() => setMenu(!menu)}><MoreVertical size={18} /></button>}
       />
 
       {menu && (
@@ -134,16 +139,21 @@ export default function ChatRoomPage() {
       )}
 
       <div className="chat-list">
-        {messages.map((m) => (
-          <div key={m.id}
-               className={`bubble ${m.message_type === 'SYSTEM' ? 'bubble--sys'
-                 : m.sender_id === user.id ? 'bubble--me' : 'bubble--you'}`}>
-            {m.content}
-            {m.message_type !== 'SYSTEM' && (
-              <div style={{ fontSize: 10, opacity: .7, marginTop: 4 }}>{time(m.sent_at)}</div>
-            )}
-          </div>
-        ))}
+        {messages.map((m) => {
+          if (m.message_type === 'SYSTEM') {
+            return <div key={m.id} className="bubble bubble--sys">{m.content}</div>;
+          }
+          const mine = m.sender_id === user.id;
+          return (
+            <div key={m.id} className={`bubble-row${mine ? ' bubble-row--me' : ''}`}>
+              {!mine && <img className="bubble-row__avatar" src={room?.partner_image || '/avatar-default.png'} alt="" />}
+              <div className={`bubble ${mine ? 'bubble--me' : 'bubble--you'}`}>
+                {m.content}
+                <div style={{ fontSize: 10, opacity: .7, marginTop: 4 }}>{time(m.sent_at)}</div>
+              </div>
+            </div>
+          );
+        })}
         <div ref={bottomRef} />
       </div>
 
@@ -176,8 +186,8 @@ export default function ChatRoomPage() {
             <Sparkles size={20} strokeWidth={2} />
           </button>
           <input className="input" value={text} maxLength={500}
-                 onChange={(e) => setText(e.target.value)} placeholder="메시지를 입력하세요" />
-          <button className="send" type="submit"><Send size={18} strokeWidth={2.2} /></button>
+                 onChange={(e) => setText(e.target.value)} placeholder="메시지를 입력하세요..." />
+          <button className="send" type="submit" disabled={!text.trim()}><Send size={16} strokeWidth={2.2} /></button>
         </form>
       )}
     </div>

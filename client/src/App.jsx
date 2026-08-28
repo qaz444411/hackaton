@@ -19,6 +19,7 @@ import ChatRoomPage from './pages/ChatRoomPage.jsx';
 import InboxPage from './pages/InboxPage.jsx';
 import MyPage from './pages/MyPage.jsx';
 import AssistantPage from './pages/AssistantPage.jsx';
+import DevPreviewPage from './pages/DevPreviewPage.jsx';
 
 function Private({ children }) {
   const { user, loading } = useAuth();
@@ -32,6 +33,7 @@ export default function App() {
   return (
     <div className="phone-frame">
       <Routes>
+        <Route path="/__preview" element={<DevPreviewPage />} />
         <Route path="/" element={<IntroPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />

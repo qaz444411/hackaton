@@ -1,0 +1,90 @@
+/* AssistantPage — 최종 디자인 (DO밥 AI) */
+.assistant__title { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.assistant__title-main {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.32px;
+  color: var(--c-text);
+}
+.assistant__title-sub {
+  margin-top: 1px;
+  font-size: 11px;
+  letter-spacing: -0.32px;
+  color: var(--c-text-sub);
+}
+
+.assistant__divider-line { flex: none; height: 0.6px; background: rgba(0, 0, 0, 0.06); }
+
+.assistant__hero { text-align: center; padding: 40px 16px 0; }
+.assistant__hero-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 36px;
+  margin: 0 auto;
+  border-radius: 40px;
+  background: var(--c-primary);
+  color: var(--c-white);
+}
+.assistant__hero-title {
+  margin-top: 14px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: -0.32px;
+  color: var(--c-text);
+}
+.assistant__hero-desc {
+  margin: 8px auto 0;
+  max-width: 220px;
+  font-size: 14px;
+  line-height: 24px;
+  letter-spacing: -0.32px;
+  color: var(--c-text-sub);
+}
+
+.assistant__divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 8px 0;
+}
+.assistant__divider span { flex: 1; height: 1px; background: rgba(0, 0, 0, 0.08); }
+.assistant__divider b {
+  flex: none;
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: -0.32px;
+  color: var(--c-text-sub);
+}
+
+.assistant__starters { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.assistant__starter {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 48px;
+  padding: 0 18px;
+  background: var(--c-white);
+  border: 0.6px solid rgba(0, 0, 0, 0.08);
+  border-radius: 40px;
+  color: var(--c-select);
+}
+.assistant__starter span {
+  font-family: var(--font-body);
+  font-size: 14px;
+  letter-spacing: -0.32px;
+  color: var(--c-text);
+}
+
+.assistant__input-bar .icon-btn {
+  width: 42px;
+  height: 42px;
+  border: 1.2px solid rgba(106, 114, 78, 0.22);
+  color: var(--c-select);
+}
+.assistant__input-bar .input { background: var(--c-bg); }

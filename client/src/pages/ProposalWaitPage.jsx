@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { XCircle } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
 import { getProposal, cancelProposal } from '../api/endpoints.js';
 import './ProposalWaitPage.css';
@@ -36,7 +37,7 @@ export default function ProposalWaitPage() {
         <AppBar title="매칭 요청" onBack={() => nav('/home')} />
         <div className="screen__body">
           <div className="mrs">
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🥲</div>
+            <div className="mrs__icon mrs__icon--muted"><XCircle size={32} strokeWidth={2} /></div>
             <p className="mrs__title">상대방이 요청을 거절했어요</p>
             <p className="mrs__subtitle">다른 밥친구를 찾아볼까요?</p>
             <button type="button" className="btn" onClick={() => nav('/preference')}>

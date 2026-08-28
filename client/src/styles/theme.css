@@ -1,49 +1,56 @@
 /* =====================================================================
    랜덤 밥친구 — 디자인 토큰
-   Figma 내보내기 CSS(css파일_최종.zip)에서 추출한 실제 값
+   "최종 디자인" (2차 리브랜딩) Figma 내보내기 CSS 기준으로 갱신.
+   올리브 그린 + 크림 배경 + 브라운 액센트 팔레트, Pretendard 폰트.
    ===================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Outfit:wght@400;500;600;700&display=swap');
 
 :root {
   /* Brand */
-  --c-primary:        #FF6B4A;
-  --c-primary-soft:   #FF8D72;
-  --c-primary-tint:   #FFF0EB;
-  --c-bg:             #FFF8F5;
-  --c-bg-grad:        linear-gradient(135deg, #FFF8F5 0%, #FFEEE8 100%);
-  --c-accent:         #FFD166;
+  --c-primary:        #515A38;
+  --c-primary-soft:   #6B7650;
+  --c-primary-tint:   #EAEBDF;
+  --c-bg:             #F6F2E9;
+  --c-bg-grad:        linear-gradient(135deg, #F6F2E9 0%, #EFE8D8 100%);
+  --c-accent:         #AC6E39;
+  --c-accent-tint:    #F3E7D8;
+  --c-error:          #B3543A;
+
+  /* 선택 상태(칩/토글/세그먼트)에 쓰는 보조 그린 — 버튼(CTA)은 --c-primary 를 그대로 쓴다 */
+  --c-select:         #6A724E;
+  --c-select-tint-07:  rgba(106, 114, 78, 0.07);
+  --c-select-tint-10:  rgba(106, 114, 78, 0.1);
 
   /* Text */
-  --c-text:           #1A1A1A;
-  --c-text-sub:       #7A7A7A;
-  --c-text-mute:      #AAAAAA;
+  --c-text:           #222222;
+  --c-text-sub:       rgba(34, 34, 34, 0.6);
+  --c-text-mute:      rgba(34, 34, 34, 0.45);
 
   /* Line / Surface */
-  --c-white:          #FFFFFF;
-  --c-line:           #F0ECE8;
-  --c-line-strong:    #DBD7D3;
-  --c-surface:        #F4F0EC;
+  --c-white:          #FFFDF9;
+  --c-line:           rgba(34, 34, 34, 0.08);
+  --c-line-strong:    rgba(34, 34, 34, 0.16);
+  --c-surface:        #EFEAE0;
 
   /* Radius */
-  --r-sm: 10px; --r-md: 14px; --r-lg: 16px; --r-xl: 20px; --r-phone: 40px;
+  --r-sm: 10px; --r-md: 14px; --r-lg: 16px; --r-xl: 20px; --r-2xl: 26px; --r-phone: 48px;
 
-  /* Brand gradient / extra text tone (app 디자인 이식용) */
-  --c-primary-grad: linear-gradient(135deg, #FF6B4A 0%, #FF8D72 100%);
-  --c-text-disabled: #CCCCCC;
+  /* Brand gradient / extra text tone */
+  --c-primary-grad: linear-gradient(135deg, #515A38 0%, #6B7650 100%);
+  --c-text-disabled: rgba(34, 34, 34, 0.28);
 
   /* Shadow */
-  --shadow-phone: 0 32px 80px rgba(255,107,74,.18), 0 8px 32px rgba(0,0,0,.10);
-  --shadow-card:  0 4px 16px rgba(255,107,74,.10);
-  --shadow-card-soft: 0 2px 12px rgba(0,0,0,.05);
-  --shadow-logo: 0 8px 20px rgba(255,107,74,.35);
-  --shadow-btn-primary: 0 8px 24px rgba(255,107,74,.4);
-  --shadow-btn-outline: 0 4px 16px rgba(255,107,74,.12);
+  --shadow-phone: 0 32px 80px rgba(0,0,0,.22);
+  --shadow-card:  0 8px 32px rgba(34,34,34,.13), 0 2px 8px rgba(34,34,34,.06);
+  --shadow-card-soft: 0 4px 20px rgba(0,0,0,.06);
+  --shadow-logo: 0 8px 20px rgba(81,90,56,.35);
+  --shadow-btn-primary: 0 4px 16px rgba(81,90,56,.28);
+  --shadow-btn-outline: 0 4px 16px rgba(81,90,56,.12);
 
   /* Type */
-  --font-body: 'Nunito', 'Apple SD Gothic Neo', sans-serif;
-  --font-display: 'Outfit', 'Nunito', sans-serif;
+  --font-body: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif;
+  --font-display: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
 
-  /* Layout (Figma 기준 390~403 x 844~874) */
+  /* Layout (Figma 기준 390 x 844) */
   --w-screen: 390px;
   --h-screen: 844px;
 }

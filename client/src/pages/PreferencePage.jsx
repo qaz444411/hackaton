@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import AppBar from '../components/AppBar.jsx';
 import ChipGroup from '../components/ChipGroup.jsx';
+import ToggleGroup from '../components/ToggleGroup.jsx';
 import RangeSlider from '../components/RangeSlider.jsx';
 import { getCodes, saveDraft, startMatching } from '../api/endpoints.js';
 import './PreferencePage.css';
@@ -22,7 +23,7 @@ export default function PreferencePage() {
   const [busy, setBusy] = useState(false);
 
   const valid = f.foodTypeCode && f.talkStyleCode && f.mealTimeCode && f.priceMin <= f.priceMax;
-  const won = (v) => `${(v / 10000).toFixed(0)}만원`;
+  const won = (v) => `${v.toLocaleString()}원`;
 
   const start = async () => {
     setBusy(true);
@@ -45,45 +46,53 @@ export default function PreferencePage() {
     <div className="screen">
       <AppBar title="이번 식사 취향" onBack={() => nav('/home')} />
       <div className="screen__body">
+        <p className="pref__intro">이번에 함께 먹을 밥친구 조건을 알려주세요.</p>
+
         <section className="pref__section">
-          <p className="pref__section-title">🍽️ 먹고 싶은 음식</p>
+          <p className="pref__section-title">먹고 싶은 음식</p>
           <ChipGroup options={(codes?.food || []).map((c) => ({ value: c.code, label: c.label }))}
                      value={f.foodTypeCode} onChange={(v) => setF({ ...f, foodTypeCode: v })} />
         </section>
 
         <section className="pref__section">
-          <p className="pref__section-title">💬 대화 스타일</p>
-          <ChipGroup options={(codes?.talk || []).map((c) => ({ value: c.code, label: c.label }))}
-                     value={f.talkStyleCode} onChange={(v) => setF({ ...f, talkStyleCode: v })} />
+          <p className="pref__section-title">대화 스타일</p>
+          <ToggleGroup options={(codes?.talk || []).map((c) => ({ value: c.code, label: c.label }))}
+                       value={f.talkStyleCode} onChange={(v) => setF({ ...f, talkStyleCode: v })} />
         </section>
 
         <section className="pref__section">
-          <p className="pref__section-title">🕒 식사 시간대</p>
-          <ChipGroup options={(codes?.meal || []).map((c) => ({ value: c.code, label: c.label }))}
-                     value={f.mealTimeCode} onChange={(v) => setF({ ...f, mealTimeCode: v })} />
+          <p className="pref__section-title">식사 시간</p>
+          <ToggleGroup options={(codes?.meal || []).map((c) => ({ value: c.code, label: c.label }))}
+                       value={f.mealTimeCode} onChange={(v) => setF({ ...f, mealTimeCode: v })} />
         </section>
 
         <section className="pref__section">
-          <p className="pref__section-title">💰 식사 가격대 (1인 기준)</p>
+          <p className="pref__section-title">가격대</p>
           <div className="card pref__price-card">
-            <p className="pref__price-value">{won(f.priceMin)} ~ {won(f.priceMax)}</p>
-            <RangeSlider
-              min={0} max={100000} step={10000}
-              valueMin={f.priceMin} valueMax={f.priceMax}
-              onChangeMin={(v) => setF({ ...f, priceMin: Math.min(v, f.priceMax) })}
-              onChangeMax={(v) => setF({ ...f, priceMax: Math.max(v, f.priceMin) })}
-            />
-            <div className="pref__price-caption">
-              <span>0원</span>
-              <span>10만원+</span>
+            <div className="pref__price-labels">
+              <span>최소</span>
+              <span>최대</span>
             </div>
+            <div className="pref__price-values">
+              <span>{won(f.priceMin)}</span>
+              <span>{won(f.priceMax)}</span>
+            </div>
+            <div className="pref__price-slider">
+              <RangeSlider
+                min={0} max={100000} step={10000}
+                valueMin={f.priceMin} valueMax={f.priceMax}
+                onChangeMin={(v) => setF({ ...f, priceMin: Math.min(v, f.priceMax) })}
+                onChangeMax={(v) => setF({ ...f, priceMax: Math.max(v, f.priceMin) })}
+              />
+            </div>
+            <p className="pref__price-caption">10,000원 단위로 조절할 수 있어요</p>
           </div>
         </section>
       </div>
 
       <div className="pref__footer">
         <button type="button" className="pref__submit" disabled={!valid || busy} onClick={start}>
-          {busy ? '매칭 준비 중…' : '매칭 시작하기 ✨'}
+          {busy ? '매칭 준비 중…' : '매칭 시작하기'}
         </button>
       </div>
     </div>

@@ -5,6 +5,7 @@ import AppBar from '../components/AppBar.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
 import { getCandidates, createProposal } from '../api/endpoints.js';
 import { matchingErrorMessage } from '../lib/matching.js';
+import './MatchResultPage.css';
 
 /** 매칭 결과 페이지 — 상대 프로필 + 취향 일치율 / 같이 밥 먹기 · 다른 친구 찾기 */
 export default function MatchResultPage() {
@@ -63,32 +64,23 @@ export default function MatchResultPage() {
         <ProfileCard variant="hero" p={p} onClick={() => nav(`/users/${p.user_id}`)} />
 
         <h2 className="section-title">이번 식사 취향</h2>
-        <div className="card">
-          <div className="row" style={{ justifyContent: 'space-between' }}>
-            <span className="muted">먹고 싶은 음식</span><strong>{p.food_type}</strong>
-          </div>
-          <div className="row" style={{ justifyContent: 'space-between', marginTop: 8 }}>
-            <span className="muted">대화 스타일</span><strong>{p.talk_style}</strong>
-          </div>
-          <div className="row" style={{ justifyContent: 'space-between', marginTop: 8 }}>
-            <span className="muted">시간대</span><strong>{p.meal_time}</strong>
-          </div>
-          <div className="row" style={{ justifyContent: 'space-between', marginTop: 8 }}>
+        <div className="card mr__meta-card">
+          <div className="mr__meta-row"><span className="muted">먹고 싶은 음식</span><strong>{p.food_type}</strong></div>
+          <div className="mr__meta-row"><span className="muted">대화 스타일</span><strong>{p.talk_style}</strong></div>
+          <div className="mr__meta-row"><span className="muted">시간대</span><strong>{p.meal_time}</strong></div>
+          <div className="mr__meta-row">
             <span className="muted">가격대</span>
             <strong>{p.price_min / 10000}만 ~ {p.price_max / 10000}만원</strong>
           </div>
           {p.restaurant_name && (
-            <div className="row" style={{ justifyContent: 'space-between', marginTop: 8 }}>
-              <span className="muted">음식점</span><strong>{p.restaurant_name}</strong>
-            </div>
+            <div className="mr__meta-row"><span className="muted">음식점</span><strong>{p.restaurant_name}</strong></div>
           )}
         </div>
 
-        <button className="btn" style={{ marginTop: 24 }} onClick={accept}>💬 같이 밥 먹기</button>
-        <button className="btn btn--line" style={{ marginTop: 10, marginBottom: 24 }}
-                onClick={() => setIdx((i) => i + 1)}>
-          다른 친구 찾기
-        </button>
+        <div className="mr__actions">
+          <button className="btn" onClick={accept}>같이 밥 먹기</button>
+          <button className="btn btn--line" onClick={() => setIdx((i) => i + 1)}>다른 친구 찾기</button>
+        </div>
       </div>
     </div>
   );

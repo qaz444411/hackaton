@@ -49,24 +49,25 @@ export default function MatchingProgressPage() {
 
   return (
     <div className="screen">
-      <AppBar title="매칭 신청" onBack={() => setLeaving(true)} />
-      <div className="screen__body">
+      <AppBar title="" onBack={() => setLeaving(true)} />
+      <div className="screen__body matching__body">
         <div className="matching">
-          <div className="matching__icon"><Sparkles size={40} strokeWidth={2} /></div>
-          <p className="matching__title">밥친구를 찾아볼게요</p>
-          <p className="matching__desc">취향이 맞는 친구를 찾으면 알려드릴게요!</p>
-
-          <div className="matching__notice">
-            <span>찾으면 보관함 알림으로 알려드릴게요</span>
+          <div className="matching__icon-wrap">
+            <span className="matching__icon-blob" aria-hidden="true" />
+            <span className="matching__icon"><Sparkles size={32} strokeWidth={2} /></span>
           </div>
-
-          <button type="button" className="btn matching__cta" onClick={() => nav('/home', { replace: true })}>
-            홈으로 돌아가기
-          </button>
-          <button type="button" className="matching__cancel-link" onClick={cancel}>
-            매칭 취소하기
-          </button>
+          <p className="matching__title">매칭을 요청했어요</p>
+          <p className="matching__desc">취향이 맞는 사람을 찾는 중이에요.</p>
         </div>
+      </div>
+
+      <div className="matching__footer">
+        <button type="button" className="matching__cta" onClick={() => nav('/home', { replace: true })}>
+          홈으로 가기
+        </button>
+        <button type="button" className="matching__cancel-link" onClick={cancel}>
+          매칭 취소하기
+        </button>
       </div>
 
       {/* 뒤로가기 선택지 — 취소하지 않으면 새 매칭을 시작할 수 없다는 걸 분명히 알려준다 */}
