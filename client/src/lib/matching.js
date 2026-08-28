@@ -1,4 +1,4 @@
-import { getCurrentMatching, saveDraft, createProposal } from '../api/endpoints.js';
+import { getCurrentMatching, saveDraft, startMatching, createProposal } from '../api/endpoints.js';
 
 /**
  * 매칭 요청을 보내려면 "내 matching_request" 가 하나 있어야 한다.
@@ -23,9 +23,15 @@ export async function ensureMyRequest({ kind, placeId, foodTypeCode, mealTimeCod
     priceMin: 0,
     priceMax: 100000,
   };
-  return saveDraft(kind === 'spot'
+  const draft = await saveDraft(kind === 'spot'
     ? { ...base, matchingType: 'SPOT', spotId: Number(placeId) }
     : { ...base, matchingType: 'MAP', restaurantId: Number(placeId) });
+
+  // saveDraft 는 DRAFT 상태로만 만든다. SEARCHING 으로 넘기지 않으면
+  // sp_accept_proposal 이 "requester request is not SEARCHING" 으로 거부해서
+  // 상대가 수락해도 채팅방이 생기지 않는다.
+  await startMatching(draft.id);
+  return { ...draft, status: 'SEARCHING' };
 }
 
 /**

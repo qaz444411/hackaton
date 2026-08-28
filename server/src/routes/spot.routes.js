@@ -75,8 +75,8 @@ r.get('/:id', wrap(async (req, res) => {
   if (!info) return res.status(404).json({ message: '해당 지점을 찾을 수 없습니다.' });
 
   const preview = await q(
-    'SELECT user_id, nickname, profile_image FROM v_spot_buddy WHERE spot_id = :id LIMIT 4',
-    { id: req.params.id });
+    'SELECT user_id, nickname, profile_image FROM v_spot_buddy WHERE spot_id = :id AND user_id <> :me LIMIT 4',
+    { id: req.params.id, me: req.user.id });
 
   res.json({ ...info, preview });
 }));
