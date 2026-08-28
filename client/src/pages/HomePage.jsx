@@ -6,6 +6,7 @@ import BottomNav from '../components/BottomNav.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { useMyLocation, FALLBACK_CENTER } from '../hooks/useKakaoMap.js';
 import { formatDistance } from '../lib/format.js';
+import { SCALE_STEPS, loadA11y, saveA11y, applyA11y } from '../lib/a11y.js';
 import {
   getHome, getCurrentMatching, cancelMatching, getSentProposals, getRestaurants,
 } from '../api/endpoints.js';
@@ -35,6 +36,16 @@ export default function HomePage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [confirmCancel, setConfirmCancel] = useState(false);
+
+  // 화면 크게 보기 — 발표할 때 잘 안 보일 수 있어서 넣는 접근성 위젯.
+  // 계정별로 저장해서 다른 페이지로 이동해도(앱 전역 zoom) 계속 유지된다.
+  const [a11yPrefs, setA11yPrefs] = useState(() => loadA11y(user?.id));
+  const updateA11y = (patch) => {
+    const next = { ...a11yPrefs, ...patch };
+    setA11yPrefs(next);
+    saveA11y(user?.id, next);
+    applyA11y(next);
+  };
 
   const { data } = useQuery({ queryKey: ['home'], queryFn: getHome });
 
@@ -219,6 +230,24 @@ export default function HomePage() {
             </div>
           </>
         )}
+
+        {/* 화면 크게 보기 — 발표용. 여기서 바꾸면 다른 화면으로 이동해도 계속 적용된다. */}
+        <div className="home__a11y">
+          <p className="home__a11y-title">화면 크게 보기</p>
+          <div className="home__a11y-row">
+            {SCALE_STEPS.map((s) => (
+              <button key={s.value} type="button"
+                      className={`home__a11y-btn${a11yPrefs.scale === s.value ? ' home__a11y-btn--active' : ''}`}
+                      onClick={() => updateA11y({ scale: s.value })}>
+                {s.label}
+              </button>
+            ))}
+          </div>
+          <label className="home__a11y-bold-row">
+            <span>굵은 글씨</span>
+            <input type="checkbox" checked={a11yPrefs.bold} onChange={(e) => updateA11y({ bold: e.target.checked })} />
+          </label>
+        </div>
       </div>
 
       {confirmCancel && (

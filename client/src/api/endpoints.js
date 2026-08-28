@@ -18,6 +18,7 @@ export const uploadAvatar = (file) => {
   return api.post('/users/me/avatar', form).then((r) => r.data);
 };
 export const getMyPage = () => api.get('/users/me/mypage').then((r) => r.data);
+export const updateNickname = (nickname) => api.patch('/users/me/nickname', { nickname }).then((r) => r.data);
 export const updateNotifications = (body) => api.patch('/users/me/notifications', body).then((r) => r.data);
 export const getHistory = () => api.get('/users/me/history').then((r) => r.data);
 export const getPartnerProfile = (id) => api.get(`/users/${id}/profile`).then((r) => r.data);

@@ -87,6 +87,18 @@ r.post('/me/avatar', (req, res, next) => {
   res.json({ profileImage: url });
 }));
 
+/** 닉네임 변경 — 마이페이지 이름 옆 연필 버튼 */
+r.patch('/me/nickname', wrap(async (req, res) => {
+  const b = z.object({ nickname: z.string().min(2).max(10) }).parse(req.body);
+  try {
+    await q('UPDATE users SET nickname = :n WHERE id = :u', { n: b.nickname, u: req.user.id });
+  } catch (e) {
+    if (e.code === 'ER_DUP_ENTRY') return res.status(409).json({ message: '이미 사용 중인 닉네임이에요.' });
+    throw e;
+  }
+  res.json({ nickname: b.nickname });
+}));
+
 /** 마이페이지 — 프로필 + 이용 현황(함께한 밥 / 만난 밥친구) + 알림 설정 */
 r.get('/me/mypage', wrap(async (req, res) => {
   const [profile, stats, notify] = await Promise.all([

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { getMe, getMyPage } from '../api/endpoints.js';
 import { showNotification } from '../lib/notify.js';
+import { loadA11y, applyA11y } from '../lib/a11y.js';
 
 const AuthContext = createContext(null);
 
@@ -50,6 +51,16 @@ export function AuthProvider({ children }) {
 
     return () => socket.disconnect();
   }, [user, notify?.match_push, notify?.chat_push, qc]);
+
+  // 화면 크게 보기(글씨 크기/볼드) — 계정별로 저장해두고 로그인할 때마다,
+  // 페이지를 옮겨 다녀도 계속 적용되게 여기(앱 전역)에서 한 번만 처리한다.
+  // 창 폭이 모바일 기준을 넘나들면(430px) 확대 적용 여부가 바뀌어야 해서 resize 에도 다시 건다.
+  useEffect(() => {
+    const reapply = () => applyA11y(user ? loadA11y(user.id) : null);
+    reapply();
+    window.addEventListener('resize', reapply);
+    return () => window.removeEventListener('resize', reapply);
+  }, [user?.id]);
 
   const signIn = ({ token, user: u }) => {
     localStorage.setItem('token', token);

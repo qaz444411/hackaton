@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronRight, Pencil } from 'lucide-react';
+import { ChevronRight, Pencil, Check, X } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
-import { getMyPage, getHistory, updateNotifications, updateAiContext, uploadAvatar } from '../api/endpoints.js';
+import {
+  getMyPage, getHistory, updateNotifications, updateAiContext, uploadAvatar, updateNickname,
+} from '../api/endpoints.js';
 import { requestNotifyPermission, notifySupported } from '../lib/notify.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import './MyPage.css';
@@ -20,11 +22,32 @@ export default function MyPage() {
   const { data: history = [] } = useQuery({ queryKey: ['history'], queryFn: getHistory });
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  const [editingNick, setEditingNick] = useState(false);
+  const [nickInput, setNickInput] = useState('');
+  const [savingNick, setSavingNick] = useState(false);
 
   if (!data) return <div className="screen center">불러오는 중…</div>;
   const { profile, stats, notify } = data;
 
   const pickAvatar = () => fileRef.current?.click();
+
+  const startEditNick = () => { setNickInput(profile.nickname); setEditingNick(true); };
+
+  const saveNick = async () => {
+    const v = nickInput.trim();
+    if (!v || v === profile.nickname) { setEditingNick(false); return; }
+    setSavingNick(true);
+    try {
+      await updateNickname(v);
+      qc.invalidateQueries({ queryKey: ['mypage'] });
+      setUser((u) => (u ? { ...u, nickname: v } : u));
+      setEditingNick(false);
+    } catch (e) {
+      alert(e.response?.data?.message || '닉네임을 바꾸지 못했어요.');
+    } finally {
+      setSavingNick(false);
+    }
+  };
 
   const onAvatarChange = async (e) => {
     const file = e.target.files?.[0];
@@ -89,7 +112,27 @@ export default function MyPage() {
               <input ref={fileRef} type="file" accept="image/*" hidden onChange={onAvatarChange} />
             </div>
             <div>
-              <p className="mypage__name">{profile.nickname}</p>
+              {editingNick ? (
+                <div className="mypage__name-edit">
+                  <input className="mypage__name-input" value={nickInput} maxLength={10}
+                         disabled={savingNick} autoFocus
+                         onChange={(e) => setNickInput(e.target.value)}
+                         onKeyDown={(e) => e.key === 'Enter' && saveNick()} />
+                  <button type="button" className="mypage__name-edit-btn" onClick={saveNick} disabled={savingNick} aria-label="저장">
+                    <Check size={14} strokeWidth={2.4} />
+                  </button>
+                  <button type="button" className="mypage__name-edit-btn" onClick={() => setEditingNick(false)} disabled={savingNick} aria-label="취소">
+                    <X size={14} strokeWidth={2.4} />
+                  </button>
+                </div>
+              ) : (
+                <div className="mypage__name-row">
+                  <p className="mypage__name">{profile.nickname}</p>
+                  <button type="button" className="mypage__name-edit-btn" onClick={startEditNick} aria-label="닉네임 수정">
+                    <Pencil size={12} strokeWidth={2.4} />
+                  </button>
+                </div>
+              )}
               <p className="mypage__sub">{profile.age}세</p>
               <p className="mypage__sub">{profile.mbti_code} · {profile.region || '지역 미설정'}</p>
             </div>

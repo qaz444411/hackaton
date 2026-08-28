@@ -6,6 +6,48 @@
   align-items: flex-start;
 }
 
+/* 화면 크게 보기 — 발표용 접근성 위젯, 홈 최하단 */
+.home__a11y {
+  align-self: stretch;
+  margin-top: 28px;
+  padding: 16px;
+  background: var(--c-white);
+  box-shadow: var(--shadow-card-soft);
+  border-radius: var(--r-xl);
+}
+.home__a11y-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.32px;
+  color: var(--c-text);
+}
+.home__a11y-row { display: flex; gap: 8px; margin-top: 10px; }
+.home__a11y-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  background: var(--c-bg);
+  border-radius: 10px;
+  font-size: 13px;
+  letter-spacing: -0.26px;
+  color: var(--c-text-sub);
+}
+.home__a11y-btn--active { background: var(--c-select); color: var(--c-white); font-weight: 600; }
+.home__a11y-bold-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--c-line);
+  font-size: 13px;
+  letter-spacing: -0.32px;
+  color: var(--c-text);
+}
+
 /* 헤더 */
 .home__header {
   display: flex;
