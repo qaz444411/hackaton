@@ -167,6 +167,42 @@ r.post('/rooms/:matchId/meeting', wrap(async (req, res) => {
   res.status(201).json(msg);
 }));
 
+/** 밥친구 평가 — 기존에 남긴 평가가 있으면 같이 돌려준다(수정 진입용). */
+r.get('/rooms/:matchId/rating', wrap(async (req, res) => {
+  const matchId = Number(req.params.matchId);
+  const guard = await one('SELECT 1 AS ok FROM match_participant WHERE match_id=:m AND user_id=:u',
+    { m: matchId, u: req.user.id });
+  if (!guard) return res.status(403).json({ message: '참여자가 아닙니다.' });
+
+  const rating = await one(
+    'SELECT score, tags FROM match_rating WHERE match_id=:m AND rater_id=:u', { m: matchId, u: req.user.id });
+  res.json(rating ? { score: rating.score, tags: rating.tags ? rating.tags.split(',') : [] } : null);
+}));
+
+/**
+ * 밥친구 평가 제출 — 상대에게는 공개하지 않고 저장만 한다(다음 매칭 가중치 반영은 별도 작업).
+ * 매칭당 한 사람이 한 번만 평가하므로(uq_match_rating) 같은 사람이 다시 보내면 덮어쓴다.
+ */
+r.post('/rooms/:matchId/rating', wrap(async (req, res) => {
+  const matchId = Number(req.params.matchId);
+  const b = z.object({
+    score: z.number().int().min(1).max(5),
+    tags: z.array(z.string()).max(6).optional(),
+  }).parse(req.body);
+
+  const partner = await one(
+    'SELECT user_id FROM match_participant WHERE match_id=:m AND user_id<>:u', { m: matchId, u: req.user.id });
+  if (!partner) return res.status(403).json({ message: '참여자가 아닙니다.' });
+
+  const tags = (b.tags ?? []).join(',') || null;
+  await pool.execute(
+    `INSERT INTO match_rating (match_id, rater_id, rated_id, score, tags)
+     VALUES (:m, :u, :p, :s, :t)
+     ON DUPLICATE KEY UPDATE score = VALUES(score), tags = VALUES(tags)`,
+    { m: matchId, u: req.user.id, p: partner.user_id, s: b.score, t: tags });
+  res.json({ ok: true });
+}));
+
 /**
  * 대화 주제 추천 — 제미나이 챗봇 API 가 들어가는 자리.
  * 두 사람의 공통 관심사·MBTI·음식점을 프롬프트로 넘겨 질문 3개를 받는다.

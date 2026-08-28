@@ -69,6 +69,10 @@ const MIGRATIONS = [
     file: '08_schema_patch_v8.sql', label: 'v8 채팅 메시지에 RESTAURANT(식당 카드) 타입 추가',
     checks: [['check_contains', 'ck_chat_message_type', 'RESTAURANT']],
   },
+  {
+    file: '09_schema_patch_v9.sql', label: 'v9 밥친구 평가(match_rating) 테이블 추가',
+    checks: [['table', 'match_rating']],
+  },
 ];
 
 const one = async (sql, params = []) => {
