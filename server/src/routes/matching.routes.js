@@ -42,19 +42,9 @@ r.post('/draft', wrap(async (req, res) => {
     b.foodTypeCode = rest.food_type_code;
   }
 
-  // matching_request.active_user_id 는 DRAFT/SEARCHING만 잡는 생성 컬럼이라, 매칭이
-  // CONFIRMED로 확정된 순간부터는 이 아래 uq_matching_request_active 제약이 안 걸린다.
-  // 그래서 이미 확정 매칭이 있는 사람도 새 검색을 또 시작할 수 있었고, 그게 성사돼서
-  // 수락 단계까지 가면 그제서야 trg_match_participant_ins 트리거가 막아서 사용자 눈엔
-  // "이미 매칭이 있다"는 원시 에러로 아주 늦게(수락 시점에) 터졌다 — 여기서 먼저 막는다.
-  const confirmedMatch = await one(
-    `SELECT m.id FROM match_participant mp JOIN meal_match m ON m.id = mp.match_id
-      WHERE mp.user_id = :u AND m.status IN ('CONFIRMED','SCHEDULED')`,
-    { u: req.user.id });
-  if (confirmedMatch) {
-    return res.status(409).json({ message: '이미 확정된 매칭이 있어요. 매칭 관리에서 확인해보세요.' });
-  }
-
+  // 이미 확정된(CONFIRMED/SCHEDULED) 매칭이 있어도 새 매칭을 또 시작할 수 있어야 한다 —
+  // 밥친구는 한 명으로 제한되지 않는다(v15에서 trg_match_participant_ins 의 1인 1매칭
+  // 제약도 함께 풀었다). 진행 중(DRAFT/SEARCHING) 검색이 이미 있는 경우만 막는다.
   const active = await one(
     "SELECT id, status FROM matching_request WHERE active_user_id = :u", { u: req.user.id });
 
@@ -91,12 +81,6 @@ r.post('/draft', wrap(async (req, res) => {
  * 트랜잭션을 열면 그 안에서 암묵적으로 커밋되며 락이 풀려버린다).
  */
 r.post('/blind/start', wrap(async (req, res) => {
-  const confirmedMatch = await one(
-    `SELECT m.id FROM match_participant mp JOIN meal_match m ON m.id = mp.match_id
-      WHERE mp.user_id = :u AND m.status IN ('CONFIRMED','SCHEDULED')`, { u: req.user.id });
-  if (confirmedMatch) {
-    return res.status(409).json({ message: '이미 확정된 매칭이 있어요. 매칭 관리에서 확인해보세요.' });
-  }
   const active = await one("SELECT id FROM matching_request WHERE active_user_id = :u", { u: req.user.id });
   if (active) return res.status(409).json({ message: '이미 진행 중인 매칭이 있습니다.', id: active.id });
 

@@ -69,7 +69,7 @@ export default function RestaurantListPage() {
           {!list.length && <p className="rl__empty">주변에 표시할 음식점이 없습니다.</p>}
         </div>
       </div>
-      <BottomNav />
+      <BottomNav floating />
     </div>
   );
 }

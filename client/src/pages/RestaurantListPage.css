@@ -1,5 +1,10 @@
 /* RestaurantListPage / RecruitPage 공용 — 최종 디자인 */
-.rl__body { padding-top: 24px; }
+.rl__body {
+  padding-top: 24px;
+  /* 하단바가 목록 위에 떠 있어서(bnav-wrap--floating), 맨 아래 카드가 알약 뒤에
+     가리지 않도록 알약 높이(약 88px)만큼 여유를 둔다. */
+  padding-bottom: 104px;
+}
 
 .rl__header {
   display: flex;

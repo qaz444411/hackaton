@@ -31,6 +31,7 @@
     "db:patch12": "node scripts/run-sql.js ../db/12_schema_patch_v12.sql",
     "db:patch13": "node scripts/run-sql.js ../db/13_schema_patch_v13.sql",
     "db:patch14": "node scripts/run-sql.js ../db/14_schema_patch_v14.sql",
+    "db:patch15": "node scripts/run-sql.js ../db/15_schema_patch_v15.sql",
     "food:reclassify": "node scripts/reclassify-food-type.js"
   },
   "dependencies": {

@@ -389,7 +389,7 @@ export default function MapPage() {
           </div>
         )}
       </div>
-      <BottomNav />
+      <BottomNav floating />
     </div>
   );
 }

@@ -4,7 +4,6 @@
  * 매핑에 없는 새 메시지는 원문 그대로 노출 — 영어가 섞이더라도 완전히 숨는 것보단 낫다.
  */
 const RULES = [
-  [/already has an active match/, '이미 확정된 매칭이 있어서 진행할 수 없어요.'],
   [/chat_room \d+: not open/, '종료된 대화방이에요.'],
   [/proposal expired/, '이미 만료된 요청이에요. 상대에게 다시 요청해 달라고 해보세요.'],
   [/proposal is not PENDING/, '이미 처리된 요청이에요.'],

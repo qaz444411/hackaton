@@ -10,15 +10,19 @@ const ITEMS = [
   { to: '/inbox', Icon: Archive, label: '보관함' },
 ];
 
-/** 하단 네비게이션 — 홈 / 채팅 / 보관함 (지도는 홈에서 진입) */
-export default function BottomNav() {
+/**
+ * 하단 네비게이션 — 홈 / 채팅 / 보관함 (지도는 홈에서 진입)
+ * floating: 뒤 콘텐츠(지도, 목록)가 하단바 밑까지 꽉 차게 깔리고 알약이 그 위에 뜬다.
+ * 기존 페이지들의 레이아웃은 그대로 유지해야 해서 opt-in으로만 켠다.
+ */
+export default function BottomNav({ floating = false }) {
   const { data } = useQuery({ queryKey: ['home'], queryFn: getHome, refetchInterval: 30000 });
   const inboxCount = data?.inboxNewCount || 0;
   const chatCount = data?.chatUnreadCount || 0;
   const badgeFor = { '/inbox': inboxCount, '/chats': chatCount };
 
   return (
-    <div className="bnav-wrap">
+    <div className={`bnav-wrap${floating ? ' bnav-wrap--floating' : ''}`}>
       <nav className="bnav">
         {ITEMS.map(({ to, Icon, label }) => (
           <NavLink

@@ -6,7 +6,7 @@ import BottomNav from '../components/BottomNav.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { useMyLocation, FALLBACK_CENTER } from '../hooks/useKakaoMap.js';
 import { formatDistance } from '../lib/format.js';
-import { SCALE_STEPS, loadA11y, saveA11y, applyA11y } from '../lib/a11y.js';
+import { loadA11y, saveA11y, applyA11y } from '../lib/a11y.js';
 import {
   getHome, getCurrentMatching, cancelMatching, getSentProposals, getRestaurants, startBlindMatching,
 } from '../api/endpoints.js';
@@ -20,6 +20,21 @@ function withEunGa(word, withBatchim, withoutBatchim) {
   if (code < 0 || code > 11171) return withoutBatchim;
   return code % 28 === 0 ? withoutBatchim : withBatchim;
 }
+
+// 랜덤 메뉴 — 한식/중식/양식/일식/기타 아우르는 약 50개 중 하나를 뽑는다
+const MENU_POOL = [
+  // 한식
+  '제육볶음', '김치찌개', '된장찌개', '순두부찌개', '비빔밥', '불고기', '삼겹살', '갈비탕',
+  '냉면', '떡볶이', '김밥', '칼국수', '순대국', '육개장', '잡채밥',
+  // 중식
+  '짜장면', '짬뽕', '탕수육', '마파두부', '볶음밥', '유린기', '깐풍기', '양장피', '라조기', '고추잡채',
+  // 양식
+  '파스타', '스테이크', '피자', '리조또', '햄버거', '샌드위치', '오믈렛', '그라탱', '감바스', '스튜',
+  // 일식
+  '초밥', '라멘', '돈카츠', '우동', '규동', '오코노미야키', '텐동', '가라아게',
+  // 아시안/기타
+  '쌀국수', '팟타이', '마라탕', '마라샹궈', '카레', '나시고랭', '케밥',
+];
 
 // 시간대별 인사말 — 매번 같은 문구 대신 지금 시간에 맞는 한마디
 function getGreeting() {
@@ -38,14 +53,24 @@ export default function HomePage() {
   const qc = useQueryClient();
   const [confirmCancel, setConfirmCancel] = useState(false);
 
-  // 화면 크게 보기 — 발표할 때 잘 안 보일 수 있어서 넣는 접근성 위젯.
+  // 화면 크게 보기 — 발표할 때 잘 안 보일 수 있어서 넣는 접근성 토글(작은 가 / 큰 가).
   // 계정별로 저장해서 다른 페이지로 이동해도(앱 전역 zoom) 계속 유지된다.
   const [a11yPrefs, setA11yPrefs] = useState(() => loadA11y(user?.id));
-  const updateA11y = (patch) => {
-    const next = { ...a11yPrefs, ...patch };
+  const toggleA11yBig = () => {
+    const next = { ...a11yPrefs, big: !a11yPrefs.big };
     setA11yPrefs(next);
     saveA11y(user?.id, next);
     applyA11y(next);
+  };
+
+  // 랜덤 메뉴 — 뭐 먹을지 고민될 때 주사위로 하나 뽑아준다
+  const [randomMenu, setRandomMenu] = useState(null);
+  const rollMenu = () => {
+    let pick = MENU_POOL[Math.floor(Math.random() * MENU_POOL.length)];
+    if (MENU_POOL.length > 1) {
+      while (pick === randomMenu) pick = MENU_POOL[Math.floor(Math.random() * MENU_POOL.length)];
+    }
+    setRandomMenu(pick);
   };
 
   const { data } = useQuery({ queryKey: ['home'], queryFn: getHome });
@@ -279,6 +304,22 @@ export default function HomePage() {
           <p className="home__note">진행 중인 매칭을 취소하면 다시 시작할 수 있어요.</p>
         )}
 
+        {/* 랜덤 메뉴 — 뭐 먹을지 고민될 때 주사위로 하나 뽑아본다 */}
+        <button type="button" className="home__menu-btn" onClick={rollMenu}>
+          <span className="home__menu-icon"><Dices size={16} strokeWidth={2.2} /></span>
+          {randomMenu ? (
+            <span className="home__menu-text">
+              <strong>오늘은 {randomMenu} 어때요?</strong>
+              <span>다시 눌러서 새로 뽑기</span>
+            </span>
+          ) : (
+            <span className="home__menu-text">
+              <strong>랜덤 메뉴</strong>
+              <span>뭐 먹을지 고민되면 주사위를 굴려보세요</span>
+            </span>
+          )}
+        </button>
+
         {/* 진짜 랜덤 매칭 — 취향 조건 없이 눌러서 30분 안에 무작위로 바로 이어진다.
             대기 중엔 홈을 나가도 되게(전용 화면으로 안 가두고) 버튼 자리에서 카운트다운으로 보여준다. */}
         {isBlindSearching ? (
@@ -312,7 +353,7 @@ export default function HomePage() {
             <div className="home__reco-row">
               {recommended.map((r) => (
                 <button type="button" key={r.restaurant_id} className="home__reco-card"
-                        onClick={() => nav(`/restaurants/${r.restaurant_id}/buddies`)}>
+                        onClick={() => nav(`/map?restaurantId=${r.restaurant_id}`)}>
                   <span className="home__reco-thumb"><UtensilsCrossed size={22} strokeWidth={1.8} /></span>
                   <span className="home__reco-body">
                     <span className="home__reco-name">{r.name}</span>
@@ -324,23 +365,6 @@ export default function HomePage() {
           </>
         )}
 
-        {/* 화면 크게 보기 — 발표용. 여기서 바꾸면 다른 화면으로 이동해도 계속 적용된다. */}
-        <div className="home__a11y">
-          <p className="home__a11y-title">화면 크게 보기</p>
-          <div className="home__a11y-row">
-            {SCALE_STEPS.map((s) => (
-              <button key={s.value} type="button"
-                      className={`home__a11y-btn${a11yPrefs.scale === s.value ? ' home__a11y-btn--active' : ''}`}
-                      onClick={() => updateA11y({ scale: s.value })}>
-                {s.label}
-              </button>
-            ))}
-          </div>
-          <label className="home__a11y-bold-row">
-            <span>굵은 글씨</span>
-            <input type="checkbox" checked={a11yPrefs.bold} onChange={(e) => updateA11y({ bold: e.target.checked })} />
-          </label>
-        </div>
       </div>
 
       {confirmCancel && (
@@ -357,6 +381,17 @@ export default function HomePage() {
       <button type="button" className="home__ai-fab" onClick={() => nav('/assistant')} aria-label="AI 도우미">
         <Sparkles size={22} strokeWidth={2} />
       </button>
+
+      {/* 화면 크게 보기 — 발표용 토글. 스크롤 콘텐츠 위에 뜨우면 카드와 겹치므로,
+          하단바 바로 위에 자기 자리를 가진 별도 줄로 둔다(항상 겹침 없이 보인다). */}
+      <div className="home__a11y-bar">
+        <button type="button"
+                className={`home__a11y-fab${a11yPrefs.big ? ' home__a11y-fab--big' : ''}`}
+                onClick={toggleA11yBig} aria-label="화면 크게 보기">
+          <span className="home__a11y-fab-small">가</span>
+          <span className="home__a11y-fab-big">가</span>
+        </button>
+      </div>
 
       <BottomNav />
     </div>

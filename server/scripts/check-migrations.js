@@ -93,6 +93,10 @@ const MIGRATIONS = [
     file: '14_schema_patch_v14.sql', label: 'v14 잡은 약속 취소(SCHEDULED→CONFIRMED) 허용',
     checks: [['trigger_contains', 'trg_match_transition', "'CONFIRMED','COMPLETED','CANCELLED'"]],
   },
+  {
+    file: '15_schema_patch_v15.sql', label: 'v15 사용자당 확정 매칭 1건 제한 제거',
+    checks: [['trigger_not_contains', 'trg_match_participant_ins', 'already has an active match']],
+  },
 ];
 
 const one = async (sql, params = []) => {
@@ -142,6 +146,13 @@ async function probe(check) {
         `SELECT ACTION_STATEMENT c FROM information_schema.TRIGGERS
           WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = ?`, [a]);
       return { ok: !!r && String(r.c).includes(b), what: `트리거 ${a} 에 ${b}` };
+    }
+    case 'trigger_not_contains': {
+      // 반대로, 트리거 본문에서 특정 문구가 빠졌는지 — 제약을 없애는 패치용
+      const r = await one(
+        `SELECT ACTION_STATEMENT c FROM information_schema.TRIGGERS
+          WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = ?`, [a]);
+      return { ok: !!r && !String(r.c).includes(b), what: `트리거 ${a} 에서 ${b} 제거` };
     }
     case 'row': {
       // 코드 테이블에 특정 행이 들어갔는지 (예: food_type_code 에 ETC)

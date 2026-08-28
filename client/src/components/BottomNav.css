@@ -9,6 +9,16 @@
   padding: 0 24px calc(20px + env(safe-area-inset-bottom));
 }
 
+/* 지도/목록처럼 배경(지도 타일, 리스트)이 하단바 밑까지 이어져야 하는 화면에서 쓴다 —
+   알약을 flex 흐름에서 빼서 화면 위에 띄우면, 뒤 콘텐츠가 그 자리까지 꽉 채워진다. */
+.bnav-wrap--floating {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 8;
+}
+
 .bnav {
   display: flex;
   flex-direction: row;

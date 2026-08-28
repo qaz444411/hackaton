@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { getMe, getMyPage } from '../api/endpoints.js';
@@ -12,6 +13,13 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [toast, setToastState] = useState(null);
   const qc = useQueryClient();
+  const location = useLocation();
+
+  // 지금 보고 있는 채팅방이면 그 방 알림(토스트/브라우저 알림)은 안 띄운다 — 이미 화면에서
+  // 실시간으로 메시지가 보이는데 알림까지 뜨면 중복이다. 소켓 이펙트는 로그인 시 한 번만
+  // 붙으므로, 최신 경로를 ref 로 들고 있다가 이벤트가 올 때마다 참조한다.
+  const pathRef = useRef(location.pathname);
+  pathRef.current = location.pathname;
 
   // 인앱 토스트 — 브라우저 알림(권한 필요, 탭이 안 보일 때만)과는 별개로, 앱을 보고 있는
   // 동안에도 채팅/보관함에 뭐가 왔는지 상단에 잠깐 띄운다. 4초 뒤 자동으로 사라진다.
@@ -64,6 +72,8 @@ export function AuthProvider({ children }) {
       // 채팅 목록/하단 바 배지도 실시간으로 갱신 — 안 그러면 30초 폴링을 기다려야 반영됐다.
       qc.invalidateQueries({ queryKey: ['home'] });
       qc.invalidateQueries({ queryKey: ['chatRooms'] });
+      // 지금 그 채팅방을 보고 있으면 메시지가 화면에 바로 찍히므로 토스트/알림은 생략한다.
+      if (pathRef.current === `/chats/${matchId}`) return;
       pushToast({ title: senderNickname, body: preview, to: `/chats/${matchId}` });
       if (notify?.chat_push) {
         showNotification(senderNickname, preview, {
