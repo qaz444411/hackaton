@@ -61,6 +61,10 @@ const MIGRATIONS = [
     file: '06_schema_patch_v6.sql', label: 'v6 지도 핀 카테고리 아이콘',
     checks: [['column', 'v_restaurant_recruiting', 'category_name']],
   },
+  {
+    file: '07_schema_patch_v7.sql', label: 'v7 음식 종류 기타(ETC) 추가',
+    checks: [['row', 'food_type_code', "code = 'ETC'"]],
+  },
 ];
 
 const one = async (sql, params = []) => {
@@ -104,6 +108,12 @@ async function probe(check) {
           WHERE CONSTRAINT_SCHEMA = DATABASE() AND CONSTRAINT_NAME = ?`, [a]);
       return { ok: !!r && String(r.c).includes(b), what: `제약 ${a} 에 ${b}` };
     }
+    case 'row': {
+      // 코드 테이블에 특정 행이 들어갔는지 (예: food_type_code 에 ETC)
+      // 조건은 패치 파일이 정하는 고정 문자열이며 사용자 입력이 아니다.
+      const r = await one(`SELECT COUNT(*) n FROM \`${a}\` WHERE ${b}`);
+      return { ok: r.n > 0, what: `${a} (${b})` };
+    }
     default:
       return { ok: false, what: `알 수 없는 판정 ${kind}` };
   }
@@ -135,7 +145,7 @@ async function main() {
   console.table(rows);
 
   if (missing.length === 0) {
-    console.log('v1~v6 전부 적용됨.\n');
+    console.log(`v1~v${MIGRATIONS.length} 전부 적용됨.\n`);
     return 0;
   }
 
