@@ -1,0 +1,26 @@
+# ---------------------------------------------------------------
+# 443 포트. 인증서가 실제로 존재할 때만 conf.d 에 복사되어 켜진다.
+# (40-enable-ssl.sh 참고 — 인증서가 없으면 이 파일은 무시되고 80 만 뜬다)
+# ---------------------------------------------------------------
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name ${DOMAIN};
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+
+    ssl_session_timeout 1d;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_tickets off;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+
+    # HSTS 는 일부러 넣지 않았다. 한 번 걸리면 브라우저가 http 접속을
+    # 거부해서 롤백이 어려워진다. 운영이 안정된 뒤에 켤 것.
+
+    include /etc/nginx/snippets/app-locations.conf;
+}

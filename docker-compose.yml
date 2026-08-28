@@ -5,7 +5,7 @@
 #   확인:  docker compose --env-file .env.production ps
 #   로그:  docker compose --env-file .env.production logs -f api
 #
-# 외부에 열리는 포트는 web 의 80 하나뿐이다.
+# 외부에 열리는 포트는 web 의 80 / 443 뿐이다.
 # api(4000) 와 db(3306) 은 도커 내부망에서만 서로 통신한다.
 # (EC2 보안그룹에도 4000/3306 은 열려 있지 않다)
 # ---------------------------------------------------------------
@@ -70,8 +70,34 @@ services:
     restart: unless-stopped
     depends_on:
       - api
+    environment:
+      # 이 도메인으로 인증서가 존재하면 443 블록이 켜진다. 비우면 80 만 뜬다.
+      DOMAIN: ${DOMAIN:-}
+      # HTTPS 가 실제로 되는 걸 확인한 뒤에 1 로 바꾼다.
+      # 켜도 IP 로 들어온 요청(Host=35.86.162.39)은 기본 server 블록이 받아
+      # 그대로 앱을 서빙하므로 롤백 여지가 남는다.
+      REDIRECT_HTTP_TO_HTTPS: ${REDIRECT_HTTP_TO_HTTPS:-0}
+    volumes:
+      - certbot-conf:/etc/letsencrypt:ro
+      - certbot-www:/var/www/certbot:ro
     ports:
       - "80:80"
+      - "443:443"
+    # 6시간마다 reload 해서 갱신된 인증서를 무중단으로 집어든다
+    command: ["/bin/sh", "-c", "while :; do sleep 21600; nginx -s reload; done & exec nginx -g 'daemon off;'"]
+
+  # 인증서 발급/갱신 전용. 12시간마다 renew 를 시도한다(만료 30일 전부터 실제 갱신).
+  # 최초 발급은 deploy 문서의 certonly 명령을 직접 실행한다.
+  certbot:
+    image: certbot/certbot:latest
+    container_name: bapfriend-certbot
+    restart: unless-stopped
+    volumes:
+      - certbot-conf:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    entrypoint: ["/bin/sh", "-c", "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 43200; done"]
 
 volumes:
   mysql-data:
+  certbot-conf:   # 발급된 인증서. 컨테이너를 지워도 남아야 한다
+  certbot-www:    # ACME 챌린지 파일을 nginx 와 certbot 이 공유
