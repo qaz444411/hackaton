@@ -15,9 +15,13 @@ const FALLBACK = [
  */
 const MODEL_FALLBACKS = ['gemini-3.6-flash', 'gemini-3-flash-preview', 'gemini-flash-lite-latest'];
 
-/** 일시적/모델 문제라 다른 모델로 재시도할 가치가 있는 오류인지 */
+/**
+ * 다른 모델로 재시도할 가치가 있는 오류인지.
+ *  404 종료된 모델 / 503 과부하 / 429 쿼터 초과
+ * 429 는 모델마다 쿼터 버킷이 달라서, 한 모델이 막혀도 다른 모델로 넘어가면 대개 통한다.
+ */
 const shouldTryNextModel = (msg = '') =>
-  /404|not found|no longer available|503|UNAVAILABLE|high demand|overloaded/i.test(msg);
+  /404|not found|no longer available|503|UNAVAILABLE|high demand|overloaded|429|quota|RESOURCE_EXHAUSTED|rate limit/i.test(msg);
 
 /** 설정 모델부터 차례로 시도한다 */
 async function withModelFallback(genAI, buildModel, run) {
