@@ -77,6 +77,10 @@ const MIGRATIONS = [
     file: '10_schema_patch_v10.sql', label: 'v10 보관함 알림 삭제(proposal_hidden) 테이블 추가',
     checks: [['table', 'proposal_hidden']],
   },
+  {
+    file: '11_schema_patch_v11.sql', label: 'v11 지역 선택지 확대(광주 등 추가)',
+    checks: [['row', 'region_code', "code = 'GWANGJU'"]],
+  },
 ];
 
 const one = async (sql, params = []) => {

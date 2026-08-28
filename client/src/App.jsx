@@ -33,7 +33,16 @@ function Private({ children }) {
 
 export default function App() {
   return (
-    <div className="phone-frame">
+    <>
+      {/* 넓은 화면(노트북 등)에서 폰 프레임 좌우/상하에 남는 빈 공간을 채우는 장식용 마스코트 */}
+      <div className="bg-mascots" aria-hidden="true">
+        <img className="bg-mascot bg-mascot--1" src="/mascots/mascot-1.png" alt="" />
+        <img className="bg-mascot bg-mascot--2" src="/mascots/mascot-2.png" alt="" />
+        <img className="bg-mascot bg-mascot--3" src="/mascots/mascot-3.png" alt="" />
+        <img className="bg-mascot bg-mascot--4" src="/mascots/mascot-4.png" alt="" />
+        <img className="bg-mascot bg-mascot--5" src="/mascots/mascot-5.png" alt="" />
+      </div>
+      <div className="phone-frame">
       <Routes>
         <Route path="/__preview" element={<DevPreviewPage />} />
         <Route path="/" element={<IntroPage />} />
@@ -63,6 +72,7 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </div>
+      </div>
+    </>
   );
 }
