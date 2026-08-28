@@ -3,6 +3,7 @@ import { q, one, pool } from '../db/pool.js';
 import { auth } from '../middlewares/auth.js';
 import { wrap } from '../middlewares/error.js';
 import { findNearbyRestaurants, upsertRestaurant } from '../services/restaurant.service.js';
+import { withRestaurantPhoto } from '../lib/restaurantPhoto.js';
 
 const r = Router();
 r.use(auth);
@@ -23,7 +24,8 @@ r.get('/', wrap(async (req, res) => {
 /** 지도 "+버튼" — 카카오 검색 결과를 우리 DB 에 음식점으로 추가 */
 r.post('/', wrap(async (req, res) => {
   const id = await upsertRestaurant(req.body);
-  res.status(201).json(await one('SELECT * FROM v_restaurant_recruiting WHERE restaurant_id = :id', { id }));
+  res.status(201).json(withRestaurantPhoto(
+    await one('SELECT * FROM v_restaurant_recruiting WHERE restaurant_id = :id', { id })));
 }));
 
 /** 음식점 배너 — 기본 정보 + 모집 인원 + 밥친구 프로필 미리보기 */
@@ -33,7 +35,7 @@ r.get('/:id', wrap(async (req, res) => {
   const preview = await q(
     'SELECT user_id, nickname, profile_image FROM v_restaurant_buddy WHERE restaurant_id = :id AND user_id <> :me LIMIT 4',
     { id: req.params.id, me: req.user.id });
-  res.json({ ...info, preview });
+  res.json({ ...withRestaurantPhoto(info), preview });
 }));
 
 /** 음식점별 밥친구 목록 페이지 (+ 취향 일치율) */

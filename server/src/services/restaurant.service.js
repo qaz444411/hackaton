@@ -1,5 +1,6 @@
 import { q, pool } from '../db/pool.js';
 import { searchKakaoPlaces } from './kakao.service.js';
+import { withRestaurantPhotos } from '../lib/restaurantPhoto.js';
 
 /**
  * 음식점 조회 — 지도 화면과 AI 추천이 함께 쓴다.
@@ -41,7 +42,7 @@ export async function findNearbyRestaurants({
     for (const p of places) await upsertRestaurant(p);
     rows = await query({ lat, lng, radius, keyword, limit });
   }
-  return rows;
+  return withRestaurantPhotos(rows);
 }
 
 /** 카카오 검색 결과를 restaurant 에 upsert 하고 id 를 돌려준다 */
