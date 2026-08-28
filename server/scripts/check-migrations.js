@@ -101,6 +101,10 @@ const MIGRATIONS = [
     file: '16_schema_patch_v16.sql', label: 'v16 음식점 사진(image_url) 추가',
     checks: [['column', 'restaurant', 'image_url'], ['column', 'v_restaurant_recruiting', 'image_url']],
   },
+  {
+    file: '17_schema_patch_v17.sql', label: 'v17 홈 확정 매칭 카드에 상대 프로필 사진 노출',
+    checks: [['column', 'v_home_confirmed_match', 'partner_image']],
+  },
 ];
 
 const one = async (sql, params = []) => {

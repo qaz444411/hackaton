@@ -17,24 +17,41 @@ const PHOTO_DIR = path.join(import.meta.dirname, '..', '..', 'uploads', 'restaur
 const CATEGORY_DIR = { KOREAN: '한식', CHINESE: '중식', JAPANESE: '일식', WESTERN: '양식', ETC: '기타' };
 const IMG_RE = /\.(jpe?g|png|webp)$/i;
 
+// macOS 에서 scp/압축으로 넘어온 한글 폴더명은 자모가 분리된 NFD 형태로 저장돼 있는
+// 경우가 많다(리눅스는 정규화를 안 해줘서 바이트가 다르면 그냥 "없는 폴더"가 된다) —
+// 코드에 적어둔 NFC 이름과 정규화 기준으로 비교해서 실제 온디스크 이름을 찾는다.
+function findCategoryDirName(expectedNfc) {
+  let entries;
+  try {
+    entries = fs.readdirSync(PHOTO_DIR, { withFileTypes: true });
+  } catch {
+    return null;
+  }
+  const hit = entries.find((e) => e.isDirectory() && e.name.normalize('NFC') === expectedNfc);
+  return hit ? hit.name : null; // 바이트가 다를 수 있는 실제 이름을 그대로 돌려준다
+}
+
 // 사진을 나중에 추가/교체해도(서버 재시작 없이) 바로 반영되도록 매 호출마다
 // 디렉터리를 새로 읽는다 — 식당 몇 개 조회할 때마다 폴더 하나 읽는 정도라 가볍다.
-function listPhotos(dirName) {
+function listPhotos(expectedNfc) {
+  const actualDirName = findCategoryDirName(expectedNfc);
+  if (!actualDirName) return { dirName: null, files: [] };
   try {
-    return fs.readdirSync(path.join(PHOTO_DIR, dirName)).filter((f) => IMG_RE.test(f));
+    const files = fs.readdirSync(path.join(PHOTO_DIR, actualDirName)).filter((f) => IMG_RE.test(f));
+    return { dirName: actualDirName, files };
   } catch {
-    return []; // 폴더가 아직 없어도 그냥 사진 없음으로 취급
+    return { dirName: null, files: [] }; // 폴더가 아직 없어도 그냥 사진 없음으로 취급
   }
 }
 
 export function randomRestaurantPhoto(foodTypeCode) {
-  let dirName = CATEGORY_DIR[foodTypeCode] || CATEGORY_DIR.ETC;
-  let files = listPhotos(dirName);
-  if (!files.length && dirName !== CATEGORY_DIR.ETC) {
-    dirName = CATEGORY_DIR.ETC;
-    files = listPhotos(dirName);
+  let want = CATEGORY_DIR[foodTypeCode] || CATEGORY_DIR.ETC;
+  let { dirName, files } = listPhotos(want);
+  if (!files.length && want !== CATEGORY_DIR.ETC) {
+    want = CATEGORY_DIR.ETC;
+    ({ dirName, files } = listPhotos(want));
   }
-  if (!files.length) return null;
+  if (!files.length || !dirName) return null;
   const f = files[Math.floor(Math.random() * files.length)];
   return `/api/uploads/restaurant-photos/${encodeURIComponent(dirName)}/${encodeURIComponent(f)}`;
 }
