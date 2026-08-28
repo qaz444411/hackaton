@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
 import { pool, one } from '../db/pool.js';
+import { translateSignal } from '../lib/sqlMessage.js';
 
 /** 채팅 실시간 전송 (Socket.IO). REST 와 같은 테이블/트리거를 그대로 탄다. */
 export function attachChatSocket(server) {
@@ -26,6 +27,17 @@ export function attachChatSocket(server) {
 
     socket.on('message:send', async ({ matchId, content }, ack) => {
       try {
+        // REST(/chat/rooms/:matchId/messages)와 동일하게, 참여자인지·방이 열려있는지
+        // 먼저 확인한다 — 이게 없으면 matchId 만 알면 아무 로그인 유저나 남의 채팅방에
+        // 메시지를 넣을 수 있었다(IDOR).
+        const guard = await one(
+          `SELECT cr.status FROM chat_room cr
+             JOIN match_participant mp ON mp.match_id = cr.match_id AND mp.user_id = :u
+            WHERE cr.match_id = :m`,
+          { m: matchId, u: socket.user.id });
+        if (!guard) return ack?.({ ok: false, message: '참여자가 아닙니다.' });
+        if (guard.status !== 'OPEN') return ack?.({ ok: false, message: '종료된 대화방이에요.' });
+
         const [ins] = await pool.execute(
           `INSERT INTO chat_message (match_id, sender_id, message_type, content)
            VALUES (:m, :u, 'TEXT', :c)`,
@@ -47,7 +59,7 @@ export function attachChatSocket(server) {
           });
         }
       } catch (e) {
-        ack?.({ ok: false, message: e.sqlMessage || e.message });
+        ack?.({ ok: false, message: e.sqlState === '45000' ? translateSignal(e.sqlMessage) : (e.sqlMessage || e.message) });
       }
     });
   });

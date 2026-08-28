@@ -10,12 +10,9 @@ import './InboxPage.css';
 const LABEL = { PENDING: '매칭 전', ACCEPTED: '수락됨', DECLINED: '거절함',
                 CANCELLED: '취소됨', EXPIRED: '만료됨' };
 
+// 서버(errorHandler)가 DB 트리거 원문을 이미 한국어로 옮겨서 내려준다 — 그대로 보여준다.
 function acceptErrorMessage(e) {
-  const msg = e?.response?.data?.message || '';
-  if (msg.includes('expired')) return '이미 만료된 요청이에요. 상대에게 다시 요청해 달라고 해보세요.';
-  if (msg.includes('not PENDING')) return '이미 처리된 요청이에요. 새로고침할게요.';
-  if (msg.includes('not SEARCHING')) return '상대가 매칭을 취소했거나 이미 다른 분과 확정됐어요.';
-  return msg || '수락하지 못했어요. 새로고침 후 다시 시도해 주세요.';
+  return e?.response?.data?.message || '수락하지 못했어요. 새로고침 후 다시 시도해 주세요.';
 }
 
 /** 보관함 — 받은 매칭 요청 목록 (읽음 처리 / 수락 / 취소) */

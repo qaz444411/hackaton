@@ -72,6 +72,8 @@ r.get('/rooms/:matchId/messages', wrap(async (req, res) => {
 /** 메시지 전송 (REST — 소켓과 동일 로직) */
 r.post('/rooms/:matchId/messages', wrap(async (req, res) => {
   const b = z.object({ content: z.string().min(1).max(500) }).parse(req.body);
+  // 참여자인지·방이 열려있는지 먼저 확인 — 없으면 matchId 만 알아도 남의 채팅방에 메시지를 넣을 수 있었다(IDOR).
+  await assertOpenRoom(req, req.params.matchId);
   const [ins] = await pool.execute(
     `INSERT INTO chat_message (match_id, sender_id, message_type, content)
      VALUES (:m, :u, 'TEXT', :c)`,
