@@ -57,6 +57,7 @@ export const readProposal = (id) => api.post(`/proposals/${id}/read`).then((r) =
 export const acceptProposal = (id) => api.post(`/proposals/${id}/accept`).then((r) => r.data);
 export const declineProposal = (id) => api.post(`/proposals/${id}/decline`).then((r) => r.data);
 export const cancelProposal = (id) => api.post(`/proposals/${id}/cancel`).then((r) => r.data);
+export const deleteProposal = (id) => api.delete(`/proposals/${id}`).then((r) => r.data);
 
 /* ── AI 도우미 (홈 챗봇) ─────────────────────── */
 export const getAssistantStatus = () => api.get('/assistant/status').then((r) => r.data);

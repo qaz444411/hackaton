@@ -73,6 +73,10 @@ const MIGRATIONS = [
     file: '09_schema_patch_v9.sql', label: 'v9 밥친구 평가(match_rating) 테이블 추가',
     checks: [['table', 'match_rating']],
   },
+  {
+    file: '10_schema_patch_v10.sql', label: 'v10 보관함 알림 삭제(proposal_hidden) 테이블 추가',
+    checks: [['table', 'proposal_hidden']],
+  },
 ];
 
 const one = async (sql, params = []) => {

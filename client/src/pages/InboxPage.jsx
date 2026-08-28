@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Trash2 } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
 import BottomNav from '../components/BottomNav.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
-import { getInbox, readProposal, acceptProposal, declineProposal } from '../api/endpoints.js';
+import { getInbox, readProposal, acceptProposal, declineProposal, deleteProposal } from '../api/endpoints.js';
 import './InboxPage.css';
 
 const LABEL = { PENDING: '매칭 전', ACCEPTED: '수락됨', DECLINED: '거절함',
@@ -22,6 +23,8 @@ export default function InboxPage() {
   const { data = [] } = useQuery({ queryKey: ['inbox'], queryFn: getInbox, refetchInterval: 10000 });
   const [cancelTarget, setCancelTarget] = useState(null);
   const [cancelling, setCancelling] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const refresh = () => { qc.invalidateQueries({ queryKey: ['inbox'] }); qc.invalidateQueries({ queryKey: ['home'] }); };
 
@@ -52,6 +55,20 @@ export default function InboxPage() {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteProposal(deleteTarget.proposal_id);
+      refresh();
+    } catch (e) {
+      alert(e.response?.data?.message || '삭제하지 못했어요.');
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
+
   return (
     <div className="screen">
       <AppBar title="보관함" back={false} tab />
@@ -67,6 +84,12 @@ export default function InboxPage() {
                     <span className="notif-card__name">{p.partner_nickname} · {p.partner_age}세</span>
                     <span className={`notif-card__badge notif-card__badge--${p.status}`}>{LABEL[p.status]}</span>
                     {p.is_new && <span className="notif-card__new">NEW</span>}
+                    {p.status !== 'PENDING' && (
+                      <button type="button" className="notif-card__delete" aria-label="삭제"
+                              onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}>
+                        <Trash2 size={15} strokeWidth={2} />
+                      </button>
+                    )}
                   </div>
                   <p className="notif-card__message">
                     {p.meal_time} · {p.food_type}{p.restaurant_name ? ` · ${p.restaurant_name}` : ''}
@@ -100,6 +123,17 @@ export default function InboxPage() {
           cancelLabel="매칭 유지"
           onCancel={() => !cancelling && setCancelTarget(null)}
           onConfirm={confirmCancel}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="알림을 삭제할까요?"
+          desc={`${deleteTarget.partner_nickname}님의 ${LABEL[deleteTarget.status]} 요청이 내 보관함에서만 사라져요.`}
+          confirmLabel={deleting ? '삭제하는 중…' : '삭제'}
+          cancelLabel="취소"
+          onCancel={() => !deleting && setDeleteTarget(null)}
+          onConfirm={confirmDelete}
         />
       )}
 

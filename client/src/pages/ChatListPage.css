@@ -49,6 +49,18 @@
 }
 .chat-row__closed { margin-top: 4px; font-size: 11px; color: var(--c-text-mute); }
 
+.chat-row__delete {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 4px;
+  border-radius: 8px;
+  color: var(--c-text-mute);
+}
+
 .chat-row__badge {
   flex: none;
   display: flex;

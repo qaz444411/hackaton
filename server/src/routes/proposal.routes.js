@@ -66,11 +66,34 @@ r.get('/:id', wrap(async (req, res) => {
   res.json(p);
 }));
 
-/** 보관함 목록 */
+/** 보관함 목록 (내가 삭제한 항목은 제외) */
 r.get('/', wrap(async (req, res) => {
   const rows = await q(
-    'SELECT * FROM v_inbox WHERE user_id = :u ORDER BY created_at DESC', { u: req.user.id });
+    `SELECT * FROM v_inbox
+      WHERE user_id = :u
+        AND proposal_id NOT IN (SELECT proposal_id FROM proposal_hidden WHERE user_id = :u)
+      ORDER BY created_at DESC`,
+    { u: req.user.id });
   res.json(rows);
+}));
+
+/**
+ * 보관함 항목 삭제 — 실제로는 "내 목록에서만" 숨긴다(상대 쪽 기록·통계는 그대로 남는다).
+ * 대기 중(PENDING)인 요청은 먼저 수락하거나 취소해야 지울 수 있다 — 안 그러면
+ * 상대는 계속 대기 중인데 나만 안 보여서 응답을 영영 안 하게 된다.
+ */
+r.delete('/:id', wrap(async (req, res) => {
+  const p = await one(
+    'SELECT status FROM match_proposal WHERE id = :id AND receiver_user_id = :u',
+    { id: req.params.id, u: req.user.id });
+  if (!p) return res.status(404).json({ message: '요청을 찾을 수 없습니다.' });
+  if (p.status === 'PENDING') {
+    return res.status(409).json({ message: '대기 중인 요청은 먼저 수락하거나 취소해 주세요.' });
+  }
+  await pool.execute(
+    'INSERT IGNORE INTO proposal_hidden (proposal_id, user_id) VALUES (:id, :u)',
+    { id: req.params.id, u: req.user.id });
+  res.json({ ok: true });
 }));
 
 /** 보관함 항목 열람 → 읽음 처리 (신규 건수 뱃지 감소) */
