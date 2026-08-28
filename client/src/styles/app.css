@@ -46,8 +46,10 @@ body {
   .bg-mascot--3 { top: 12%;   left: calc(50% + 210px);  width: 84px; transform: rotate(8deg); }
   .bg-mascot--4 { bottom: 8%; left: calc(50% + 202px);  width: 76px; transform: rotate(-6deg); }
   /* 5번은 1·2번보다 안쪽(화면 중앙에 더 가깝게)에 둬서, 창을 최대화하지 않은
-     평범한 노트북 창 너비에서도 화면 밖으로 안 밀려나게 한다. */
-  .bg-mascot--5 { display: block; top: 50%; left: calc(50% - 220px); width: 80px; transform: translateY(-50%) rotate(-4deg); }
+     평범한 노트북 창 너비에서도 화면 밖으로 안 밀려나게 한다. 폰 프레임 반너비가
+     195px 라, 마스코트 자기 너비(80px)까지 감안해서 195+80=275px 보다는 더
+     바깥이어야 프레임 뒤로 안 숨는다(처음에 220으로 했다가 프레임과 겹쳐버렸다). */
+  .bg-mascot--5 { display: block; top: 50%; left: calc(50% - 300px); width: 80px; transform: translateY(-50%) rotate(-4deg); }
 }
 @media (min-width: 1040px) {
   .bg-mascot--1 { left: calc(50% - 470px); width: 132px; }
