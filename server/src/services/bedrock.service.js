@@ -31,15 +31,17 @@ const client = new BedrockRuntimeClient({});
 const ANTHROPIC_VERSION = 'bedrock-2023-05-31';
 
 /** Bedrock 호출 후 텍스트만 꺼낸다 */
-async function invoke({ system, messages, maxTokens = 512, temperature = 0.9 }) {
+async function invoke({ system, messages, maxTokens = 512 }) {
   const res = await client.send(new InvokeModelCommand({
     modelId: config.bedrock.modelId,
     contentType: 'application/json',
     accept: 'application/json',
+    // temperature 는 보내지 않는다. claude-sonnet-5 는
+    //   ValidationException: `temperature` is deprecated for this model
+    // 로 거부한다(실측). 샘플링은 모델 기본값을 쓴다.
     body: JSON.stringify({
       anthropic_version: ANTHROPIC_VERSION,
       max_tokens: maxTokens,
-      temperature,
       system,
       messages,
     }),
@@ -95,7 +97,9 @@ function explain(e) {
     return 'AWS 자격증명을 가져오지 못했어요. EC2 인스턴스 프로파일이 붙어 있는지 확인해 주세요.';
   }
   if (/ValidationException/i.test(name + msg)) {
-    return '모델 요청 형식이 맞지 않아요. 모델 ID 가 추론 프로파일(global. 접두사)인지 확인해 주세요.';
+    // 원문을 그대로 보여준다. 'temperature is deprecated' 처럼 원인이 구체적인 경우가 많아
+    // 엉뚱한 곳(모델 ID 등)을 짚으면 오히려 디버깅이 늦어진다.
+    return `모델 요청이 거부됐어요 (${msg}). 모델 ID 가 추론 프로파일(global. 접두사)인지도 확인해 주세요.`;
   }
   if (/Throttling|TooManyRequests/i.test(name + msg)) {
     return '요청이 몰리고 있어요. 잠시 후 다시 시도해 주세요.';
@@ -110,7 +114,6 @@ export async function chatWithAssistant({ history = [], message, context = {} })
       system: buildAssistantSystemPrompt(ASSISTANT_RULES, context),
       messages: toClaudeMessages(history, message),
       maxTokens: 512,
-      temperature: 0.9,
     });
     if (!reply) return { reply: '잠시 생각이 멈췄어요. 다시 한 번 물어봐 주시겠어요?', source: 'FALLBACK' };
     return { reply, source: 'BEDROCK' };
@@ -127,7 +130,6 @@ export async function suggestQuestions(ctx = {}) {
       system: SUGGEST_RULES,
       messages: [{ role: 'user', content: buildSuggestPrompt(ctx) }],
       maxTokens: 400,
-      temperature: 1.0,
     });
 
     // Claude 는 JSON 앞뒤에 설명을 붙이는 경우가 있어 첫 객체만 뽑아낸다
