@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { User, Dices, MapPin, Sparkles } from 'lucide-react';
 import BottomNav from '../components/BottomNav.jsx';
 import {
-  getHome, getAssistantStarters, getCurrentMatching, cancelMatching,
+  getHome, getAssistantStarters, getCurrentMatching, cancelMatching, getSentProposals,
 } from '../api/endpoints.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import './HomePage.css';
@@ -29,9 +29,19 @@ export default function HomePage() {
     refetchOnWindowFocus: true,
   });
 
+  // 내가 보낸 대기 중인 요청 — 화면(대기 페이지)을 나갔다 와도 여기서 다시 열 수 있어야 한다.
+  const { data: sentProposals } = useQuery({
+    queryKey: ['proposals', 'sent'],
+    queryFn: getSentProposals,
+    refetchInterval: 15000,
+  });
+
   const m = data?.confirmedMatch;
   const starters = startersData?.starters || [];
-  const searching = current && current.status === 'SEARCHING';
+  const pendingSent = sentProposals?.[0];
+  // 직접 요청(지도/밥친구목록)은 매칭 요청과 제안이 함께 생기므로, 보낸 요청 카드가 있으면
+  // 아래 "진행 중 매칭" 카드는 같은 상태를 중복해서 보여주는 셈이라 숨긴다.
+  const searching = current && current.status === 'SEARCHING' && !pendingSent;
 
   const cancel = async () => {
     if (!current) return;
@@ -86,6 +96,22 @@ export default function HomePage() {
             </div>
           )}
 
+          {/* 내가 보낸 요청 — 화면을 나가도 여기서 다시 확인/취소할 수 있다 */}
+          {pendingSent && (
+            <Link to={`/proposals/${pendingSent.id}/wait`} style={{ textDecoration: 'none', color: 'inherit', alignSelf: 'stretch' }}>
+              <div className="card matching-card home__searching-card">
+                <div className="row" style={{ justifyContent: 'space-between' }}>
+                  <span className="tag">요청 보냄</span>
+                  <span className="dot-pulse" aria-hidden="true" />
+                </div>
+                <p className="home__searching-desc">
+                  {pendingSent.partner_nickname}님에게 보낸 요청, 답변을 기다리고 있어요
+                </p>
+                <p className="muted" style={{ marginTop: 4 }}>눌러서 남은 시간과 상태를 확인하세요.</p>
+              </div>
+            </Link>
+          )}
+
           {/* 진행 중인 매칭 — 이어보기 / 취소 (취소 전엔 새 매칭을 시작할 수 없다) */}
           {searching && (
             <div className="card matching-card home__searching-card">
@@ -107,7 +133,7 @@ export default function HomePage() {
           )}
 
           <section className="home__actions">
-            <button type="button" className="home__action home__action--primary" disabled={searching}
+            <button type="button" className="home__action home__action--primary" disabled={searching || !!pendingSent}
                     onClick={() => nav('/preference')}>
               <span className="home__action-icon"><Dices size={24} strokeWidth={2} /></span>
               <span className="home__action-body">
@@ -125,7 +151,7 @@ export default function HomePage() {
               </span>
               <span className="home__action-arrow">›</span>
             </button>
-            {searching && (
+            {(searching || pendingSent) && (
               <p className="muted" style={{ textAlign: 'center' }}>
                 진행 중인 매칭을 취소하면 다시 시작할 수 있어요.
               </p>

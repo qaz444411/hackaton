@@ -43,6 +43,7 @@ export const getSpotBuddies = (id) => api.get(`/spots/${id}/buddies`).then((r) =
 /* ── 매칭 요청 / 보관함 ──────────────────────── */
 export const createProposal = (body) => api.post('/proposals', body).then((r) => r.data);
 export const getProposal = (id) => api.get(`/proposals/${id}`).then((r) => r.data);
+export const getSentProposals = () => api.get('/proposals/sent').then((r) => r.data);
 export const getInbox = () => api.get('/proposals').then((r) => r.data);
 export const readProposal = (id) => api.post(`/proposals/${id}/read`).then((r) => r.data);
 export const acceptProposal = (id) => api.post(`/proposals/${id}/accept`).then((r) => r.data);

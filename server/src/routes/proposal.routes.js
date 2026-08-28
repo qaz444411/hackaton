@@ -27,6 +27,22 @@ r.post('/', wrap(async (req, res) => {
   res.status(201).json({ id: ins.insertId, status: 'PENDING' });
 }));
 
+/**
+ * 내가 보낸(요청자) 대기 중인 요청 — 화면을 나갔다 와도 다시 확인할 수 있게.
+ * uq_proposal_pending_per_request 로 매칭 요청 1건당 PENDING 은 최대 1개다.
+ */
+r.get('/sent', wrap(async (req, res) => {
+  const rows = await q(
+    `SELECT p.id, p.expires_at, p.created_at,
+            u.nickname AS partner_nickname, u.profile_image AS partner_image
+       FROM match_proposal p
+       JOIN users u ON u.id = p.receiver_user_id
+      WHERE p.requester_user_id = :u AND p.status = 'PENDING' AND p.expires_at > NOW()
+      ORDER BY p.created_at DESC`,
+    { u: req.user.id });
+  res.json(rows);
+}));
+
 /** 매칭 요청 대기 페이지 — 상태 폴링 */
 r.get('/:id', wrap(async (req, res) => {
   const p = await one(
