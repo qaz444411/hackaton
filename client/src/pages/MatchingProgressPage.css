@@ -31,15 +31,9 @@
 
 .matching__icon {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  background: var(--c-primary);
-  color: var(--c-white);
-  border-radius: 24px;
-  box-shadow: var(--shadow-btn-primary);
+  height: 52px;
+  width: auto;
+  object-fit: contain;
 }
 
 .matching__title {

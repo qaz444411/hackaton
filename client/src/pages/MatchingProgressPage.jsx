@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Sparkles } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
 import { getCandidates, cancelMatching } from '../api/endpoints.js';
+import logo from '../assets/logo.png';
 import './MatchingProgressPage.css';
 
 /**
@@ -54,7 +54,7 @@ export default function MatchingProgressPage() {
         <div className="matching">
           <div className="matching__icon-wrap">
             <span className="matching__icon-blob" aria-hidden="true" />
-            <span className="matching__icon"><Sparkles size={32} strokeWidth={2} /></span>
+            <img className="matching__icon" src={logo} alt="DO밥" />
           </div>
           <p className="matching__title">매칭을 요청했어요</p>
           <p className="matching__desc">취향이 맞는 사람을 찾는 중이에요.</p>
