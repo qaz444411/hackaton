@@ -142,19 +142,19 @@ export default function HomePage() {
           </button>
         </section>
 
-        {/* 지금 매칭 찾는 인원 / 이번 주 인기 음식 — 가벼운 사회적 증거, 데이터 없으면 안 보여준다 */}
+        {/* 지금 매칭 찾는 인원 / 이번 주 인기 음식 — 알약 두 개가 동시에 뜨면 부담스러워서
+            한 줄에 하나만, 있는 것 위주로(둘 다 있으면 실시간 인원 쪽을 우선한다) */}
         {(!!data?.searchingCount || data?.popularFood) && (
-          <div className="home__stats-row">
-            {!!data?.searchingCount && (
-              <div className="home__stat-pill">
+          <div className="home__stat-pill">
+            {!!data?.searchingCount ? (
+              <>
                 <span className="dot-pulse" aria-hidden="true" />
                 지금 {data.searchingCount}명이 밥친구를 찾고 있어요
-              </div>
-            )}
-            {data?.popularFood && (
-              <div className="home__stat-pill">
+              </>
+            ) : (
+              <>
                 이번 주는 {data.popularFood.label}{withEunGa(data.popularFood.label, '이', '가')} 인기예요 ({data.popularFood.pct}%)
-              </div>
+              </>
             )}
           </div>
         )}
