@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { User, Dices, MapPin, Sparkles } from 'lucide-react';
 import BottomNav from '../components/BottomNav.jsx';
 import {
-  getHome, getAssistantStarters, getCurrentMatching, cancelMatching, getSentProposals,
+  getHome, getAssistantStarters, getCurrentMatching, cancelMatching, getMatchingDiagnosis, getSentProposals,
 } from '../api/endpoints.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import './HomePage.css';
@@ -27,6 +27,14 @@ export default function HomePage() {
     queryKey: ['matching', 'current'],
     queryFn: getCurrentMatching,
     refetchOnWindowFocus: true,
+  });
+
+  // 매칭이 왜 안 잡히는지 — 진행 중일 때만 조회한다
+  const { data: diag } = useQuery({
+    queryKey: ['matching', current?.id, 'diagnosis'],
+    queryFn: () => getMatchingDiagnosis(current.id),
+    enabled: !!current && current.status === 'SEARCHING',
+    refetchInterval: 10000,
   });
 
   // 내가 보낸 대기 중인 요청 — 화면(대기 페이지)을 나갔다 와도 여기서 다시 열 수 있어야 한다.
@@ -125,6 +133,24 @@ export default function HomePage() {
               <p className="muted" style={{ marginTop: 4 }}>
                 취소하기 전에는 새로운 매칭을 시작할 수 없어요.
               </p>
+
+              {/*
+                조건이 좁으면 아무도 안 잡히는데 화면에는 계속 "찾는 중" 만 뜬다.
+                왜 못 찾는지 알려주고, 조건을 넓혀서 다시 찾을 수 있게 한다.
+              */}
+              {diag?.reasons?.length > 0 && (
+                <div className="home__searching-why">
+                  <ul>{diag.reasons.map((r) => <li key={r}>{r}</li>)}</ul>
+                  <p className="muted">지금 매칭 중인 다른 사람: {diag.searching}명</p>
+                  {diag.searching > 0 && (
+                    <button type="button" className="btn btn--ghost" style={{ marginTop: 10 }}
+                            onClick={() => nav(`/matching/${current.id}/result?relax=1`)}>
+                      조건 넓혀서 찾기
+                    </button>
+                  )}
+                </div>
+              )}
+
               <div className="row" style={{ marginTop: 12 }}>
                 <button type="button" className="btn btn--line" onClick={cancel}>매칭 취소</button>
                 <button type="button" className="btn" onClick={() => nav(`/matching/${current.id}`)}>이어보기</button>

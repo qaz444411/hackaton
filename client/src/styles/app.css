@@ -348,3 +348,11 @@ input[type='range'] { flex: 1; accent-color: var(--c-primary); }
   background: var(--c-surface); color: var(--c-text-sub);
   font-size: 12px; line-height: 1.5;
 }
+
+/* 매칭이 안 잡히는 이유 (홈 진행 중 카드) */
+.home__searching-why {
+  margin-top: 12px; padding: 10px 12px;
+  border-radius: var(--r-md); background: var(--c-surface);
+}
+.home__searching-why ul { margin: 0 0 6px; padding-left: 18px; }
+.home__searching-why li { font-size: 13px; color: var(--c-text-sub); line-height: 1.7; }

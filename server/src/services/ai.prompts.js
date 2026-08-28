@@ -121,13 +121,25 @@ ${lines.join('\n')}
  * 형식이 어긋나면 추천 없이 원문만 돌려준다(파싱 실패로 대화가 깨지지 않게).
  */
 export function extractPicks(reply = '', nearby = []) {
+  if (!nearby.length) return { text: reply.trim(), picks: [] };
+
   const m = /^\s*추천\s*[:：]\s*([0-9,\s]+)\s*$/m.exec(reply);
-  if (!m || !nearby.length) return { text: reply.trim(), picks: [] };
+  if (m) {
+    const picks = [...new Set(m[1].split(',').map((s) => parseInt(s.trim(), 10)))]
+      .filter((n) => Number.isInteger(n) && n >= 1 && n <= nearby.length)
+      .slice(0, 3)
+      .map((n) => nearby[n - 1]);
+    if (picks.length) return { text: reply.replace(m[0], '').trim(), picks };
+  }
 
-  const picks = [...new Set(m[1].split(',').map((s) => parseInt(s.trim(), 10)))]
-    .filter((n) => Number.isInteger(n) && n >= 1 && n <= nearby.length)
-    .slice(0, 3)
-    .map((n) => nearby[n - 1]);
+  /*
+   * 폴백 — 모델이 번호 줄을 빠뜨리는 경우가 있다(실측).
+   * 답변에 언급된 가게 이름을 후보 목록과 대조해 되짚는다.
+   * 여기서도 결과는 목록의 원소이므로 없는 가게가 나올 수는 없다.
+   */
+  const picks = nearby
+    .filter((r) => r.name && reply.includes(r.name))
+    .slice(0, 3);
 
-  return { text: reply.replace(m[0], '').trim(), picks };
+  return { text: reply.replace(/^\s*추천\s*[:：].*$/m, '').trim(), picks };
 }
