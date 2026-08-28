@@ -39,7 +39,7 @@ const RULES = [
 
 /** food_type_code 폴백 (category_name 이 없을 때) */
 const BY_FOOD_TYPE = {
-  KOREAN: '🍚', JAPANESE: '🍱', CHINESE: '🥟', WESTERN: '🍝', ANY: '🍽',
+  KOREAN: '🍚', JAPANESE: '🍱', CHINESE: '🥟', WESTERN: '🍝', ETC: '🍽', ANY: '🍽',
 };
 
 /** 음식점 하나의 아이콘을 고른다 */
@@ -61,6 +61,8 @@ export const FOOD_FILTERS = [
   { value: 'JAPANESE', label: '일식', icon: '🍱' },
   { value: 'CHINESE', label: '중식', icon: '🥟' },
   { value: 'WESTERN', label: '양식', icon: '🍝' },
+  // ETC = 술집/도시락/구내식당처럼 4분류에 안 들어가는 것들 (v7)
+  { value: 'ETC', label: '기타', icon: '🍽' },
 ];
 
 /** 필터 적용 — ALL 이면 그대로 */

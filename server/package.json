@@ -22,7 +22,9 @@
     "db:patch6": "node scripts/run-sql.js ../db/06_schema_patch_v6.sql",
     "bedrock:check": "node scripts/check-bedrock.js",
     "db:status": "node scripts/check-migrations.js",
-    "db:patch5": "node scripts/run-sql.js ../db/05_schema_patch_v5.sql"
+    "db:patch5": "node scripts/run-sql.js ../db/05_schema_patch_v5.sql",
+    "db:patch7": "node scripts/run-sql.js ../db/07_schema_patch_v7.sql",
+    "food:reclassify": "node scripts/reclassify-food-type.js"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1120.0",

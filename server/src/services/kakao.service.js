@@ -7,14 +7,38 @@ import { config } from '../config.js';
  */
 const KAKAO_URL = 'https://dapi.kakao.com/v2/local/search';
 
+/**
+ * 카카오 category_name → food_type_code.
+ *
+ * food_type_code 는 5종뿐이다: KOREAN / JAPANESE / CHINESE / WESTERN / ANY.
+ * 카카오 분류는 이보다 훨씬 세분화돼 있어(치킨, 패스트푸드, 술집, 분식 …)
+ * 어디에 넣을지 명시적으로 정해줘야 한다.
+ *
+ * 구체적인 규칙을 위에 둔다. 위에서부터 순서대로 검사한다.
+ */
 const CATEGORY_TO_FOOD = [
-  [/한식/, 'KOREAN'], [/일식|초밥|돈까스/, 'JAPANESE'],
-  [/중식/, 'CHINESE'], [/양식|이탈리|피자|파스타/, 'WESTERN'],
+  // 양식 — 치킨/패스트푸드/제과를 여기에 넣는다.
+  // 카카오는 치킨을 한식 하위가 아니라 최상위 "음식점 > 치킨" 으로 둔다.
+  [/치킨|후라이드|BBQ|패스트푸드|버거|피자|파스타|이탈리|스테이크|샌드위치|샐러드|제과|베이커리|양식/, 'WESTERN'],
+  // 일식
+  [/일식|초밥|스시|롤|돈까스|돈가스|라멘|우동|샤브샤브|텐동/, 'JAPANESE'],
+  // 중식
+  [/중식|중국|딤섬|마라|양꼬치/, 'CHINESE'],
+  // 한식 — 분식(김밥·떡볶이)은 한식으로 본다
+  [/한식|분식|김밥|떡볶이|국밥|해장국|칼국수|냉면|족발|보쌈|삼겹|고기|한정식|백반|찌개|국수/, 'KOREAN'],
 ];
 
+/**
+ * 어디에도 안 걸리면 ETC('기타')로 둔다.
+ *
+ * 예전에는 KOREAN 으로 떨어뜨렸는데, 술집·도시락·구내식당·아시아음식처럼
+ * 한식이 아닌 것들이 전부 한식으로 섞여 들어가 필터가 망가졌다(224건 중 43건).
+ * 모르면 모른다고 두는 편이 낫다. restaurant 는 ck_restaurant_food 때문에
+ * ANY 를 쓸 수 없어서 분류용 코드 ETC 를 따로 뒀다(v7).
+ */
 export function mapFoodType(categoryName = '') {
   for (const [re, code] of CATEGORY_TO_FOOD) if (re.test(categoryName)) return code;
-  return 'KOREAN';
+  return 'ETC';
 }
 
 const headers = () => ({ Authorization: `KakaoAK ${config.kakaoKey}` });

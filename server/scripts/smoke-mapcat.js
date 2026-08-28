@@ -110,3 +110,41 @@ await conn.end();
 
 const failed = results.filter((r) => r.결과 === 'FAIL').length;
 console.log(failed ? `\n실패 ${failed}건` : '\n전부 통과');
+
+/* ⑤ 음식 종류 분류 규칙 — 치킨/패스트푸드가 한식으로 새지 않는지 */
+const { mapFoodType } = await import('../src/services/kakao.service.js');
+const CASES = [
+  ['음식점 > 치킨 > 교촌치킨',            'WESTERN'],
+  ['음식점 > 치킨 > BBQ',                 'WESTERN'],
+  ['음식점 > 패스트푸드 > 맥도날드',      'WESTERN'],
+  ['음식점 > 패스트푸드 > 샌드위치',      'WESTERN'],
+  ['음식점 > 간식 > 제과,베이커리',       'WESTERN'],
+  ['음식점 > 양식 > 피자',                'WESTERN'],
+  ['음식점 > 한식 > 국밥',                'KOREAN'],
+  ['음식점 > 분식',                       'KOREAN'],
+  ['음식점 > 일식 > 초밥,롤',             'JAPANESE'],
+  ['음식점 > 샤브샤브',                   'JAPANESE'],
+  ['음식점 > 중식 > 중국요리',            'CHINESE'],
+  ['음식점 > 술집 > 호프,요리주점',       'ETC'],
+  ['음식점 > 구내식당',                   'ETC'],
+  ['음식점',                              'ETC'],
+];
+const wrong = CASES.filter(([cat, want]) => mapFoodType(cat) !== want);
+check('분류 규칙 14종', wrong.length === 0,
+  wrong.length ? wrong.map(([c, w]) => `${c}→${mapFoodType(c)}(기대 ${w})`).join(' / ') : 'OK');
+
+/* ⑥ DB 에 한식으로 잘못 남은 게 없는지 */
+const conn2 = await mysql.createConnection({
+  host: process.env.DB_HOST, port: Number(process.env.DB_PORT || 3306),
+  user: process.env.DB_USER, password: process.env.DB_PASSWORD, database: process.env.DB_NAME,
+});
+const [stale] = await conn2.query('SELECT id, name, category_name, food_type_code FROM restaurant');
+const bad = stale.filter((r) => mapFoodType(r.category_name || '') !== r.food_type_code);
+check('DB 분류가 규칙과 일치', bad.length === 0,
+  bad.length ? `${bad.length}건 불일치 (npm run food:reclassify -- --apply)` : `${stale.length}건 일치`);
+await conn2.end();
+
+console.log('');
+console.table(results.slice(-2));
+const failed2 = results.filter((r) => r.결과 === 'FAIL').length;
+if (failed2) process.exitCode = 1;
