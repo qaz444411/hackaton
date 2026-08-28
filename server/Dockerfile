@@ -14,6 +14,13 @@ RUN npm ci --omit=dev
 
 COPY . .
 
+# uploads-data 볼륨이 붙는 경로를 이미지 안에 미리 만들어 둔다.
+# 도커는 "이미지에 그 경로가 있을 때만" 소유권/권한을 새 named volume 에 복사한다.
+# 이게 없으면 빈 볼륨이 root:root 로 생기고, USER node(uid 1000) 가
+# user.routes.js 의 mkdirSync('/app/uploads/avatars') 에서 EACCES 로 죽는다.
+# (실제로 배포 후 api 가 107회 재시작하며 502 를 냈다)
+RUN mkdir -p /app/uploads/avatars
+
 # 루트로 돌리지 않는다 (node 이미지에 이미 있는 계정)
 RUN chown -R node:node /app
 USER node
