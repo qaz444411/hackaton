@@ -1,0 +1,25 @@
+# ---------------------------------------------------------------
+# 80 포트 — https 리다이렉트 모드.
+#   REDIRECT_HTTP_TO_HTTPS=1 이고 인증서가 실제로 있을 때만 쓰인다.
+#   default_server 라서 IP 로 들어온 요청(Host=35.86.162.39)도 함께 잡아
+#   https 도메인으로 보낸다. 그래야 예전 IP 링크를 쓰던 사람도
+#   secure context 를 받아 지도의 현재 위치가 동작한다.
+#
+#   되돌리려면 .env.production 의 REDIRECT_HTTP_TO_HTTPS 를 0 으로 바꾸고
+#   web 컨테이너만 재기동하면 된다 (인증서·데이터 영향 없음).
+# ---------------------------------------------------------------
+server {
+    listen 80 default_server;
+    server_name _;
+
+    # 갱신(renew)은 http 로 들어온다. 리다이렉트보다 먼저 매칭되도록 ^~ 를 쓴다.
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        default_type "text/plain";
+        try_files $uri =404;
+    }
+
+    location / {
+        return 301 https://${DOMAIN}$request_uri;
+    }
+}
