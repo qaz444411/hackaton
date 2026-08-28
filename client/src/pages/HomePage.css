@@ -76,12 +76,9 @@
 .home__a11y-fab {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   height: 36px;
-  padding: 0 10px;
-  border-radius: 18px;
-  background: var(--c-white);
-  box-shadow: var(--shadow-card-soft);
+  padding: 0 2px;
   color: var(--c-text-sub);
 }
 .home__a11y-fab-small { font-size: 12px; font-weight: 600; letter-spacing: -0.26px; }
@@ -493,7 +490,9 @@
   height: 90px;
   background: var(--c-primary-tint);
   color: var(--c-primary);
+  overflow: hidden;
 }
+.home__reco-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
 .home__reco-body { display: flex; flex-direction: column; padding: 10px 10px 12px; align-self: stretch; }
 .home__reco-name {

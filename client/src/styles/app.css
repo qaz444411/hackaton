@@ -137,8 +137,14 @@ body {
   position: relative; flex: 1;
   --map-top: 24px;
 }
+.map-back {
+  display: flex; align-items: center; justify-content: center;
+  position: absolute; top: var(--map-top); left: 16px; z-index: 5;
+  width: 48px; height: 48px; border-radius: 14px; border: none;
+  background: var(--c-white); box-shadow: var(--shadow-card-soft); color: var(--c-text);
+}
 .map-search {
-  position: absolute; top: var(--map-top); left: 16px; right: 16px; z-index: 5;
+  position: absolute; top: var(--map-top); left: 72px; right: 16px; z-index: 5;
   height: 48px; border-radius: 14px; border: none; padding: 0 16px;
   background: var(--c-white); box-shadow: var(--shadow-card-soft);
   font-family: var(--font-body); font-size: 14px; letter-spacing: -0.28px; color: var(--c-text);
@@ -146,15 +152,15 @@ body {
 .map-search::placeholder { color: rgba(34, 34, 34, 0.5); }
 .map-fab {
   display: flex; align-items: center; justify-content: center;
-  /* 하단바가 이제 지도 위에 떠 있어서(bnav-wrap--floating), 그 알약 높이(약 88px)만큼
-     더 띄워야 FAB이 알약 뒤에 가리지 않는다. */
-  position: absolute; right: 16px; bottom: 184px; z-index: 5;
+  /* 하단바가 지도 위에 떠 있어서(bnav-wrap--floating) 알약 뒤에 가리지 않을 만큼만
+     띄운다(알약 높이 88px + 여유 16px). */
+  position: absolute; right: 16px; bottom: 104px; z-index: 5;
   width: 48px; height: 48px; border-radius: 24px; border: none;
   background: var(--c-accent); color: var(--c-white); font-size: 22px;
   box-shadow: 0 6px 20px rgba(172, 110, 57, 0.4); cursor: pointer;
 }
-.map-fab--list { bottom: 248px; background: var(--c-white); color: var(--c-text); font-size: 16px; box-shadow: var(--shadow-card-soft); }
-.map-fab--me { bottom: 312px; background: var(--c-white); color: var(--c-select); font-size: 18px; box-shadow: var(--shadow-card-soft); }
+.map-fab--list { bottom: 168px; background: var(--c-white); color: var(--c-text); font-size: 16px; box-shadow: var(--shadow-card-soft); }
+.map-fab--me { bottom: 232px; background: var(--c-white); color: var(--c-select); font-size: 18px; box-shadow: var(--shadow-card-soft); }
 
 .map-pin {
   display: flex; align-items: center; gap: 4px;
@@ -206,7 +212,7 @@ body {
   padding: 6px 12px; border-radius: 999px; background: rgba(0,0,0,.6); color: #fff; font-size: 11px;
 }
 .map-hint {
-  position: absolute; bottom: 172px; left: 16px; right: 84px; z-index: 4;
+  position: absolute; bottom: 92px; left: 16px; right: 84px; z-index: 4;
   padding: 8px 12px; border-radius: var(--r-md);
   background: rgba(0,0,0,.55); color: #fff; font-size: 11px; line-height: 1.4;
 }

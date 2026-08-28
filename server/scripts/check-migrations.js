@@ -97,6 +97,10 @@ const MIGRATIONS = [
     file: '15_schema_patch_v15.sql', label: 'v15 사용자당 확정 매칭 1건 제한 제거',
     checks: [['trigger_not_contains', 'trg_match_participant_ins', 'already has an active match']],
   },
+  {
+    file: '16_schema_patch_v16.sql', label: 'v16 음식점 사진(image_url) 추가',
+    checks: [['column', 'restaurant', 'image_url'], ['column', 'v_restaurant_recruiting', 'image_url']],
+  },
 ];
 
 const one = async (sql, params = []) => {

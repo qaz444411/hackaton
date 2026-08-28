@@ -354,7 +354,11 @@ export default function HomePage() {
               {recommended.map((r) => (
                 <button type="button" key={r.restaurant_id} className="home__reco-card"
                         onClick={() => nav(`/map?restaurantId=${r.restaurant_id}`)}>
-                  <span className="home__reco-thumb"><UtensilsCrossed size={22} strokeWidth={1.8} /></span>
+                  <span className="home__reco-thumb">
+                    {r.image_url
+                      ? <img src={r.image_url} alt="" />
+                      : <UtensilsCrossed size={22} strokeWidth={1.8} />}
+                  </span>
                   <span className="home__reco-body">
                     <span className="home__reco-name">{r.name}</span>
                     <span className="home__reco-meta">{formatDistance(r.distance_m)}</span>

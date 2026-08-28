@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Map, Search, UtensilsCrossed } from 'lucide-react';
+import { ArrowLeft, Map, Search, UtensilsCrossed } from 'lucide-react';
 import BottomNav from '../components/BottomNav.jsx';
 import { useMyLocation, FALLBACK_CENTER, GEO_MESSAGE } from '../hooks/useKakaoMap.js';
 import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
@@ -29,6 +29,9 @@ export default function RestaurantListPage() {
       <div className="screen__body rl__body">
         <header className="rl__header">
           <div>
+            <button type="button" className="rl__back" onClick={() => nav(-1)} aria-label="뒤로가기">
+              <ArrowLeft size={18} strokeWidth={2.2} />
+            </button>
             <p className="rl__title">어디서 같이 먹을까요?</p>
             <p className="rl__subtitle">먹고 싶은 음식점을 골라 밥친구를 찾아보세요.</p>
           </div>
@@ -51,7 +54,11 @@ export default function RestaurantListPage() {
           {list.map((r) => (
             <div key={r.restaurant_id} className="rl__card"
                  onClick={() => nav(`/restaurants/${r.restaurant_id}/buddies`)}>
-              <span className="rl__card-thumb"><UtensilsCrossed size={20} strokeWidth={2} /></span>
+              <span className="rl__card-thumb">
+                {r.image_url
+                  ? <img src={r.image_url} alt="" />
+                  : <UtensilsCrossed size={20} strokeWidth={2} />}
+              </span>
               <div className="rl__card-body">
                 <div className="rl__card-name-row">
                   <span className="rl__card-name ellipsis">{r.name}</span>

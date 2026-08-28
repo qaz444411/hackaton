@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  List, LocateFixed, Plus, Utensils, Soup, Fish, CookingPot, Pizza, UtensilsCrossed,
+  ArrowLeft, List, LocateFixed, Plus, Utensils, Soup, Fish, CookingPot, Pizza, UtensilsCrossed,
 } from 'lucide-react';
 import BottomNav from '../components/BottomNav.jsx';
 import {
@@ -258,6 +258,10 @@ export default function MapPage() {
             </p>
           </div>
         )}
+
+        <button type="button" className="map-back" onClick={() => nav(-1)} aria-label="뒤로가기">
+          <ArrowLeft size={20} strokeWidth={2.2} />
+        </button>
 
         <input className="map-search" placeholder="음식점 검색" value={keyword}
                onChange={(e) => setKeyword(e.target.value)}
