@@ -1,0 +1,44 @@
+/* AppBar — app/ BackHeader 디자인 이식 */
+.appbar {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  align-self: stretch;
+  flex: none;
+  width: 100%;
+  min-height: 56px;
+  padding: max(22px, calc(env(safe-area-inset-top) + 14px)) 16px 0;
+}
+
+.appbar__title {
+  flex: 1;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18px;
+  line-height: 23px;
+  color: var(--c-text);
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  border-radius: 100px;
+  font-size: 20px;
+  color: var(--c-text);
+}
+
+.icon-btn:active {
+  background: var(--c-primary-tint);
+}
+
+.icon-btn--active {
+  background: var(--c-primary-tint);
+  color: var(--c-primary);
+}

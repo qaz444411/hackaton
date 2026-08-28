@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { Trash2, Sparkles, ArrowUp } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
 import { askAssistant, getAssistantStatus, getAssistantStarters } from '../api/endpoints.js';
 
@@ -78,7 +79,7 @@ export default function AssistantPage() {
     <div className="screen">
       <AppBar title="AI 도우미" onBack={() => nav('/home')}
               right={messages.length
-                ? <button className="icon-btn" onClick={reset} aria-label="대화 지우기">🗑</button>
+                ? <button className="icon-btn" onClick={reset} aria-label="대화 지우기"><Trash2 size={18} /></button>
                 : null} />
 
       {status && !status.enabled && (
@@ -92,7 +93,7 @@ export default function AssistantPage() {
         {!messages.length && (
           <>
             <div className="ai-hello">
-              <div className="ai-hello__icon">🍚</div>
+              <div className="ai-hello__icon"><Sparkles size={26} strokeWidth={2} /></div>
               <strong>무엇이든 물어보세요</strong>
               <p className="muted" style={{ marginTop: 6 }}>
                 오늘 뭐 먹을지, 앱 사용법, 처음 만나는 사람과의 대화 요령까지 도와드려요.
@@ -125,7 +126,7 @@ export default function AssistantPage() {
                onChange={(e) => setInput(e.target.value)}
                onKeyDown={(e) => e.key === 'Enter' && send()} />
         <button className="send" onClick={() => send()} disabled={busy || !input.trim()}
-                aria-label="보내기">↑</button>
+                aria-label="보내기"><ArrowUp size={18} strokeWidth={2.2} /></button>
       </div>
     </div>
   );

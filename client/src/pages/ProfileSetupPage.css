@@ -1,0 +1,73 @@
+/* ProfileSetupPage — app/ SignupPreferences 디자인 이식 */
+.sp {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 100%;
+  gap: 20px;
+}
+
+.sp__intro {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 4px;
+}
+
+.sp__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 28px;
+  color: var(--c-text);
+}
+
+.sp__desc {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--c-text-sub);
+}
+
+.sp__section {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 10px;
+}
+
+.sp__section-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--c-text);
+}
+
+.sp__cta-wrap {
+  align-self: stretch;
+  padding-top: 12px;
+}
+
+.sp__submit {
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  width: 100%;
+  height: 54px;
+  background: var(--c-primary-grad);
+  box-shadow: var(--shadow-btn-primary);
+  border-radius: 20px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--c-white);
+}
+
+.sp__submit:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  cursor: not-allowed;
+}

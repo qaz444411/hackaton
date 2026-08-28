@@ -1,0 +1,106 @@
+/* ProfileCard — app/ BuddyList(list) + MatchComplete(hero) 디자인 이식 */
+
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  padding: 16px;
+  background: var(--c-white);
+  box-shadow: 0 3px 16px rgba(0, 0, 0, 0.07);
+  border-radius: 22px;
+}
+
+.profile-card__banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+}
+
+.profile-card__avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  background: var(--c-primary-grad);
+  object-fit: cover;
+  font-size: 24px;
+  color: #fff;
+}
+
+.profile-card__meta { flex: 1 1 auto; min-width: 0; }
+.profile-card__name { font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--c-text); }
+.profile-card__sub { font-size: 11px; color: var(--c-text-mute); }
+
+.profile-card__rate-badge {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.profile-card__rate-badge-value { font-family: var(--font-display); font-weight: 800; font-size: 20px; color: var(--c-primary); }
+.profile-card__rate-badge-label { font-size: 9px; color: var(--c-text-mute); }
+
+.profile-card__body { align-self: stretch; }
+
+.profile-card__interests { align-self: stretch; margin-top: 12px; }
+.profile-card__interests-label { font-family: var(--font-body); font-weight: 600; font-size: 10px; color: var(--c-text-mute); }
+.profile-card__tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.profile-card__tag {
+  flex: none; padding: 3px 10px; background: var(--c-surface); border-radius: 20px;
+  font-family: var(--font-body); font-weight: 700; font-size: 11px; color: #888;
+  white-space: nowrap;
+}
+
+.profile-card__progress-row { display: flex; align-items: center; gap: 8px; align-self: stretch; margin-top: 12px; }
+.profile-card__track { flex: 1 1 auto; height: 5px; background: var(--c-line); border-radius: 3px; overflow: hidden; }
+.profile-card__fill { height: 100%; background: linear-gradient(90deg, #ff6b4a 0%, #ffd166 100%); border-radius: 3px; }
+.profile-card__percent { flex: none; font-family: var(--font-body); font-weight: 700; font-size: 10px; color: var(--c-primary); }
+
+.profile-card__extra { align-self: stretch; margin-top: 8px; font-size: 11px; color: var(--c-text-mute); }
+.profile-card__footer { align-self: stretch; margin-top: 12px; }
+
+/* ── hero 변형: 매칭 결과 상세 카드 ───────────────────────── */
+.profile-card--hero {
+  padding: 0;
+  border-radius: 24px;
+  box-shadow: 0 6px 24px rgba(255, 107, 74, 0.12);
+  overflow: hidden;
+}
+
+.profile-card--hero .profile-card__banner {
+  padding: 16px 20px;
+  gap: 12px;
+  background: var(--c-primary-grad);
+}
+
+.profile-card--hero .profile-card__avatar {
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.25);
+  font-size: 28px;
+}
+
+.profile-card--hero .profile-card__name { color: var(--c-white); font-size: 18px; }
+.profile-card--hero .profile-card__sub { color: rgba(255, 255, 255, 0.8); }
+
+.profile-card__badge {
+  flex: none;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--c-white);
+  white-space: nowrap;
+}
+
+.profile-card--hero .profile-card__body { padding: 14px 20px 18px; }
+.profile-card__info-row { display: flex; justify-content: space-between; align-items: center; align-self: stretch; }
+.profile-card__info-label { font-size: 11px; color: var(--c-text-mute); }
+.profile-card__info-value { font-family: var(--font-body); font-weight: 700; font-size: 13px; color: var(--c-text); }

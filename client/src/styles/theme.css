@@ -27,9 +27,17 @@
   /* Radius */
   --r-sm: 10px; --r-md: 14px; --r-lg: 16px; --r-xl: 20px; --r-phone: 40px;
 
+  /* Brand gradient / extra text tone (app 디자인 이식용) */
+  --c-primary-grad: linear-gradient(135deg, #FF6B4A 0%, #FF8D72 100%);
+  --c-text-disabled: #CCCCCC;
+
   /* Shadow */
   --shadow-phone: 0 32px 80px rgba(255,107,74,.18), 0 8px 32px rgba(0,0,0,.10);
   --shadow-card:  0 4px 16px rgba(255,107,74,.10);
+  --shadow-card-soft: 0 2px 12px rgba(0,0,0,.05);
+  --shadow-logo: 0 8px 20px rgba(255,107,74,.35);
+  --shadow-btn-primary: 0 8px 24px rgba(255,107,74,.4);
+  --shadow-btn-outline: 0 4px 16px rgba(255,107,74,.12);
 
   /* Type */
   --font-body: 'Nunito', 'Apple SD Gothic Neo', sans-serif;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import AppBar from '../components/AppBar.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
@@ -10,13 +10,8 @@ import { matchingErrorMessage } from '../lib/matching.js';
 export default function MatchResultPage() {
   const { id } = useParams();
   const nav = useNavigate();
-  const [sp] = useSearchParams();
-  const relax = sp.get('relax') === '1';
   const [idx, setIdx] = useState(0);
-  const { data = [], isLoading } = useQuery({
-    queryKey: ['candidates', id, relax],
-    queryFn: () => getCandidates(id, relax),
-  });
+  const { data = [], isLoading } = useQuery({ queryKey: ['candidates', id], queryFn: () => getCandidates(id) });
 
   if (isLoading) return <div className="screen center">불러오는 중…</div>;
   const p = data[idx];
@@ -52,14 +47,7 @@ export default function MatchResultPage() {
     <div className="screen">
       <AppBar title="매칭 결과" onBack={() => nav('/home')} />
       <div className="screen__body">
-        {/* 조건을 넓혀서 찾은 상대는 취향이 다를 수 있으니 미리 알린다 */}
-        {p.match_level === 'NEAR' && (
-          <div className="near-note">
-            조건을 넓혀서 찾은 분이에요. 시간대·음식·가격이 조금 다를 수 있어요.
-          </div>
-        )}
-
-        <ProfileCard p={p} onClick={() => nav(`/users/${p.user_id}`)} />
+        <ProfileCard variant="hero" p={p} onClick={() => nav(`/users/${p.user_id}`)} />
 
         <h2 className="section-title">이번 식사 취향</h2>
         <div className="card">
@@ -83,7 +71,7 @@ export default function MatchResultPage() {
           )}
         </div>
 
-        <button className="btn" style={{ marginTop: 24 }} onClick={accept}>같이 밥 먹기</button>
+        <button className="btn" style={{ marginTop: 24 }} onClick={accept}>💬 같이 밥 먹기</button>
         <button className="btn btn--line" style={{ marginTop: 10, marginBottom: 24 }}
                 onClick={() => setIdx((i) => i + 1)}>
           다른 친구 찾기

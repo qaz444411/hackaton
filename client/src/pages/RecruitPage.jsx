@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { X, Search, UtensilsCrossed } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
 import ChipGroup from '../components/ChipGroup.jsx';
 import { useMyLocation, FALLBACK_CENTER, GEO_MESSAGE } from '../hooks/useKakaoMap.js';
 import { getCodes, getRestaurants } from '../api/endpoints.js';
+import './RestaurantListPage.css';
 
 /** 밥친구 모집 페이지 — 식당 검색·선택 + 시간대 → 취향 선택으로 이어 모집 시작 */
 export default function RecruitPage() {
@@ -26,28 +28,31 @@ export default function RecruitPage() {
     <div className="screen">
       <AppBar title="밥친구 모집하기"
               onBack={() => nav(-1)}
-              right={<button className="icon-btn" onClick={() => nav('/map')}>✕</button>} />
+              right={<button className="icon-btn" onClick={() => nav('/map')}><X size={20} /></button>} />
       <div className="screen__body">
-        <input className="input" placeholder="함께 식사할 음식점 검색" value={keyword}
-               onChange={(e) => setKeyword(e.target.value)}
-               onKeyDown={(e) => e.key === 'Enter' && search()} />
+        <label className="rl__search">
+          <Search size={15} strokeWidth={2.2} />
+          <input placeholder="함께 식사할 음식점 검색" value={keyword}
+                 onChange={(e) => setKeyword(e.target.value)}
+                 onKeyDown={(e) => e.key === 'Enter' && search()} />
+        </label>
 
         {!myPos && GEO_MESSAGE[geoState] && (
           <p className="muted" style={{ marginTop: 8 }}>{GEO_MESSAGE[geoState]}</p>
         )}
 
         <h2 className="section-title">음식점 선택</h2>
-        <div className="list">
+        <div className="rl__list">
           {list.map((r) => (
-            <div key={r.restaurant_id} className="card"
-                 style={{ borderColor: picked?.restaurant_id === r.restaurant_id
-                   ? 'var(--c-primary)' : 'var(--c-line)' }}
-                 onClick={() => setPicked(r)}>
-              <strong>{r.name}</strong>
-              <p className="muted" style={{ marginTop: 4 }}>
-                {r.food_type_label} · {r.road_address} · {r.distance_m}m · ⭐ {r.rating ?? '-'}
-              </p>
-            </div>
+            <button type="button" key={r.restaurant_id}
+                    className={`rl__card${picked?.restaurant_id === r.restaurant_id ? ' rl__card--selected' : ''}`}
+                    onClick={() => setPicked(r)}>
+              <span className="rl__card-emoji"><UtensilsCrossed size={22} strokeWidth={2} /></span>
+              <div className="rl__card-body">
+                <span className="rl__card-name">{r.name}</span>
+                <p className="rl__card-sub">{r.food_type_label} · {r.road_address} · {r.distance_m}m · ⭐ {r.rating ?? '-'}</p>
+              </div>
+            </button>
           ))}
         </div>
 

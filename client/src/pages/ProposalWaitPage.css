@@ -1,0 +1,57 @@
+/* ProposalWaitPage — app/ MatchRequestSent 디자인 이식 */
+.mrs {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 100%;
+  padding: 28px;
+  text-align: center;
+}
+
+.mrs__avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 28px;
+  margin-bottom: 20px;
+  box-shadow: 0 16px 40px rgba(255, 107, 74, 0.25);
+}
+
+.mrs__title {
+  margin-bottom: 6px;
+  max-width: 220px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 20px;
+  line-height: 28px;
+  color: var(--c-text);
+}
+
+.mrs__subtitle {
+  margin-bottom: 24px;
+  max-width: 220px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--c-text-mute);
+}
+
+.mrs__timer {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 26px;
+  color: var(--c-primary);
+  margin-top: 20px;
+}
+
+.mrs__timer-label {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--c-text-mute);
+}
+
+.mrs__cancel {
+  margin-top: 32px;
+  width: 100%;
+  max-width: 260px;
+}

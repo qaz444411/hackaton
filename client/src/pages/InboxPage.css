@@ -1,0 +1,65 @@
+/* InboxPage — app/ ArchivePage 디자인 이식 */
+.inbox__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notif-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  padding: 16px;
+  background: var(--c-white);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.notif-card__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+}
+
+.notif-card__avatar {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--c-primary-grad);
+  object-fit: cover;
+}
+
+.notif-card__body { flex: 1 1 auto; min-width: 0; }
+.notif-card__name-row { display: flex; align-items: center; gap: 6px; }
+.notif-card__name { font-family: var(--font-display); font-weight: 800; font-size: 14px; color: var(--c-text); }
+.notif-card__age { font-size: 12px; color: var(--c-text-mute); }
+
+.notif-card__new {
+  flex: none;
+  padding: 1px 6px;
+  background: var(--c-primary);
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 9px;
+  color: #fff;
+}
+
+.notif-card__message {
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: #888;
+}
+
+.notif-card__status { flex: none; font-size: 11px; color: var(--c-text-mute); }
+
+.notif-card__actions { display: flex; gap: 8px; margin-top: 12px; align-self: stretch; }
+.notif-card__actions .btn,
+.notif-card__actions .btn--line { height: 44px; }

@@ -1,10 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { User, Dices, MapPin, Sparkles } from 'lucide-react';
 import BottomNav from '../components/BottomNav.jsx';
 import {
   getHome, getAssistantStarters, getCurrentMatching, cancelMatching,
 } from '../api/endpoints.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import './HomePage.css';
 
 /** 홈 — 랜덤 매칭 진입 / 지도 매칭 진입 / 확정 매칭 정보 / 진행 중 매칭 / AI 도우미 */
 export default function HomePage() {
@@ -46,86 +48,110 @@ export default function HomePage() {
 
   return (
     <div className="screen">
-      <header className="appbar">
-        <h1 className="appbar__title">안녕하세요, {user?.nickname}님 👋</h1>
-        <button className="icon-btn" onClick={() => nav('/mypage')} aria-label="마이페이지">👤</button>
-      </header>
-
       <div className="screen__body">
-        {m ? (
-          <Link to={`/chats/${m.match_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-            <div className="card">
-              <span className="tag">확정된 약속</span>
-              <div className="list-item" style={{ marginTop: 12 }}>
-                <img className="avatar" src={m.partner_image || '/avatar-default.png'} alt="" />
-                <div className="list-item__body">
-                  <strong>{m.partner_nickname}</strong>
-                  <div className="muted">
-                    {m.meal_time} · {m.restaurant_name || m.food_type}
+        <div className="home">
+          <header className="home__header">
+            <div className="home__logo">
+              <span className="home__logo-emoji">🍱</span>
+            </div>
+            <div className="home__brand">
+              <p className="home__brand-title">안녕하세요, {user?.nickname}님</p>
+              <p className="home__brand-sub">혼밥은 이제 그만! 🙌</p>
+            </div>
+            <button className="icon-btn home__mypage-btn" onClick={() => nav('/mypage')} aria-label="마이페이지">
+              <User size={20} strokeWidth={2} />
+            </button>
+          </header>
+
+          {m ? (
+            <Link to={`/chats/${m.match_id}`} style={{ textDecoration: 'none', color: 'inherit', alignSelf: 'stretch' }}>
+              <div className="card home__intro-card">
+                <span className="tag">확정된 약속</span>
+                <div className="list-item" style={{ marginTop: 12 }}>
+                  <img className="avatar" src={m.partner_image || '/avatar-default.png'} alt="" />
+                  <div className="list-item__body">
+                    <strong>{m.partner_nickname}</strong>
+                    <div className="muted">
+                      {m.meal_time} · {m.restaurant_name || m.food_type}
+                    </div>
                   </div>
+                  <span>›</span>
                 </div>
-                <span>›</span>
+              </div>
+            </Link>
+          ) : (
+            <div className="card home__intro-card">
+              <p className="home__intro-title">오늘 어떻게 밥친구를 찾을까요?</p>
+              <p className="home__intro-desc">두 가지 방법으로 취향에 맞는 밥친구를 만나보세요.</p>
+            </div>
+          )}
+
+          {/* 진행 중인 매칭 — 이어보기 / 취소 (취소 전엔 새 매칭을 시작할 수 없다) */}
+          {searching && (
+            <div className="card matching-card home__searching-card">
+              <div className="row" style={{ justifyContent: 'space-between' }}>
+                <span className="tag">매칭 진행 중</span>
+                <span className="dot-pulse" aria-hidden="true" />
+              </div>
+              <p className="home__searching-desc">
+                {current.food_type} · {current.meal_time} 밥친구를 찾고 있어요
+              </p>
+              <p className="muted" style={{ marginTop: 4 }}>
+                취소하기 전에는 새로운 매칭을 시작할 수 없어요.
+              </p>
+              <div className="row" style={{ marginTop: 12 }}>
+                <button type="button" className="btn btn--line" onClick={cancel}>매칭 취소</button>
+                <button type="button" className="btn" onClick={() => nav(`/matching/${current.id}`)}>이어보기</button>
               </div>
             </div>
-          </Link>
-        ) : (
-          <div className="card" style={{ textAlign: 'center' }}>
-            <p className="muted">아직 확정된 약속이 없어요.<br />오늘 한 끼 같이 할 사람을 찾아볼까요?</p>
-          </div>
-        )}
+          )}
 
-        {/* 진행 중인 매칭 — 이어보기 / 취소 */}
-        {searching && (
-          <div className="card matching-card" style={{ marginTop: 12 }}>
-            <div className="row" style={{ justifyContent: 'space-between' }}>
-              <span className="tag">매칭 진행 중</span>
-              <span className="dot-pulse" aria-hidden="true" />
+          <section className="home__actions">
+            <button type="button" className="home__action home__action--primary" disabled={searching}
+                    onClick={() => nav('/preference')}>
+              <span className="home__action-icon"><Dices size={24} strokeWidth={2} /></span>
+              <span className="home__action-body">
+                <span className="home__action-title">취향으로 랜덤 매칭</span>
+                <span className="home__action-desc">취향 선택 → 매칭 → 상대 발견 → 채팅</span>
+              </span>
+              <span className="home__action-arrow">›</span>
+            </button>
+
+            <button type="button" className="home__action home__action--outline" onClick={() => nav('/map')}>
+              <span className="home__action-icon"><MapPin size={24} strokeWidth={2} /></span>
+              <span className="home__action-body">
+                <span className="home__action-title">지도에서 밥친구 찾기</span>
+                <span className="home__action-desc">지도 → 음식점/마커 선택 → 밥친구 확인 → 채팅</span>
+              </span>
+              <span className="home__action-arrow">›</span>
+            </button>
+            {searching && (
+              <p className="muted" style={{ textAlign: 'center' }}>
+                진행 중인 매칭을 취소하면 다시 시작할 수 있어요.
+              </p>
+            )}
+          </section>
+
+          {/* AI 도우미 — 질문을 누르면 그 질문으로 바로 대화가 시작된다 */}
+          <h2 className="home__section-title">AI 도우미</h2>
+          <div className="card home__ai-card" onClick={() => nav('/assistant')}>
+            <div className="home__ai-row">
+              <div className="home__ai-icon"><Sparkles size={20} strokeWidth={2} /></div>
+              <div className="home__ai-body">
+                <div className="home__ai-title">무엇이든 물어보세요</div>
+                <div className="home__ai-desc">오늘 뭐 먹지? 앱은 어떻게 써요?</div>
+              </div>
+              <span className="home__ai-arrow">›</span>
             </div>
-            <p style={{ marginTop: 10, fontWeight: 700 }}>
-              {current.food_type} · {current.meal_time} 밥친구를 찾고 있어요
-            </p>
-            <p className="muted" style={{ marginTop: 4 }}>
-              취소하기 전에는 새로운 매칭을 시작할 수 없어요.
-            </p>
-            <div className="row" style={{ marginTop: 12 }}>
-              <button className="btn btn--line" onClick={cancel}>매칭 취소</button>
-              <button className="btn" onClick={() => nav(`/matching/${current.id}`)}>이어보기</button>
+
+            <div className="home__ai-starters" onClick={(e) => e.stopPropagation()}>
+              {starters.map((s) => (
+                <button key={s} className="home__ai-starter"
+                        onClick={() => nav(`/assistant?q=${encodeURIComponent(s)}`)}>
+                  {s}
+                </button>
+              ))}
             </div>
-          </div>
-        )}
-
-        <h2 className="section-title">밥친구 찾기</h2>
-        <button className="btn" disabled={searching} onClick={() => nav('/preference')}>
-          🎲 랜덤 매칭 시작하기
-        </button>
-        <button className="btn btn--ghost" style={{ marginTop: 10 }} onClick={() => nav('/map')}>
-          🗺️ 지도에서 찾기
-        </button>
-        {searching && (
-          <p className="muted" style={{ marginTop: 8, textAlign: 'center' }}>
-            진행 중인 매칭을 취소하면 다시 시작할 수 있어요.
-          </p>
-        )}
-
-        {/* AI 도우미 — 질문을 누르면 그 질문으로 바로 대화가 시작된다 */}
-        <h2 className="section-title">AI 도우미</h2>
-        <div className="card ai-card" onClick={() => nav('/assistant')}>
-          <div className="row">
-            <div className="ai-card__icon">🍚</div>
-            <div className="list-item__body">
-              <strong>무엇이든 물어보세요</strong>
-              <div className="muted">오늘 뭐 먹지? 앱은 어떻게 써요?</div>
-            </div>
-            <span>›</span>
-          </div>
-
-          <div className="ai-starters" onClick={(e) => e.stopPropagation()}>
-            {starters.map((s) => (
-              <button key={s} className="ai-starter"
-                      onClick={() => nav(`/assistant?q=${encodeURIComponent(s)}`)}>
-                {s}
-              </button>
-            ))}
           </div>
         </div>
       </div>

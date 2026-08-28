@@ -1,0 +1,122 @@
+/* FormField — app/ 디자인 이식 */
+.field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: 8px;
+}
+
+.field__label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 18px;
+  color: var(--c-text);
+}
+
+.field__input-wrap {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  height: 52px;
+  padding: 0 16px;
+  background: var(--c-white);
+  border: 1.5px solid var(--c-line);
+  border-radius: 16px;
+}
+
+.field__input-wrap:focus-within,
+.field__input-wrap--active {
+  border-color: var(--c-primary);
+}
+
+.field__input-wrap--error {
+  border-color: var(--c-primary);
+}
+
+.field__row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  align-self: stretch;
+  gap: 10px;
+}
+
+.field__row .field__input-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.field__action {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  flex: none;
+  height: 52px;
+  padding: 16px;
+  background: var(--c-primary-tint);
+  border: none;
+  border-radius: 16px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 14px;
+  line-height: 18px;
+  color: var(--c-primary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.field__action:disabled {
+  background: var(--c-line);
+  color: var(--c-text-disabled);
+  cursor: not-allowed;
+}
+
+.field__input-wrap:has(.field__input:disabled) {
+  background: var(--c-bg);
+}
+
+.field__input:disabled {
+  color: var(--c-text-mute);
+}
+
+.field__hint {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.field__hint--default { color: var(--c-text-mute); }
+.field__hint--active,
+.field__hint--error { color: var(--c-primary); }
+
+.field__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 20px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--c-text);
+  background: transparent;
+  border: none;
+}
+
+.field__input::placeholder { color: var(--c-text-mute); }
+
+.field__icon-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+}

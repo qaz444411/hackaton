@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import AppBar from '../components/AppBar.jsx';
 import ProfileCard from '../components/ProfileCard.jsx';
+import './BuddyListPage.css';
 import { getRestaurant, getBuddies, getSpot, getSpotBuddies } from '../api/endpoints.js';
 import { proposeTo, matchingErrorMessage } from '../lib/matching.js';
 
@@ -30,8 +31,7 @@ export default function BuddyListPage({ kind = 'restaurant' }) {
   const request = async (b) => {
     try {
       const proposal = await proposeTo(b, {
-        kind,
-        placeId: Number(id),
+        kind, placeId: Number(id),
         // 마커에는 음식 종류가 없다 (ANY 면 무엇이든 매칭)
         foodTypeCode: isSpot ? 'ANY' : place?.food_type_code,
       });
@@ -46,16 +46,15 @@ export default function BuddyListPage({ kind = 'restaurant' }) {
       <AppBar title={title || '밥친구 목록'} onBack={() => nav(-1)} />
       <div className="screen__body">
         {place && (
-          <div className="card">
-            <div className="row" style={{ justifyContent: 'space-between' }}>
-              <strong>{title}</strong>
-              {place.is_popular ? <span className="tag">🔥 인기</span> : null}
+          <div className="bl__place">
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p className="bl__place-name">{title} {place.is_popular ? '🔥' : ''}</p>
+              <p className="bl__place-desc">
+                {isSpot
+                  ? (place.address || '지도에 찍힌 지점')
+                  : `⭐ ${place.rating ?? '-'} · ${place.food_type_label} · ${place.road_address}`}
+              </p>
             </div>
-            <p className="muted" style={{ marginTop: 4 }}>
-              {isSpot
-                ? (place.address || '지도에 찍힌 지점')
-                : `⭐ ${place.rating ?? '-'} · ${place.food_type_label} · ${place.road_address}`}
-            </p>
           </div>
         )}
 
@@ -64,8 +63,7 @@ export default function BuddyListPage({ kind = 'restaurant' }) {
           {buddies.map((b) => (
             <ProfileCard key={b.user_id} p={b}
               footer={
-                <button className="btn" style={{ marginTop: 12, height: 44 }}
-                        onClick={() => request(b)}>매칭 요청하기</button>
+                <button type="button" className="bl__cta" onClick={() => request(b)}>🍜 매칭 요청하기</button>
               } />
           ))}
           {!buddies.length && (

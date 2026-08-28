@@ -3,7 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import AppBar from '../components/AppBar.jsx';
 import ChipGroup from '../components/ChipGroup.jsx';
+import RangeSlider from '../components/RangeSlider.jsx';
 import { getCodes, saveDraft, startMatching } from '../api/endpoints.js';
+import './PreferencePage.css';
 
 /** 취향 선택 페이지 — 음식/대화스타일/시간대/가격대 → 매칭 시작 */
 export default function PreferencePage() {
@@ -43,38 +45,45 @@ export default function PreferencePage() {
     <div className="screen">
       <AppBar title="이번 식사 취향" onBack={() => nav('/home')} />
       <div className="screen__body">
-        <h2 className="section-title">먹고 싶은 음식</h2>
-        <ChipGroup options={(codes?.food || []).map((c) => ({ value: c.code, label: c.label }))}
-                   value={f.foodTypeCode} onChange={(v) => setF({ ...f, foodTypeCode: v })} />
+        <section className="pref__section">
+          <p className="pref__section-title">🍽️ 먹고 싶은 음식</p>
+          <ChipGroup options={(codes?.food || []).map((c) => ({ value: c.code, label: c.label }))}
+                     value={f.foodTypeCode} onChange={(v) => setF({ ...f, foodTypeCode: v })} />
+        </section>
 
-        <h2 className="section-title">대화 스타일</h2>
-        <ChipGroup options={(codes?.talk || []).map((c) => ({ value: c.code, label: c.label }))}
-                   value={f.talkStyleCode} onChange={(v) => setF({ ...f, talkStyleCode: v })} />
+        <section className="pref__section">
+          <p className="pref__section-title">💬 대화 스타일</p>
+          <ChipGroup options={(codes?.talk || []).map((c) => ({ value: c.code, label: c.label }))}
+                     value={f.talkStyleCode} onChange={(v) => setF({ ...f, talkStyleCode: v })} />
+        </section>
 
-        <h2 className="section-title">식사 시간대</h2>
-        <ChipGroup options={(codes?.meal || []).map((c) => ({ value: c.code, label: c.label }))}
-                   value={f.mealTimeCode} onChange={(v) => setF({ ...f, mealTimeCode: v })} />
+        <section className="pref__section">
+          <p className="pref__section-title">🕒 식사 시간대</p>
+          <ChipGroup options={(codes?.meal || []).map((c) => ({ value: c.code, label: c.label }))}
+                     value={f.mealTimeCode} onChange={(v) => setF({ ...f, mealTimeCode: v })} />
+        </section>
 
-        <h2 className="section-title">식사 가격대 (1인 기준)</h2>
-        <div className="card">
-          <div className="row" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
-            <span className="muted">최소 {won(f.priceMin)}</span>
-            <strong style={{ color: 'var(--c-primary)' }}>{won(f.priceMin)} ~ {won(f.priceMax)}</strong>
-            <span className="muted">최대 {won(f.priceMax)}</span>
+        <section className="pref__section">
+          <p className="pref__section-title">💰 식사 가격대 (1인 기준)</p>
+          <div className="card pref__price-card">
+            <p className="pref__price-value">{won(f.priceMin)} ~ {won(f.priceMax)}</p>
+            <RangeSlider
+              min={0} max={100000} step={10000}
+              valueMin={f.priceMin} valueMax={f.priceMax}
+              onChangeMin={(v) => setF({ ...f, priceMin: Math.min(v, f.priceMax) })}
+              onChangeMax={(v) => setF({ ...f, priceMax: Math.max(v, f.priceMin) })}
+            />
+            <div className="pref__price-caption">
+              <span>0원</span>
+              <span>10만원+</span>
+            </div>
           </div>
-          {/* 1만원 단위 범위 슬라이더 */}
-          <div className="range-row">
-            <input type="range" min="0" max="100000" step="10000" value={f.priceMin}
-                   onChange={(e) => setF({ ...f, priceMin: Math.min(+e.target.value, f.priceMax) })} />
-          </div>
-          <div className="range-row">
-            <input type="range" min="0" max="100000" step="10000" value={f.priceMax}
-                   onChange={(e) => setF({ ...f, priceMax: Math.max(+e.target.value, f.priceMin) })} />
-          </div>
-        </div>
+        </section>
+      </div>
 
-        <button className="btn" style={{ margin: '24px 0' }} disabled={!valid || busy} onClick={start}>
-          {busy ? '매칭 준비 중…' : '매칭 시작하기'}
+      <div className="pref__footer">
+        <button type="button" className="pref__submit" disabled={!valid || busy} onClick={start}>
+          {busy ? '매칭 준비 중…' : '매칭 시작하기 ✨'}
         </button>
       </div>
     </div>

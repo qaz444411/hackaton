@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import AppBar from '../components/AppBar.jsx';
 import BottomNav from '../components/BottomNav.jsx';
 import { getInbox, readProposal, acceptProposal, declineProposal } from '../api/endpoints.js';
+import './InboxPage.css';
 
 const LABEL = { PENDING: '대기 중', ACCEPTED: '수락됨', DECLINED: '거절함',
                 CANCELLED: '취소됨', EXPIRED: '만료됨' };
@@ -25,32 +26,32 @@ export default function InboxPage() {
     <div className="screen">
       <AppBar title="보관함" back={false} />
       <div className="screen__body">
-        <div className="list">
+        <div className="inbox__list">
           {data.map((p) => (
-            <div key={p.proposal_id} className="card"
+            <div key={p.proposal_id} className="notif-card"
                  onClick={() => { if (p.is_new) readProposal(p.proposal_id).then(refresh); }}>
-              <div className="list-item">
-                <img className="avatar" src={p.partner_image || '/avatar-default.png'} alt="" />
-                <div className="list-item__body">
-                  <div className="row" style={{ gap: 6 }}>
-                    <strong>{p.partner_nickname}</strong>
-                    <span className="muted">{p.partner_age}세</span>
-                    {p.is_new ? <span className="tag">NEW</span> : null}
+              <div className="notif-card__top">
+                <img className="notif-card__avatar" src={p.partner_image || '/avatar-default.png'} alt="" />
+                <div className="notif-card__body">
+                  <div className="notif-card__name-row">
+                    <span className="notif-card__name">{p.partner_nickname}</span>
+                    <span className="notif-card__age">{p.partner_age}세</span>
+                    {p.is_new && <span className="notif-card__new">NEW</span>}
                   </div>
-                  <div className="muted ellipsis">
+                  <p className="notif-card__message">
                     {p.meal_time} · {p.food_type}{p.restaurant_name ? ` · ${p.restaurant_name}` : ''}
-                  </div>
+                  </p>
                 </div>
-                <span className="muted">{LABEL[p.status]}</span>
+                <span className="notif-card__status">{LABEL[p.status]}</span>
               </div>
 
               {p.status === 'PENDING' && (
-                <div className="row" style={{ marginTop: 12 }}>
-                  <button className="btn btn--line" style={{ height: 44 }}
+                <div className="notif-card__actions">
+                  <button type="button" className="btn btn--line"
                           onClick={(e) => { e.stopPropagation(); declineProposal(p.proposal_id).then(refresh); }}>
                     거절
                   </button>
-                  <button className="btn" style={{ height: 44 }}
+                  <button type="button" className="btn"
                           onClick={(e) => { e.stopPropagation(); accept(p); }}>
                     같이 밥 먹기
                   </button>

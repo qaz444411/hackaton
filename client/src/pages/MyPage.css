@@ -1,0 +1,90 @@
+/* MyPage — app/ 디자인 시스템에 맞춰 정리 (app에는 없는 화면) */
+.mypage__profile {
+  text-align: center;
+}
+
+.mypage__avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  margin: 0 auto;
+  object-fit: cover;
+  background: var(--c-surface);
+}
+
+.mypage__name {
+  margin-top: 10px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--c-text);
+}
+
+.mypage__sub { margin-top: 2px; font-size: 13px; color: var(--c-text-sub); }
+
+.mypage__tags {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.mypage__stats-row { display: flex; gap: 10px; }
+
+.mypage__stat {
+  flex: 1;
+  text-align: center;
+  padding: 16px 10px;
+}
+
+.mypage__stat-value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 22px;
+  color: var(--c-primary);
+}
+
+.mypage__stat-label { margin-top: 2px; font-size: 12px; color: var(--c-text-mute); }
+
+.mypage__notify-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--c-text);
+}
+
+.mypage__notify-row + .mypage__notify-row { border-top: 1px solid var(--c-line); }
+
+.mypage__history-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  align-self: stretch;
+  padding: 14px 16px;
+  background: var(--c-white);
+  box-shadow: var(--shadow-card-soft);
+  border-radius: 20px;
+}
+
+.mypage__history-avatar {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--c-primary-grad);
+  object-fit: cover;
+}
+
+.mypage__history-body { flex: 1 1 auto; min-width: 0; }
+.mypage__history-name { font-family: var(--font-display); font-weight: 800; font-size: 14px; color: var(--c-text); }
+.mypage__history-sub { margin-top: 2px; font-size: 12px; color: var(--c-text-mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mypage__history-status { flex: none; font-size: 12px; color: var(--c-text-mute); }
+
+.mypage__logout {
+  margin: 24px 0;
+}

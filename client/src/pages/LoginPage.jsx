@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
+import FormField from '../components/FormField.jsx';
 import { login, getMe } from '../api/endpoints.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import './LoginPage.css';
 
 export default function LoginPage() {
   const nav = useNavigate();
@@ -27,31 +30,52 @@ export default function LoginPage() {
   return (
     <div className="screen">
       <AppBar title="로그인" />
-      <form className="screen__body" onSubmit={submit}>
-        <div className="field">
-          <label className="field__label">이메일 또는 닉네임</label>
-          <input className="input" value={form.account}
-                 onChange={(e) => setForm({ ...form, account: e.target.value })} />
-        </div>
-        <div className="field">
-          <label className="field__label">비밀번호</label>
-          <div className="row">
-            <input className="input" type={show ? 'text' : 'password'} value={form.password}
-                   onChange={(e) => setForm({ ...form, password: e.target.value })} />
-            {/* 비밀번호 표시 전환 */}
-            <button type="button" className="icon-btn" onClick={() => setShow(!show)}>
-              {show ? '🙈' : '👁️'}
-            </button>
+      <div className="screen__body">
+        <div className="login">
+          <div className="login__logo-area">
+            <div className="login__logo">🍱</div>
+            <div className="login__logo-text">
+              <p className="login__brand">랜덤 밥친구</p>
+              <p className="login__tagline">맛있는 일상, 같이 먹어 더 즐겁게 👋</p>
+            </div>
           </div>
+
+          <form className="login__form" onSubmit={submit}>
+            <FormField
+              label="이메일 또는 닉네임"
+              placeholder="id@example.com 또는 닉네임"
+              value={form.account}
+              onChange={(v) => setForm({ ...form, account: v })}
+            />
+            <FormField
+              label="비밀번호"
+              type={show ? 'text' : 'password'}
+              placeholder="비밀번호를 입력해주세요"
+              value={form.password}
+              onChange={(v) => setForm({ ...form, password: v })}
+              suffix={
+                <button type="button" className="field__icon-btn" onClick={() => setShow(!show)}
+                        aria-label={show ? '비밀번호 숨기기' : '비밀번호 보기'}>
+                  {show ? <EyeOff size={18} strokeWidth={1.8} /> : <Eye size={18} strokeWidth={1.8} />}
+                </button>
+              }
+              hint={error || undefined}
+              variant={error ? 'error' : 'default'}
+            />
+
+            <div className="login__actions">
+              <button type="submit" className="login__submit" disabled={!form.account || !form.password}>
+                로그인
+              </button>
+              <div className="login__links">
+                <Link to="/find-password">비밀번호 찾기</Link>
+                <span>|</span>
+                <Link className="login__links--strong" to="/signup">회원가입하기</Link>
+              </div>
+            </div>
+          </form>
         </div>
-        {error && <p className="field__msg err">{error}</p>}
-        <button className="btn" style={{ marginTop: 12 }}
-                disabled={!form.account || !form.password}>로그인</button>
-        <div className="row" style={{ justifyContent: 'center', gap: 16, marginTop: 16 }}>
-          <Link className="muted" to="/find-password">비밀번호 찾기</Link>
-          <Link className="muted" to="/signup">회원가입하기</Link>
-        </div>
-      </form>
+      </div>
     </div>
   );
 }
