@@ -1,0 +1,124 @@
+# ---------------------------------------------------------------
+# main 에 push 되면 EC2 로 자동 배포한다.
+#
+# 이 저장소는 공개(public)다. pem 키와 호스트는 반드시 GitHub Secrets 로만
+# 다루고, 워크플로우 파일과 로그 어디에도 값이 남지 않게 한다.
+#
+# 서버에서 하는 일은 deploy.sh 와 완전히 동일하다 (같은 스크립트를 호출한다):
+#   git fetch --depth 1 -> reset --hard -> compose build -> up -d -> 헬스체크
+#
+# 건드리지 않는 것:
+#   - 서버의 .env.production (git 추적 대상이 아니라 reset 에도 남는다)
+#   - DB 볼륨 (down -v 같은 명령은 어디에도 없다. 실사용자 데이터가 있다)
+# ---------------------------------------------------------------
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 배포가 겹치면 같은 서버에서 build/up 이 동시에 돌아 컨테이너가 꼬인다.
+# cancel-in-progress: false — 진행 중인 배포는 반드시 끝까지 보낸다.
+# 중간에 죽이면 이미지가 반쯤 바뀐 상태로 남을 수 있다.
+concurrency:
+  group: deploy-ec2-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & deploy on EC2
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 시크릿이 없으면 SSH 단계에서 알 수 없는 오류로 죽는다.
+      # 원인을 바로 알 수 있게 먼저 확인하고 끝낸다. (값은 출력하지 않는다)
+      - name: Check required secrets
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          missing=0
+          [ -n "${EC2_HOST:-}" ]    || { echo "::error::secrets.EC2_HOST 가 없다"; missing=1; }
+          [ -n "${EC2_SSH_KEY:-}" ] || { echo "::error::secrets.EC2_SSH_KEY 가 없다"; missing=1; }
+          if [ "$missing" = 1 ]; then
+            echo "Settings > Secrets and variables > Actions 에서 등록한다."
+            exit 1
+          fi
+          echo "필요한 시크릿이 모두 설정되어 있다."
+
+      - name: Set up SSH key
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          # 키는 작업 디렉토리가 아니라 러너 임시 경로에 둔다.
+          # 아티팩트나 후속 스텝에 실수로 딸려 들어가지 않게 하기 위함이다.
+          install -m 700 -d "$RUNNER_TEMP/.ssh"
+          printf '%s\n' "$EC2_SSH_KEY" > "$RUNNER_TEMP/.ssh/ec2.pem"
+          chmod 600 "$RUNNER_TEMP/.ssh/ec2.pem"
+
+          # 호스트 키를 미리 고정한다. accept-new 로 첫 접속을 무조건 믿는 것보다 낫다.
+          # deploy.sh 안의 ssh 는 기본 경로(~/.ssh/known_hosts)를 보므로 반드시
+          # 거기에 써야 실제 검증에 쓰인다. 임시 경로에 두면 아무 효과가 없다.
+          install -m 700 -d "$HOME/.ssh"
+          ssh-keyscan -H "$EC2_HOST" > "$HOME/.ssh/known_hosts" 2>/dev/null
+          chmod 600 "$HOME/.ssh/known_hosts"
+          test -s "$HOME/.ssh/known_hosts" || { echo "::error::호스트 키를 가져오지 못했다"; exit 1; }
+          echo "호스트 키 $(wc -l < "$HOME/.ssh/known_hosts") 건 등록됨"
+
+      - name: Deploy
+        env:
+          # deploy.sh 가 읽는 변수들. 값은 GitHub 이 로그에서 자동으로 가린다.
+          DEPLOY_HOST: ${{ secrets.EC2_HOST }}
+          DEPLOY_KEY: ${{ runner.temp }}/.ssh/ec2.pem
+          DEPLOY_BRANCH: main
+        run: |
+          set -euo pipefail
+          # -y : CI 에는 TTY 가 없다. 확인 프롬프트를 건너뛴다.
+          #      (서버는 GitHub 에서 받으므로 로컬 작업트리 검사가 의미 없다)
+          ./deploy.sh -y
+
+      # deploy.sh 안에서도 헬스체크를 하지만, 워크플로우 레벨에서 한 번 더 본다.
+      # 배포가 조용히 깨진 채로 성공 표시가 나는 것을 막는다.
+      - name: Verify deployment
+        run: |
+          set -euo pipefail
+          HEALTH="https://35.86.162.39.nip.io/api/health"
+          SITE="https://35.86.162.39.nip.io/"
+
+          code=$(curl -sL -m 15 -o /tmp/health.json -w '%{http_code}' "$HEALTH" || echo 000)
+          echo "GET $HEALTH -> HTTP $code"
+          cat /tmp/health.json; echo
+          if [ "$code" != "200" ]; then
+            echo "::error::헬스체크 실패 (HTTP $code) — 배포가 정상적으로 끝나지 않았다"
+            exit 1
+          fi
+
+          site=$(curl -sL -m 15 -o /dev/null -w '%{http_code}' "$SITE" || echo 000)
+          echo "GET $SITE -> HTTP $site"
+          if [ "$site" != "200" ]; then
+            echo "::error::사이트 응답 실패 (HTTP $site)"
+            exit 1
+          fi
+
+          # 인증서가 유효한지도 같이 본다 (0 = 유효)
+          verify=$(curl -sL -m 15 -o /dev/null -w '%{ssl_verify_result}' "$SITE" || echo 1)
+          echo "TLS 인증서 검증: $verify (0 = 유효)"
+          if [ "$verify" != "0" ]; then
+            echo "::error::TLS 인증서 검증 실패"
+            exit 1
+          fi
+
+          echo "배포 확인 완료: $SITE"
+
+      # 성공/실패와 무관하게 키와 호스트키를 지운다
+      - name: Remove SSH key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/.ssh" "$HOME/.ssh/known_hosts"
