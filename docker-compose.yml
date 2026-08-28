@@ -83,8 +83,17 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    # 6시간마다 reload 해서 갱신된 인증서를 무중단으로 집어든다
-    command: ["/bin/sh", "-c", "while :; do sleep 21600; nginx -s reload; done & exec nginx -g 'daemon off;'"]
+    # nginx 공식 entrypoint 는 $1 이 'nginx' 일 때만 /docker-entrypoint.d/* 를 실행한다.
+    # reload 루프 때문에 command 를 sh 로 덮어쓰므로, SSL 활성화 스크립트를
+    # 여기서 직접 호출해야 한다. (이걸 빠뜨리면 인증서를 받아도 443 이 안 켜진다)
+    command:
+      - /bin/sh
+      - -c
+      - |
+        /docker-entrypoint.d/40-enable-ssl.sh
+        # 6시간마다 reload 해서 갱신된 인증서를 무중단으로 집어든다
+        while :; do sleep 21600; nginx -s reload; done &
+        exec nginx -g 'daemon off;'
 
   # 인증서 발급/갱신 전용. 12시간마다 renew 를 시도한다(만료 30일 전부터 실제 갱신).
   # 최초 발급은 deploy 문서의 certonly 명령을 직접 실행한다.
