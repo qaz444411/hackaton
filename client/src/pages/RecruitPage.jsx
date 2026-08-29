@@ -1,23 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { X, Search, Check } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
 import { useMyLocation, FALLBACK_CENTER, GEO_MESSAGE } from '../hooks/useKakaoMap.js';
 import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
-import { getCodes, getRestaurants } from '../api/endpoints.js';
+import { getRestaurants } from '../api/endpoints.js';
 import { formatDistance } from '../lib/format.js';
 import './RestaurantListPage.css';
 
-/** 밥친구 모집 페이지 — 식당 검색·선택 + 시간대 → 취향 선택으로 이어 모집 시작 */
+/**
+ * 밥친구 모집 페이지 — 식당 검색·선택 → 취향 선택(시간대 포함)으로 이어 모집 시작.
+ * 예전엔 여기서도 식사 시간을 따로 골라야 버튼이 눌렸는데, 그 값은 다음 화면
+ * (PreferencePage)으로 전달되지 않고 그냥 버려졌다 — 시간대는 거기서 다시
+ * 물어보므로, 여기선 식당만 고르면 바로 넘어가게 뺐다.
+ */
 export default function RecruitPage() {
   const nav = useNavigate();
-  const { data: codes } = useQuery({ queryKey: ['codes'], queryFn: getCodes });
   const [keyword, setKeyword] = useState('');
   const debouncedKeyword = useDebouncedValue(keyword, 300);
   const [list, setList] = useState([]);
   const [picked, setPicked] = useState(null);
-  const [mealTime, setMealTime] = useState(null);
   const { pos: myPos, state: geoState } = useMyLocation({ watch: false });
 
   // 위치를 못 받으면 기본 좌표로라도 목록을 채운다
@@ -58,23 +60,11 @@ export default function RecruitPage() {
             </button>
           ))}
         </div>
-
-        <h2 className="rc__section-title" style={{ marginTop: 8 }}>모집 정보</h2>
-        <p className="rc__sub-title">식사 시간</p>
-        <div className="rc__time-row">
-          {(codes?.meal || []).map((c) => (
-            <button key={c.code} type="button"
-                    className={`rc__time-pill${mealTime === c.code ? ' rc__time-pill--active' : ''}`}
-                    onClick={() => setMealTime(c.code)}>
-              {c.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="rc__footer">
-        <button className="btn" disabled={!picked || !mealTime}
-                onClick={() => nav(`/preference?restaurantId=${picked.restaurant_id}&mealTime=${mealTime}`)}>
+        <button className="btn" disabled={!picked}
+                onClick={() => nav(`/preference?restaurantId=${picked.restaurant_id}`)}>
           모집 시작하기
         </button>
       </div>

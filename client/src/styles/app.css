@@ -365,6 +365,16 @@ input[type='range'] { flex: 1; accent-color: var(--c-primary); }
 }
 .avatar-stack .avatar:last-child { margin-right: 0; }
 
+/* 모집자 1명일 때 — 요청 보내기 전에 취향(성별 제외)을 미리 보여준다 */
+.map-buddy-detail { display: flex; gap: 12px; margin-top: 12px; align-items: flex-start; }
+.map-buddy-detail__avatar {
+  flex: none; width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: var(--c-surface);
+}
+.map-buddy-detail__grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px;
+  font-size: 12px; letter-spacing: -0.28px; color: var(--c-text-sub);
+}
+
 /* 매칭이 안 잡힐 때 원인 안내 */
 .stall-card { margin-top: 24px; width: 100%; text-align: left; }
 .stall-list { margin: 8px 0 10px; padding-left: 18px; }

@@ -20,6 +20,8 @@ import { useAuth } from '../context/AuthContext.jsx';
 import './ChatRoomPage.css';
 
 const time = (v) => new Date(v).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+const SPICY_LABEL = { 1: '순한맛', 2: '보통', 3: '아주 매운맛' };
+const OILY_LABEL = { 1: '담백', 2: '보통', 3: '느끼한 것도 OK' };
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const tomorrowStr = () => {
@@ -49,6 +51,7 @@ export default function ChatRoomPage() {
   const [openSuggest, setOpenSuggest] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [menu, setMenu] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmCancelMeeting, setConfirmCancelMeeting] = useState(false);
@@ -208,10 +211,10 @@ export default function ChatRoomPage() {
     <div className="screen">
       <AppBar
         center={
-          <div className="chatroom__title">
+          <button type="button" className="chatroom__title" onClick={() => setShowProfile(true)}>
             <img className="chatroom__avatar" src={room?.partner_image || '/avatar-default.png'} alt="" />
             <span className="chatroom__name">{room?.partner_nickname || '채팅'}</span>
-          </div>
+          </button>
         }
         right={<button className="icon-btn" onClick={() => setMenu(!menu)}><MoreVertical size={18} /></button>}
       />
@@ -270,6 +273,33 @@ export default function ChatRoomPage() {
           onConfirm={deleteRoom}
           onCancel={() => setConfirmDelete(false)}
         />
+      )}
+
+      {/* 상단 이름/사진을 누르면 상대 프로필(성별 제외)을 보여준다 */}
+      {showProfile && (
+        <>
+          <div className="sheet-backdrop" onClick={() => setShowProfile(false)} />
+          <div className="sheet partner-profile-sheet">
+            <div className="sheet__handle" onClick={() => setShowProfile(false)} />
+            <div className="partner-profile-sheet__head">
+              <img className="partner-profile-sheet__avatar" src={room?.partner_image || '/avatar-default.png'} alt="" />
+              <strong className="partner-profile-sheet__name">{room?.partner_nickname}</strong>
+            </div>
+            <div className="partner-profile-sheet__grid">
+              {room?.partner_mbti && <span>MBTI · {room.partner_mbti}</span>}
+              {room?.partner_spicy_level && <span>맵기 · {SPICY_LABEL[room.partner_spicy_level]}</span>}
+              {room?.partner_oily_level && <span>느끼함 · {OILY_LABEL[room.partner_oily_level]}</span>}
+              {room?.partner_has_allergy != null && (
+                <span>알레르기 · {room.partner_has_allergy ? '있음' : '없음'}</span>
+              )}
+            </div>
+            {!!room?.partner_interests?.length && (
+              <div className="partner-profile-sheet__tags">
+                {room.partner_interests.map((i) => <span key={i} className="profile-card__tag">#{i}</span>)}
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {room?.restaurant_name && (

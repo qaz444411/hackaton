@@ -32,8 +32,12 @@ r.post('/', wrap(async (req, res) => {
 r.get('/:id', wrap(async (req, res) => {
   const info = await one('SELECT * FROM v_restaurant_recruiting WHERE restaurant_id = :id', { id: req.params.id });
   if (!info) return res.status(404).json({ message: '음식점을 찾을 수 없습니다.' });
+  // 지도에서 핀 눌렀을 때 "밥 같이 할까요?" 배너에 상대 취향(성별 제외)을 보여주려고
+  // 프로필/취향 필드까지 같이 내려준다.
   const preview = await q(
-    'SELECT user_id, nickname, profile_image FROM v_restaurant_buddy WHERE restaurant_id = :id AND user_id <> :me LIMIT 4',
+    `SELECT user_id, nickname, profile_image, mbti_code, spicy_level, oily_level,
+            food_type, talk_style, meal_time, price_min, price_max
+       FROM v_restaurant_buddy WHERE restaurant_id = :id AND user_id <> :me LIMIT 4`,
     { id: req.params.id, me: req.user.id });
   res.json({ ...withRestaurantPhoto(info), preview });
 }));

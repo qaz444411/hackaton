@@ -61,7 +61,9 @@ r.get('/rooms/:matchId', wrap(async (req, res) => {
   const room = await one(
     `SELECT m.id AS match_id, m.status, m.meal_date,
             mt.label AS meal_time, ft.label AS food_type, rest.name AS restaurant_name,
-            u.id AS partner_user_id, u.nickname AS partner_nickname, u.profile_image AS partner_image
+            u.id AS partner_user_id, u.nickname AS partner_nickname, u.profile_image AS partner_image,
+            p.mbti_code AS partner_mbti, p.has_allergy AS partner_has_allergy,
+            p.spicy_level AS partner_spicy_level, p.oily_level AS partner_oily_level
        FROM meal_match m
        JOIN match_participant me    ON me.match_id = m.id AND me.user_id = :u
        JOIN match_participant other ON other.match_id = m.id AND other.user_id <> me.user_id
@@ -69,11 +71,15 @@ r.get('/rooms/:matchId', wrap(async (req, res) => {
        JOIN meal_time_code mt       ON mt.code = m.meal_time_code
        JOIN food_type_code ft       ON ft.code = m.food_type_code
        LEFT JOIN restaurant rest    ON rest.id = m.restaurant_id
+       LEFT JOIN user_profile p     ON p.user_id = other.user_id
       WHERE m.id = :m`,
     { u: req.user.id, m: req.params.matchId });
   if (!room) return res.status(404).json({ message: '채팅방을 찾을 수 없습니다.' });
   const status = await one('SELECT status FROM chat_room WHERE match_id = :m', { m: req.params.matchId });
-  res.json({ ...room, roomStatus: status.status });
+  const interests = await q(
+    `SELECT i.name FROM user_interest ui JOIN interest i ON i.id = ui.interest_id
+      WHERE ui.user_id = :u ORDER BY ui.slot`, { u: room.partner_user_id });
+  res.json({ ...room, roomStatus: status.status, partner_interests: interests.map((x) => x.name) });
 }));
 
 /**

@@ -17,6 +17,9 @@ import { shortCategory, FOOD_FILTERS, applyFoodFilter } from '../lib/foodCategor
 import { formatDistance } from '../lib/format.js';
 
 const FILTER_ICONS = { Utensils, Soup, Fish, CookingPot, Pizza, UtensilsCrossed };
+const SPICY_LABEL = { 1: '순한맛', 2: '보통', 3: '아주 매운맛' };
+const OILY_LABEL = { 1: '담백', 2: '보통', 3: '느끼한 것도 OK' };
+const formatPrice = (v) => (v == null ? '-' : `${Math.round(v / 1000)}천원`);
 
 /**
  * 지도 페이지 — 카카오 지도 API 사용 지점 ①
@@ -353,12 +356,30 @@ export default function MapPage() {
                   <strong style={{ fontSize: 14 }}>
                     현재 {buddies.length}명이 여기서 밥친구를 찾고 있어요
                   </strong>
-                  <div className="avatar-stack" style={{ marginTop: 12 }}>
-                    {buddies.slice(0, 4).map((u) => (
-                      <img key={u.user_id} className="avatar"
-                           src={u.profile_image || '/avatar-default.png'} alt="" />
-                    ))}
-                  </div>
+                  {buddies.length === 1 ? (
+                    // 혼자면 "네, 좋아요" 로 바로 요청이 나가버리니, 보내기 전에
+                    // 상대 취향(성별 제외)을 미리 볼 수 있게 한다.
+                    <div className="map-buddy-detail">
+                      <img className="map-buddy-detail__avatar"
+                           src={buddies[0].profile_image || '/avatar-default.png'} alt="" />
+                      <div className="map-buddy-detail__grid">
+                        {buddies[0].mbti_code && <span>MBTI · {buddies[0].mbti_code}</span>}
+                        {buddies[0].spicy_level && <span>맵기 · {SPICY_LABEL[buddies[0].spicy_level]}</span>}
+                        {buddies[0].oily_level && <span>느끼함 · {OILY_LABEL[buddies[0].oily_level]}</span>}
+                        {buddies[0].food_type && <span>음식 · {buddies[0].food_type}</span>}
+                        {buddies[0].talk_style && <span>대화 · {buddies[0].talk_style}</span>}
+                        {buddies[0].meal_time && <span>시간 · {buddies[0].meal_time}</span>}
+                        <span>가격대 · {formatPrice(buddies[0].price_min)}~{formatPrice(buddies[0].price_max)}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="avatar-stack" style={{ marginTop: 12 }}>
+                      {buddies.slice(0, 4).map((u) => (
+                        <img key={u.user_id} className="avatar"
+                             src={u.profile_image || '/avatar-default.png'} alt="" />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <p className="ask-title">밥 같이 할까요?</p>

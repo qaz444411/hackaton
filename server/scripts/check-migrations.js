@@ -113,6 +113,10 @@ const MIGRATIONS = [
     file: '19_schema_patch_v19.sql', label: 'v19 홈 확정 매칭 카드, 최근 연락 순 정렬',
     checks: [['column', 'v_home_confirmed_match', 'last_message_at']],
   },
+  {
+    file: '20_schema_patch_v20.sql', label: 'v20 v_restaurant_buddy 에 음식 종류 추가',
+    checks: [['column', 'v_restaurant_buddy', 'food_type']],
+  },
 ];
 
 const one = async (sql, params = []) => {
