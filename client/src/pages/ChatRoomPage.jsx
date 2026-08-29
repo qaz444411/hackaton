@@ -14,7 +14,7 @@ import { formatDistance } from '../lib/format.js';
 import {
   getChatRoom, getMessages, getSuggestions, useSuggestion, closeChat,
   getAiContext, updateAiContext, deleteChatRoom, getCodes, getRestaurants,
-  sendRestaurantMessage, sendMeetingMessage, cancelMeeting, sendLotteryMessage,
+  sendRestaurantMessage, sendMeetingMessage, cancelMeeting, sendLotteryMessage, markChatRead,
 } from '../api/endpoints.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import './ChatRoomPage.css';
@@ -68,8 +68,18 @@ export default function ChatRoomPage() {
 
   const { data: room } = useQuery({ queryKey: ['chatRoom', matchId], queryFn: () => getChatRoom(matchId) });
   const { data: aiContext } = useQuery({ queryKey: ['aiContext'], queryFn: getAiContext });
-  const { send } = useChatSocket(matchId, (m) =>
-    setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m])));
+  // 방을 이미 열어놓은 채로 상대 메시지가 도착하면 화면엔 바로 보이지만, 그것만으론
+  // read_at 이 안 채워져서 방을 나갔다 다시 들어오기 전까진 계속 "안읽음"으로 쌓였다 —
+  // 내가 보낸 게 아닌 메시지가 오면 즉시 읽음 처리하고, 채팅 목록/배지도 같이 갱신한다.
+  const { send } = useChatSocket(matchId, (m) => {
+    setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
+    if (m.sender_id !== user.id) {
+      markChatRead(matchId).then(() => {
+        qc.invalidateQueries({ queryKey: ['home'] });
+        qc.invalidateQueries({ queryKey: ['chatRooms'] });
+      });
+    }
+  });
 
   useEffect(() => { getMessages(matchId).then(setMessages); }, [matchId]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);

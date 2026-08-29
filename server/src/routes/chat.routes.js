@@ -80,16 +80,41 @@ r.get('/rooms/:matchId/messages', wrap(async (req, res) => {
   res.json(rows.reverse());
 }));
 
+/**
+ * 방을 읽음 처리한다 — 메시지 목록을 새로 불러올 때(GET /messages)뿐 아니라,
+ * 채팅방을 이미 켜놓은 채로 소켓으로 새 메시지가 도착할 때도 호출한다.
+ * 안 그러면 방 안에 있는 동안 받은 메시지는 방을 나갔다 다시 들어오기 전까진
+ * 계속 안읽음으로 남아서, 채팅 목록/하단바 배지에 안 읽은 것처럼 쌓여 보였다.
+ */
+r.post('/rooms/:matchId/read', wrap(async (req, res) => {
+  const matchId = Number(req.params.matchId);
+  const guard = await one(
+    'SELECT 1 AS ok FROM match_participant WHERE match_id=:m AND user_id=:u',
+    { m: matchId, u: req.user.id });
+  if (!guard) return res.status(403).json({ message: '참여자가 아닙니다.' });
+
+  await q(`UPDATE chat_message SET read_at = NOW()
+            WHERE match_id=:m AND read_at IS NULL AND (sender_id IS NULL OR sender_id <> :u)`,
+    { m: matchId, u: req.user.id });
+  res.json({ ok: true });
+}));
+
 /** 메시지 전송 (REST — 소켓과 동일 로직) */
 r.post('/rooms/:matchId/messages', wrap(async (req, res) => {
+  const matchId = Number(req.params.matchId);
   const b = z.object({ content: z.string().min(1).max(500) }).parse(req.body);
   // 참여자인지·방이 열려있는지 먼저 확인 — 없으면 matchId 만 알아도 남의 채팅방에 메시지를 넣을 수 있었다(IDOR).
-  await assertOpenRoom(req, req.params.matchId);
+  await assertOpenRoom(req, matchId);
   const [ins] = await pool.execute(
     `INSERT INTO chat_message (match_id, sender_id, message_type, content)
      VALUES (:m, :u, 'TEXT', :c)`,
-    { m: req.params.matchId, u: req.user.id, c: b.content });
-  res.status(201).json(await one('SELECT * FROM chat_message WHERE id = :id', { id: ins.insertId }));
+    { m: matchId, u: req.user.id, c: b.content });
+  const msg = await one('SELECT * FROM chat_message WHERE id = :id', { id: ins.insertId });
+  // 소켓의 'message:send' 핸들러와 동일하게 실시간 브로드캐스트도 해야 하는데
+  // 빠져 있었다 — 이 REST 경로로 보내면 상대는 방을 나갔다 들어오기 전까진
+  // 새 메시지를 실시간으로 못 받았다.
+  req.app.get('io')?.to(`room:${matchId}`).emit('message:new', msg);
+  res.status(201).json(msg);
 }));
 
 /** 방 참여자인지 + 열려 있는지 확인. 아니면 던진다. */
