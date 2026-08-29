@@ -220,6 +220,10 @@ export default function ChatRoomPage() {
         <div className="card chat-menu-card">
           <button className="btn btn--line" style={{ height: 42 }}
                   onClick={() => { setMenu(false); nav(`/chats/${matchId}/rating`); }}>밥친구 평가하기</button>
+          {!readOnly && (
+            <button className="btn btn--line" style={{ height: 42 }}
+                    onClick={() => { setMenu(false); nav(`/chats/${matchId}/rating?report=1`); }}>신고하기</button>
+          )}
           {!readOnly && room?.meal_date && (
             <button className="btn btn--line" style={{ height: 42 }}
                     onClick={() => { setMenu(false); setConfirmCancelMeeting(true); }}>약속 취소하기</button>

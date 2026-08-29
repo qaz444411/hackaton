@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
@@ -35,6 +35,7 @@ const REPORT_REASONS = [
 export default function RatingPage() {
   const { matchId } = useParams();
   const nav = useNavigate();
+  const [sp] = useSearchParams();
   const { data: room } = useQuery({ queryKey: ['chatRoom', matchId], queryFn: () => getChatRoom(matchId) });
   const { data: existing } = useQuery({ queryKey: ['rating', matchId], queryFn: () => getRating(matchId) });
 
@@ -50,6 +51,11 @@ export default function RatingPage() {
   const [reportReason, setReportReason] = useState(null);
   const [reportDetail, setReportDetail] = useState('');
   const [reporting, setReporting] = useState(false);
+
+  // 채팅방 "..." 메뉴의 "신고하기"는 평가 화면을 거치지 않고 바로 신고 시트로 들어온다.
+  useEffect(() => {
+    if (sp.get('report') === '1') setReportStep('reason');
+  }, [sp]);
 
   const closeReport = () => { setReportStep(null); setReportReason(null); setReportDetail(''); };
 

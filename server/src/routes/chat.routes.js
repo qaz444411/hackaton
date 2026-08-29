@@ -51,14 +51,54 @@ r.delete('/rooms/:matchId', wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
-/** 채팅 상세 헤더 — 상대 정보 + 약속(음식점) 정보 */
+/**
+ * 채팅 상세 헤더 — 상대 정보 + 약속(음식점) 정보.
+ * v_home_confirmed_match 는 홈 카드용으로 status IN (CONFIRMED,SCHEDULED) 만 보여주는
+ * 뷰라 여기서 그대로 쓰면, 매칭이 취소/종료된(신고 포함) 뒤에는 이 방을 다시 못 열었다
+ * (평가는 매칭이 끝난 뒤에도 계속 할 수 있어야 해서 직접 조인한다 — 상태로 거르지 않음).
+ */
 r.get('/rooms/:matchId', wrap(async (req, res) => {
   const room = await one(
-    `SELECT * FROM v_home_confirmed_match WHERE user_id = :u AND match_id = :m`,
+    `SELECT m.id AS match_id, m.status, m.meal_date,
+            mt.label AS meal_time, ft.label AS food_type, rest.name AS restaurant_name,
+            u.id AS partner_user_id, u.nickname AS partner_nickname, u.profile_image AS partner_image
+       FROM meal_match m
+       JOIN match_participant me    ON me.match_id = m.id AND me.user_id = :u
+       JOIN match_participant other ON other.match_id = m.id AND other.user_id <> me.user_id
+       JOIN users u                 ON u.id = other.user_id
+       JOIN meal_time_code mt       ON mt.code = m.meal_time_code
+       JOIN food_type_code ft       ON ft.code = m.food_type_code
+       LEFT JOIN restaurant rest    ON rest.id = m.restaurant_id
+      WHERE m.id = :m`,
     { u: req.user.id, m: req.params.matchId });
   if (!room) return res.status(404).json({ message: '채팅방을 찾을 수 없습니다.' });
   const status = await one('SELECT status FROM chat_room WHERE match_id = :m', { m: req.params.matchId });
   res.json({ ...room, roomStatus: status.status });
+}));
+
+/**
+ * 보관함 "밥친구 평가" 목록 — 지금까지 확정됐던 모든 매칭(취소/종료 포함).
+ * 매칭이 끝난 뒤(신고로 자동 종료된 경우 포함)에도 평가할 수 있어야 해서 상태로
+ * 거르지 않고, 내가 이미 남긴 평가(my_score)가 있으면 같이 내려줘서 "평가하기"/
+ * "평가 수정"을 구분할 수 있게 한다.
+ */
+r.get('/my-matches', wrap(async (req, res) => {
+  const rows = await q(
+    `SELECT m.id AS match_id, m.status, m.meal_date,
+            mt.label AS meal_time, ft.label AS food_type, rest.name AS restaurant_name,
+            u.id AS partner_user_id, u.nickname AS partner_nickname, u.profile_image AS partner_image,
+            mr.score AS my_score
+       FROM meal_match m
+       JOIN match_participant me    ON me.match_id = m.id AND me.user_id = :u
+       JOIN match_participant other ON other.match_id = m.id AND other.user_id <> me.user_id
+       JOIN users u                 ON u.id = other.user_id
+       JOIN meal_time_code mt       ON mt.code = m.meal_time_code
+       JOIN food_type_code ft       ON ft.code = m.food_type_code
+       LEFT JOIN restaurant rest    ON rest.id = m.restaurant_id
+       LEFT JOIN match_rating mr    ON mr.match_id = m.id AND mr.rater_id = :u
+      ORDER BY m.id DESC`,
+    { u: req.user.id });
+  res.json(rows);
 }));
 
 /** 메시지 조회 (커서 페이징) */

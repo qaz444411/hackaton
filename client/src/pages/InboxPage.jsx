@@ -5,7 +5,9 @@ import { Trash2 } from 'lucide-react';
 import AppBar from '../components/AppBar.jsx';
 import BottomNav from '../components/BottomNav.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
-import { getInbox, readProposal, acceptProposal, declineProposal, deleteProposal } from '../api/endpoints.js';
+import {
+  getInbox, readProposal, acceptProposal, declineProposal, deleteProposal, getMyMatches,
+} from '../api/endpoints.js';
 import './InboxPage.css';
 
 const LABEL = { PENDING: '매칭 전', ACCEPTED: '수락됨', DECLINED: '거절함',
@@ -21,6 +23,7 @@ export default function InboxPage() {
   const nav = useNavigate();
   const qc = useQueryClient();
   const { data = [] } = useQuery({ queryKey: ['inbox'], queryFn: getInbox, refetchInterval: 10000 });
+  const { data: myMatches = [] } = useQuery({ queryKey: ['myMatches'], queryFn: getMyMatches });
   const [cancelTarget, setCancelTarget] = useState(null);
   const [cancelling, setCancelling] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -73,6 +76,36 @@ export default function InboxPage() {
     <div className="screen">
       <AppBar title="보관함" back={false} tab />
       <div className="screen__body">
+        {!!myMatches.length && (
+          <>
+            <h2 className="inbox__section-title">밥친구 평가</h2>
+            <div className="inbox__list">
+              {myMatches.map((m) => (
+                <div key={m.match_id} className="notif-card"
+                     onClick={() => nav(`/chats/${m.match_id}/rating`)}>
+                  <div className="notif-card__top">
+                    <img className="notif-card__avatar" src={m.partner_image || '/avatar-default.png'} alt="" />
+                    <div className="notif-card__body">
+                      <div className="notif-card__name-row">
+                        <span className="notif-card__name">{m.partner_nickname}</span>
+                        {m.my_score ? (
+                          <span className="notif-card__badge notif-card__badge--ACCEPTED">평가 완료</span>
+                        ) : (
+                          <span className="notif-card__badge">평가 전</span>
+                        )}
+                      </div>
+                      <p className="notif-card__message">
+                        {[m.meal_time, m.food_type, m.restaurant_name].filter(Boolean).join(' · ')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        <h2 className="inbox__section-title">받은 요청</h2>
         <div className="inbox__list">
           {data.map((p) => (
             <div key={p.proposal_id} className="notif-card"

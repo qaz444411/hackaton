@@ -92,3 +92,4 @@ export const sendLotteryMessage = (matchId) => api.post(`/chat/rooms/${matchId}/
 export const markChatRead = (matchId) => api.post(`/chat/rooms/${matchId}/read`).then((r) => r.data);
 export const getRating = (matchId) => api.get(`/chat/rooms/${matchId}/rating`).then((r) => r.data);
 export const submitRating = (matchId, body) => api.post(`/chat/rooms/${matchId}/rating`, body).then((r) => r.data);
+export const getMyMatches = () => api.get('/chat/my-matches').then((r) => r.data);

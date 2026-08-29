@@ -1,4 +1,14 @@
 /* InboxPage — 최종 디자인 */
+.inbox__section-title {
+  margin-top: 20px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.32px;
+  color: var(--c-text);
+}
+.inbox__section-title:first-child { margin-top: 4px; }
+
 .inbox__list {
   display: flex;
   flex-direction: column;
