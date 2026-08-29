@@ -221,8 +221,11 @@ r.post('/:id/cancel', wrap(async (req, res) => {
 
 /** 홈 화면 — 확정 매칭 정보 + 지금 매칭 찾는 인원 + 이번 주 인기 음식(가벼운 사회적 증거용) */
 r.get('/home', wrap(async (req, res) => {
+  // 동시에 여러 확정 매칭이 있을 수 있어서(v15), 그중 가장 최근에 연락 온 상대를
+  // 보여준다 — 아직 대화가 없으면 확정된 시각으로 대신 정렬한다.
   const confirmed = await one(
-    'SELECT * FROM v_home_confirmed_match WHERE user_id = :u ORDER BY match_id DESC LIMIT 1',
+    `SELECT * FROM v_home_confirmed_match WHERE user_id = :u
+      ORDER BY COALESCE(last_message_at, confirmed_at) DESC LIMIT 1`,
     { u: req.user.id });
   const inboxNew = await one(
     "SELECT COUNT(*) AS c FROM v_inbox WHERE user_id=:u AND status='PENDING' AND is_new", { u: req.user.id });

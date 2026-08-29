@@ -109,6 +109,10 @@ const MIGRATIONS = [
     file: '18_schema_patch_v18.sql', label: 'v18 채팅 랜덤 메뉴 복권(LOTTERY) 타입 추가',
     checks: [['check_contains', 'ck_chat_message_type', 'LOTTERY']],
   },
+  {
+    file: '19_schema_patch_v19.sql', label: 'v19 홈 확정 매칭 카드, 최근 연락 순 정렬',
+    checks: [['column', 'v_home_confirmed_match', 'last_message_at']],
+  },
 ];
 
 const one = async (sql, params = []) => {
