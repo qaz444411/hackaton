@@ -70,6 +70,7 @@ export default function App() {
         <Route path="/inbox" element={<Private><InboxPage /></Private>} />
         <Route path="/matching/manage" element={<Private><MatchManagePage /></Private>} />
         <Route path="/mypage" element={<Private><MyPage /></Private>} />
+        <Route path="/mypage/taste" element={<Private><ProfileSetupPage /></Private>} />
         <Route path="/assistant" element={<Private><AssistantPage /></Private>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />

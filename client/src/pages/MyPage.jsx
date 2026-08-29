@@ -166,7 +166,7 @@ export default function MyPage() {
         </div>
 
         <div className="mypage__menu">
-          <button type="button" className="mypage__menu-item" onClick={() => nav('/preference')}>
+          <button type="button" className="mypage__menu-item" onClick={() => nav('/mypage/taste')}>
             <span className="mypage__menu-title">취향 설정 변경</span>
             <ChevronRight size={16} strokeWidth={2} className="mypage__menu-arrow" />
           </button>
